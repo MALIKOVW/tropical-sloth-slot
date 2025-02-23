@@ -21,14 +21,36 @@ class SlotMachine {
             totalWon: 0
         };
 
+        // Initialize responsive canvas
         this.resizeCanvas();
         this.draw();
-        window.addEventListener('resize', () => this.resizeCanvas());
+        window.addEventListener('resize', () => {
+            this.resizeCanvas();
+            this.draw();
+        });
+
+        // Disable overscroll/bounce effect on mobile
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target.closest('#slotCanvas')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Handle touch events
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!this.spinning) {
+                this.spin();
+            }
+        });
+
         this.initializeEventListeners();
         this.initializeNewEventListeners();
         this.updateBonusDisplay();
         this.fetchStatistics();
         setInterval(() => this.fetchStatistics(), 60000);
+
+        // Initialize other properties
         this.winningLines = [];
         this.animatingWin = false;
         this.paylineContainer = document.createElement('div');
@@ -39,65 +61,18 @@ class SlotMachine {
         this.autoSpinning = false;
         this.autoSpinCount = 0;
         this.stopBalance = 0;
-        this.spinDelay = 50; 
-        this.turboDelay = 25; 
+        this.spinDelay = 50;
+        this.turboDelay = 25;
 
         this.autoSpinModal = new bootstrap.Modal(document.getElementById('autoSpinModal'));
         this.buyFreespinsModal = new bootstrap.Modal(document.getElementById('buyFreespinsModal'));
-    }
 
-    initializeEventListeners() {
-        const spinButton = document.getElementById('spinButton');
-        if (spinButton) {
-            spinButton.textContent = 'SPIN';  
-            spinButton.addEventListener('click', () => this.spin());
-        }
-
-        document.getElementById('increaseBet').textContent = '+';
-        document.getElementById('decreaseBet').textContent = '-';
-        document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(0.10));
-        document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-0.10));
-    }
-
-    initializeNewEventListeners() {
-        document.getElementById('turboSpinBtn').addEventListener('click', () => {
-            this.turboMode = !this.turboMode;
-            const btn = document.getElementById('turboSpinBtn');
-            btn.classList.toggle('active');
-            this.spinDelay = this.turboMode ? this.turboDelay : 50;
-        });
-
-        document.getElementById('autoSpinBtn').addEventListener('click', () => {
-            if (this.autoSpinning) {
-                this.stopAutoSpin();
-            } else {
-                this.autoSpinModal.show();
-            }
-        });
-
-        document.getElementById('startAutoSpin').addEventListener('click', () => {
-            const selectedCount = document.querySelector('input[name="autoSpinCount"]:checked');
-            const stopBalance = document.getElementById('stopBalance').value;
-
-            if (!selectedCount) {
-                alert('Please select number of spins');
-                return;
-            }
-
-            this.autoSpinCount = parseInt(selectedCount.value);
-            this.stopBalance = parseFloat(stopBalance) || 0;
-            this.autoSpinModal.hide();
-            this.startAutoSpin();
-        });
-
-        document.getElementById('buyFreespinsBtn').addEventListener('click', () => {
-            const cost = this.currentBet * 10;
-            document.getElementById('freespinsCost').textContent = cost.toFixed(2);
-            this.buyFreespinsModal.show();
-        });
-
-        document.getElementById('confirmBuyFreespins').addEventListener('click', () => {
-            this.buyFreespins();
+        // Handle orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                this.resizeCanvas();
+                this.draw();
+            }, 100);
         });
     }
 
@@ -141,7 +116,7 @@ class SlotMachine {
 
         this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
         this.ctx.shadowBlur = 10;
-        this.ctx.fillText(this.getSymbolDisplay(symbol), x + size/2, y + size/2);
+        this.ctx.fillText(this.getSymbolDisplay(symbol), x + size / 2, y + size / 2);
         this.ctx.restore();
 
         if (symbol === 'wild' || symbol === 'scatter') {
@@ -173,6 +148,7 @@ class SlotMachine {
             }
         }
     }
+
 
     async loadImages() {
         const loadImage = (symbol) => {
@@ -221,8 +197,19 @@ class SlotMachine {
     resizeCanvas() {
         const container = this.canvas.parentElement;
         const containerWidth = container.clientWidth;
-        this.canvas.width = Math.min(800, containerWidth - 40);
-        this.canvas.height = this.canvas.width * 0.75;
+        const maxWidth = Math.min(800, containerWidth - 40);
+
+        // Maintain aspect ratio
+        this.canvas.width = maxWidth;
+        this.canvas.height = maxWidth * 0.75;
+
+        // Update canvas scale based on device pixel ratio
+        const scale = window.devicePixelRatio;
+        this.canvas.style.width = `${this.canvas.width}px`;
+        this.canvas.style.height = `${this.canvas.height}px`;
+        this.canvas.width *= scale;
+        this.canvas.height *= scale;
+        this.ctx.scale(scale, scale);
         this.draw();
     }
 
@@ -554,6 +541,60 @@ class SlotMachine {
             this.buyFreespinsModal.hide();
         }
     }
+    initializeEventListeners() {
+        const spinButton = document.getElementById('spinButton');
+        if (spinButton) {
+            spinButton.textContent = 'SPIN';
+            spinButton.addEventListener('click', () => this.spin());
+        }
+
+        document.getElementById('increaseBet').textContent = '+';
+        document.getElementById('decreaseBet').textContent = '-';
+        document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(0.10));
+        document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-0.10));
+    }
+
+    initializeNewEventListeners() {
+        document.getElementById('turboSpinBtn').addEventListener('click', () => {
+            this.turboMode = !this.turboMode;
+            const btn = document.getElementById('turboSpinBtn');
+            btn.classList.toggle('active');
+            this.spinDelay = this.turboMode ? this.turboDelay : 50;
+        });
+
+        document.getElementById('autoSpinBtn').addEventListener('click', () => {
+            if (this.autoSpinning) {
+                this.stopAutoSpin();
+            } else {
+                this.autoSpinModal.show();
+            }
+        });
+
+        document.getElementById('startAutoSpin').addEventListener('click', () => {
+            const selectedCount = document.querySelector('input[name="autoSpinCount"]:checked');
+            const stopBalance = document.getElementById('stopBalance').value;
+
+            if (!selectedCount) {
+                alert('Please select number of spins');
+                return;
+            }
+
+            this.autoSpinCount = parseInt(selectedCount.value);
+            this.stopBalance = parseFloat(stopBalance) || 0;
+            this.autoSpinModal.hide();
+            this.startAutoSpin();
+        });
+
+        document.getElementById('buyFreespinsBtn').addEventListener('click', () => {
+            const cost = this.currentBet * 10;
+            document.getElementById('freespinsCost').textContent = cost.toFixed(2);
+            this.buyFreespinsModal.show();
+        });
+
+        document.getElementById('confirmBuyFreespins').addEventListener('click', () => {
+            this.buyFreespins();
+        });
+    }
 }
 
 window.addEventListener('load', () => {
@@ -561,4 +602,14 @@ window.addEventListener('load', () => {
         audio.init();
     }
     const slot = new SlotMachine();
+
+    // Prevent double-tap zoom on mobile
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
 });

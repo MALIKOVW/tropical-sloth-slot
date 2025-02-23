@@ -1,3 +1,4 @@
+/* Базовые стили остаются без изменений */
 body {
     background-color: #1a1a1a;
     font-family: 'Arial', sans-serif;
@@ -34,11 +35,38 @@ body {
     backdrop-filter: blur(10px);
 }
 
-/* Update spin button styles to work without PNG */
+/* Адаптивные стили для элементов управления */
+.controls .d-flex {
+    gap: 15px;
+}
+
+@media (max-width: 768px) {
+    .controls .d-flex {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+    .bet-controls, .credits, .spin-controls {
+        width: 100%;
+        text-align: center;
+    }
+
+    .spin-controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    #spinButton {
+        grid-column: span 2;
+    }
+}
+
+/* Обновленные стили для кнопок */
 #spinButton {
     min-width: 120px;
     height: 50px;
-    font-size: 24px;
+    font-size: clamp(18px, 4vw, 24px);
     font-weight: bold;
     background: linear-gradient(45deg, #1a9fff, #00ff9d);
     border: none;
@@ -49,6 +77,7 @@ body {
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    padding: 0 20px;
 }
 
 #spinButton:hover {
@@ -63,12 +92,11 @@ body {
     opacity: 0.7;
 }
 
-/* Update bet control buttons */
 .bet-controls button {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    font-size: 24px;
+    font-size: clamp(16px, 3vw, 24px);
     line-height: 1;
     background: linear-gradient(45deg, #1a9fff, #00ff9d);
     border: none;
@@ -86,35 +114,106 @@ body {
     box-shadow: 0 0 20px rgba(0, 255, 157, 0.8);
 }
 
-.bet-controls button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    font-size: 20px;
-    line-height: 1;
-    border: none;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    transition: all 0.3s ease;
-}
-
-.bet-controls button:hover {
-    transform: scale(1.1);
-}
-
 #currentBet {
-    font-size: 24px;
+    font-size: clamp(18px, 4vw, 24px);
     font-weight: bold;
     color: #00ff9d;
     text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
 }
 
 .credits {
-    font-size: 24px;
+    font-size: clamp(18px, 4vw, 24px);
     font-weight: bold;
     color: #00ff9d;
     text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+}
+
+/* Адаптивные стили для новых кнопок */
+#turboSpinBtn, #autoSpinBtn, #buyFreespinsBtn {
+    min-width: 100px;
+    height: 40px;
+    font-size: clamp(14px, 3vw, 16px);
+    font-weight: bold;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    padding: 0 15px;
+}
+
+@media (max-width: 576px) {
+    #turboSpinBtn, #autoSpinBtn, #buyFreespinsBtn {
+        width: 100%;
+        margin: 5px 0;
+    }
+}
+
+/* Адаптивные стили для модальных окон */
+.modal-dialog {
+    margin: 20px;
+    max-width: min(90%, 500px);
+}
+
+.modal-content {
+    background-color: #2a2a2a;
+    color: white;
+    border: 1px solid #444;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.btn-group {
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+@media (max-width: 576px) {
+    .btn-group {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .btn-outline-primary {
+        width: 100%;
+        margin: 2px;
+    }
+}
+
+/* Адаптивные стили для статистики */
+.statistics {
+    background-color: rgba(51, 51, 51, 0.2);
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    backdrop-filter: blur(10px);
+}
+
+@media (max-width: 576px) {
+    .statistics .row {
+        flex-direction: column;
+    }
+
+    .statistics .col {
+        margin-bottom: 15px;
+    }
+
+    .statistics p {
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+}
+
+/* Адаптивные стили для заголовка */
+h1 {
+    font-size: clamp(24px, 6vw, 36px);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin-bottom: 20px;
+}
+
+.alert {
+    font-size: clamp(14px, 3vw, 16px);
+    margin-bottom: 20px;
 }
 
 .payline {
@@ -301,7 +400,6 @@ h1 {
     color: #fff;
 }
 
-/* Add SVG symbol styles */
 .symbol {
     width: 100%;
     height: 100%;
@@ -313,7 +411,6 @@ h1 {
     height: 100%;
 }
 
-/* Update existing symbol styles */
 .symbol-container {
     position: relative;
     width: 100%;
@@ -323,7 +420,6 @@ h1 {
     justify-content: center;
 }
 
-/* Glow effects for special symbols */
 .symbol.wild svg {
     filter: drop-shadow(0 0 5px #ff9f43);
 }
@@ -332,7 +428,6 @@ h1 {
     filter: drop-shadow(0 0 5px #95a5a6);
 }
 
-/* Animation for winning symbols */
 @keyframes symbolWin {
     0% { transform: scale(1); }
     50% { transform: scale(1.1); }
