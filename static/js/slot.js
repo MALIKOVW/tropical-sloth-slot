@@ -148,16 +148,19 @@ class SlotMachine {
                     const symbolIndex = (reel.currentStep + i) % reel.symbols.length;
                     const symbol = reel.symbols[symbolIndex];
 
-                    this.ctx.fillStyle = '#444';
-                    this.ctx.fillRect(
+                    this.ctx.fillStyle = 'rgba(51, 51, 51, 0.2)';
+                    this.ctx.beginPath();
+                    this.ctx.roundRect(
                         reelIndex * reelWidth + horizontalPadding,
                         i * (symbolSize + verticalPadding) + verticalPadding,
                         symbolSize,
-                        symbolSize
+                        symbolSize,
+                        10
                     );
+                    this.ctx.fill();
 
-                    this.ctx.fillStyle = '#fff';
-                    this.ctx.font = `${symbolSize * 0.6}px Arial`;
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                    this.ctx.font = `${symbolSize * 0.7}px Arial`;
                     this.ctx.textAlign = 'center';
                     this.ctx.textBaseline = 'middle';
                     this.ctx.fillText(
@@ -221,24 +224,19 @@ class SlotMachine {
         this.animatingWin = true;
         this.winningLines = winningLines;
 
-        // Create win message
         const winDisplay = document.createElement('div');
         winDisplay.className = 'win-animation';
         winDisplay.textContent = `WIN! ${amount}`;
         document.body.appendChild(winDisplay);
 
-        // Clear any existing paylines
         this.clearPaylines();
 
-        // Animate each winning line sequentially
         for (const line of winningLines) {
             await this.animatePayline(line);
-            // Wait between lines
             await new Promise(resolve => setTimeout(resolve, 800));
             this.clearPaylines();
         }
 
-        // Remove win display after all animations
         setTimeout(() => {
             winDisplay.remove();
             this.animatingWin = false;
@@ -247,23 +245,16 @@ class SlotMachine {
 
     async animatePayline(line) {
         const reelWidth = this.canvas.width / 5;
-        const symbolSize = reelWidth * 0.8;
+        const symbolSize = reelWidth * 0.95; 
         const horizontalPadding = (reelWidth - symbolSize) / 2;
         const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
 
-        // Create container for this payline animation
-        const paylineContainer = document.createElement('div');
-        paylineContainer.className = 'payline-group';
-        this.paylineContainer.appendChild(paylineContainer);
-
-        // Calculate positions for connected line first
         if (line.length >= 2) {
             const points = line.map(([row, col]) => ({
                 x: col * reelWidth + horizontalPadding + symbolSize / 2,
                 y: row * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2
             }));
 
-            // Create connecting lines between each consecutive pair of points
             for (let i = 0; i < points.length - 1; i++) {
                 const start = points[i];
                 const end = points[i + 1];
@@ -277,27 +268,25 @@ class SlotMachine {
                 payline.style.left = `${start.x}px`;
                 payline.style.top = `${start.y}px`;
                 payline.style.transform = `rotate(${angle}deg)`;
-                paylineContainer.appendChild(payline);
+
+                this.paylineContainer.appendChild(payline);
             }
         }
 
-        // Add symbol highlights with slight delay
-        setTimeout(() => {
-            for (const [row, col] of line) {
-                const symbol = document.createElement('div');
-                symbol.className = 'symbol-highlight';
-                symbol.style.left = `${col * reelWidth + horizontalPadding}px`;
-                symbol.style.top = `${row * (symbolSize + verticalPadding) + verticalPadding}px`;
-                symbol.style.width = `${symbolSize}px`;
-                symbol.style.height = `${symbolSize}px`;
-                paylineContainer.appendChild(symbol);
-            }
-        }, 200);
+        for (const [row, col] of line) {
+            const x = col * reelWidth + horizontalPadding;
+            const y = row * (symbolSize + verticalPadding) + verticalPadding;
 
-        // Play win sound for this line
+            const highlight = document.createElement('div');
+            highlight.className = 'symbol-highlight';
+            highlight.style.left = `${x}px`;
+            highlight.style.top = `${y}px`;
+            highlight.style.width = `${symbolSize}px`;
+            highlight.style.height = `${symbolSize}px`;
+            this.paylineContainer.appendChild(highlight);
+        }
+
         audio.playWinSound();
-
-        // Wait for animation duration
         await new Promise(resolve => setTimeout(resolve, 1500));
     }
 
@@ -321,7 +310,7 @@ class SlotMachine {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         const reelWidth = this.canvas.width / 5;
-        const symbolSize = reelWidth * 0.8;
+        const symbolSize = reelWidth * 0.95; 
         const horizontalPadding = (reelWidth - symbolSize) / 2;
         const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
 
@@ -330,16 +319,17 @@ class SlotMachine {
                 const x = i * reelWidth + horizontalPadding;
                 const y = j * (symbolSize + verticalPadding) + verticalPadding;
 
-                // Make the background more transparent
-                this.ctx.fillStyle = 'rgba(68, 68, 68, 0.3)';
+                this.ctx.fillStyle = 'rgba(51, 51, 51, 0.05)';
                 if (this.bonusSpinsRemaining > 0 && this.wildPositions.some(pos => pos[0] === j && pos[1] === i)) {
-                    this.ctx.fillStyle = 'rgba(102, 68, 0, 0.4)';
+                    this.ctx.fillStyle = 'rgba(102, 68, 0, 0.1)';
                 }
-                this.ctx.fillRect(x, y, symbolSize, symbolSize);
 
-                // Make the symbols more visible against transparent background
-                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                this.ctx.font = `${symbolSize * 0.6}px Arial`;
+                this.ctx.beginPath();
+                this.ctx.roundRect(x, y, symbolSize, symbolSize, 10);
+                this.ctx.fill();
+
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                this.ctx.font = `${symbolSize * 0.75}px Arial`; 
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
 
