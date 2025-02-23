@@ -9,7 +9,6 @@ class SlotMachine {
         this.specialSymbols = ['wild', 'scatter'];
 
         this.symbols = [...this.lowSymbols, ...this.highSymbols, ...this.specialSymbols];
-        this.symbolImages = {};
         this.reels = Array(5).fill().map(() => Array(3).fill('A'));
         this.spinning = false;
         this.currentBet = 0.20;
@@ -23,11 +22,9 @@ class SlotMachine {
             totalWon: 0
         };
 
-        this.loadImages().then(() => {
-            this.resizeCanvas();
-            this.draw();
-        });
-
+        // Initialize
+        this.resizeCanvas();
+        this.draw();
         window.addEventListener('resize', () => this.resizeCanvas());
         this.initializeEventListeners();
         this.updateBonusDisplay();
@@ -38,9 +35,78 @@ class SlotMachine {
         this.paylineContainer = document.createElement('div');
         this.paylineContainer.id = 'paylineContainer';
         document.querySelector('.game-container').appendChild(this.paylineContainer);
+    }
 
-        // Загрузка SVG символов
-        this.loadSymbols();
+    initializeEventListeners() {
+        const spinButton = document.getElementById('spinButton');
+        if (spinButton) {
+            spinButton.textContent = 'SPIN';  // Add text to button
+            spinButton.addEventListener('click', () => this.spin());
+        }
+
+        document.getElementById('increaseBet').textContent = '+';
+        document.getElementById('decreaseBet').textContent = '-';
+        document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(0.10));
+        document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-0.10));
+    }
+
+    drawSymbol(symbol, x, y, size) {
+        // Background for symbol
+        this.ctx.fillStyle = 'rgba(51, 51, 51, 0.2)';
+        this.ctx.beginPath();
+        this.ctx.roundRect(x, y, size, size, 10);
+        this.ctx.fill();
+
+        // Symbol text with gradient
+        this.ctx.save();
+        const gradient = this.ctx.createLinearGradient(x, y, x + size, y + size);
+
+        // Different colors for different symbol types
+        if (this.lowSymbols.includes(symbol)) {
+            gradient.addColorStop(0, '#4a90e2');
+            gradient.addColorStop(1, '#2171cd');
+        } else if (this.highSymbols.includes(symbol)) {
+            gradient.addColorStop(0, '#f39c12');
+            gradient.addColorStop(1, '#d35400');
+        } else if (symbol === 'wild') {
+            gradient.addColorStop(0, '#ff9f43');
+            gradient.addColorStop(1, '#ff7f00');
+        } else if (symbol === 'scatter') {
+            gradient.addColorStop(0, '#95a5a6');
+            gradient.addColorStop(1, '#7f8c8d');
+        }
+
+        this.ctx.fillStyle = gradient;
+        this.ctx.font = `bold ${size * 0.5}px Arial`;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+
+        // Draw symbol with outer glow
+        this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+        this.ctx.shadowBlur = 10;
+        this.ctx.fillText(symbol, x + size/2, y + size/2);
+        this.ctx.restore();
+    }
+
+    draw() {
+        if (!this.ctx || !this.canvas) return;
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        const reelWidth = this.canvas.width / 5;
+        const symbolSize = reelWidth * 0.8;
+        const horizontalPadding = (reelWidth - symbolSize) / 2;
+        const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
+
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 3; j++) {
+                const x = i * reelWidth + horizontalPadding;
+                const y = j * (symbolSize + verticalPadding) + verticalPadding;
+
+                const symbol = this.reels[i] && this.reels[i][j] ? this.reels[i][j] : this.symbols[0];
+                this.drawSymbol(symbol, x, y, symbolSize);
+            }
+        }
     }
 
     async loadImages() {
@@ -55,11 +121,10 @@ class SlotMachine {
 
         const imagePromises = this.symbols.map(loadImage);
         const loadedImages = await Promise.all(imagePromises);
-        loadedImages.forEach(([symbol, img]) => {
-            this.symbolImages[symbol] = img;
-        });
+        //loadedImages.forEach(([symbol, img]) => {
+        //    this.symbolImages[symbol] = img;
+        //});
     }
-
     loadSymbols() {
         fetch('/static/svg/symbols.svg')
             .then(response => response.text())
@@ -97,12 +162,6 @@ class SlotMachine {
         this.canvas.width = Math.min(800, containerWidth - 40);
         this.canvas.height = this.canvas.width * 0.75;
         this.draw();
-    }
-
-    initializeEventListeners() {
-        document.getElementById('spinButton').addEventListener('click', () => this.spin());
-        document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(0.10));
-        document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-0.10));
     }
 
     adjustBet(amount) {
@@ -204,21 +263,7 @@ class SlotMachine {
                     const symbolIndex = (reel.currentStep + i) % reel.symbols.length;
                     const symbol = reel.symbols[symbolIndex];
 
-                    this.ctx.fillStyle = 'rgba(51, 51, 51, 0.2)';
-                    this.ctx.beginPath();
-                    this.ctx.roundRect(
-                        reelIndex * reelWidth + horizontalPadding,
-                        i * (symbolSize + verticalPadding) + verticalPadding,
-                        symbolSize,
-                        symbolSize,
-                        10
-                    );
-                    this.ctx.fill();
-
-                    const img = this.symbolImages[symbol];
-                    if (img) {
-                        this.ctx.drawImage(img, reelIndex * reelWidth + horizontalPadding, i * (symbolSize + verticalPadding) + verticalPadding, symbolSize, symbolSize);
-                    }
+                    this.drawSymbol(symbol, reelIndex * reelWidth + horizontalPadding, i * (symbolSize + verticalPadding) + verticalPadding, symbolSize);
                 }
             });
         };
@@ -355,47 +400,6 @@ class SlotMachine {
         setTimeout(() => bonusMessage.remove(), 2000);
     }
 
-    draw() {
-        if (!this.ctx || !this.canvas) return;
-
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        const reelWidth = this.canvas.width / 5;
-        const symbolSize = reelWidth * 0.95;
-        const horizontalPadding = (reelWidth - symbolSize) / 2;
-        const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
-
-        for (let i = 0; i < 5; i++) {
-            for (let j = 0; j < 3; j++) {
-                const x = i * reelWidth + horizontalPadding;
-                const y = j * (symbolSize + verticalPadding) + verticalPadding;
-
-                this.ctx.fillStyle = 'rgba(51, 51, 51, 0.05)';
-                if (this.bonusSpinsRemaining > 0 && this.wildPositions.some(pos => pos[0] === j && pos[1] === i)) {
-                    this.ctx.fillStyle = 'rgba(102, 68, 0, 0.1)';
-                }
-
-                this.ctx.beginPath();
-                this.ctx.roundRect(x, y, symbolSize, symbolSize, 10);
-                this.ctx.fill();
-
-                const symbol = this.reels[i] && this.reels[i][j] ? this.reels[i][j] : this.symbols[0];
-
-                const symbolElement = this.createSymbolElement(symbol);
-                document.body.appendChild(symbolElement);
-
-                const svgData = new XMLSerializer().serializeToString(symbolElement.querySelector('svg'));
-                const img = new Image();
-                img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-
-                img.onload = () => {
-                    this.ctx.drawImage(img, x, y, symbolSize, symbolSize);
-                    document.body.removeChild(symbolElement);
-                };
-            }
-        }
-    }
-
     async fetchStatistics() {
         try {
             const response = await fetch('/statistics');
@@ -414,6 +418,8 @@ class SlotMachine {
 }
 
 window.addEventListener('load', () => {
-    audio.init();
+    if (typeof audio !== 'undefined') {
+        audio.init();
+    }
     const slot = new SlotMachine();
 });
