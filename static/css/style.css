@@ -292,3 +292,45 @@ h1 {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     color: #fff;
 }
+
+/* Add SVG symbol styles */
+.symbol {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.symbol svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Update existing symbol styles */
+.symbol-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Glow effects for special symbols */
+.symbol.wild svg {
+    filter: drop-shadow(0 0 5px #ff9f43);
+}
+
+.symbol.scatter svg {
+    filter: drop-shadow(0 0 5px #95a5a6);
+}
+
+/* Animation for winning symbols */
+@keyframes symbolWin {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.symbol.winning {
+    animation: symbolWin 0.5s ease-in-out infinite;
+}

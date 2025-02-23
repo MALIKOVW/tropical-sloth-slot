@@ -38,6 +38,9 @@ class SlotMachine {
         this.paylineContainer = document.createElement('div');
         this.paylineContainer.id = 'paylineContainer';
         document.querySelector('.game-container').appendChild(this.paylineContainer);
+
+        // Загрузка SVG символов
+        this.loadSymbols();
     }
 
     async loadImages() {
@@ -55,6 +58,37 @@ class SlotMachine {
         loadedImages.forEach(([symbol, img]) => {
             this.symbolImages[symbol] = img;
         });
+    }
+
+    loadSymbols() {
+        fetch('/static/svg/symbols.svg')
+            .then(response => response.text())
+            .then(svgData => {
+                const container = document.createElement('div');
+                container.style.display = 'none';
+                container.innerHTML = svgData;
+                document.body.appendChild(container);
+            });
+    }
+
+    createSymbolElement(symbol) {
+        const container = document.createElement('div');
+        container.className = `symbol-container symbol ${symbol}`;
+
+        const symbolElement = document.createElement('div');
+        symbolElement.className = 'symbol';
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+
+        const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+        use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#${symbol}`);
+
+        svg.appendChild(use);
+        symbolElement.appendChild(svg);
+        container.appendChild(symbolElement);
+
+        return container;
     }
 
     resizeCanvas() {
@@ -322,7 +356,7 @@ class SlotMachine {
     }
 
     draw() {
-        if (!this.ctx || !this.canvas || Object.keys(this.symbolImages).length === 0) return;
+        if (!this.ctx || !this.canvas) return;
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -346,30 +380,20 @@ class SlotMachine {
                 this.ctx.fill();
 
                 const symbol = this.reels[i] && this.reels[i][j] ? this.reels[i][j] : this.symbols[0];
-                const img = this.symbolImages[symbol];
-                if (img) {
+
+                const symbolElement = this.createSymbolElement(symbol);
+                document.body.appendChild(symbolElement);
+
+                const svgData = new XMLSerializer().serializeToString(symbolElement.querySelector('svg'));
+                const img = new Image();
+                img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+
+                img.onload = () => {
                     this.ctx.drawImage(img, x, y, symbolSize, symbolSize);
-                }
+                    document.body.removeChild(symbolElement);
+                };
             }
         }
-    }
-
-    getSymbolEmoji(symbol) {
-        const emojiMap = {
-            '10': '🔟',
-            'J': 'J️⃣',
-            'Q': 'Q️⃣',
-            'K': 'K️⃣',
-            'A': 'A️⃣',
-            'dog1': '🐕',
-            'dog2': '🐶',
-            'dog3': '🐩',
-            'toy1': '🎾',
-            'toy2': '🧸',
-            'wild': '🏠',
-            'scatter': '🦴'
-        };
-        return emojiMap[symbol] || symbol;
     }
 
     async fetchStatistics() {
