@@ -76,7 +76,7 @@ body {
     transform: translate(-50%, -50%);
     width: calc(100% + 40px);
     height: calc(100% + 40px);
-    z-index: 1;
+    z-index: 2;
     pointer-events: none;
 }
 
@@ -89,7 +89,7 @@ body {
     margin: 0 auto;
     border-radius: 10px;
     background-color: #000;
-    z-index: 2;
+    z-index: 1;
 }
 
 /* Update existing game container styles */
@@ -150,6 +150,19 @@ body {
     justify-content: center;
     align-items: center;
     gap: 20px;
+}
+
+.bet-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Responsive styles */
