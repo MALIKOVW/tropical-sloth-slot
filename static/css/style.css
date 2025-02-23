@@ -56,13 +56,43 @@ body {
     font-weight: bold;
 }
 
-/* Game container styles */
+/* Game field wrapper with Rick and Morty frame */
+.game-field-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    background-image: url('/static/images/rick-morty-frame.png');
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.game-field-wrapper canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+
+/* Update existing game container styles */
 .game-container {
     max-width: 1440px; /* Maximum width as per standards */
     min-width: 800px; /* Minimum width as per standards */
     margin: 0 auto;
-    border-radius: 15px;
     padding: 20px;
+}
+
+/* Ensure the game wrapper respects the new frame */
+.game-wrapper {
+    padding: 20px;
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .top-bar {
@@ -703,6 +733,6 @@ h1 {
 }
 .game-wrapper {
     padding: 20px;
-    max-width: 2560px; /* Increased max-width for ultra-wide game field */
+    max-width: 1440px; /* Maximum width as per standards */
     margin: 0 auto;
 }
