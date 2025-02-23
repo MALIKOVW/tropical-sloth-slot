@@ -143,11 +143,10 @@ class SlotMachine {
 
         // Animation states
         const reelStates = Array(5).fill().map(() => ({
-            symbols: Array(15).fill().map(() => // Увеличили количество символов для плавности
+            symbols: Array(20).fill().map(() => // Увеличили количество символов для плавности
                 this.symbols[Math.floor(Math.random() * this.symbols.length)]
             ),
-            position: 0,
-            finalPosition: Math.random() * 100 // Случайная конечная позиция для разнообразия
+            position: 0
         }));
 
         const startTime = Date.now();
@@ -171,26 +170,24 @@ class SlotMachine {
                 // Calculate spinning speed with smooth deceleration
                 let speed;
                 if (reelProgress < 0.7) {
-                    speed = 30; // Максимальная скорость
+                    speed = 20; // Уменьшили максимальную скорость для стабильности
                 } else {
-                    // Плавное замедление
                     const slowdownProgress = (reelProgress - 0.7) / 0.3;
-                    speed = 30 * (1 - Math.pow(slowdownProgress, 2));
+                    speed = 20 * (1 - Math.pow(slowdownProgress, 2));
                 }
 
-                // Update position with boundary check
+                // Update position with continuous scrolling
                 state.position = (state.position + speed) % (symbolSize * state.symbols.length);
 
-                // Draw visible symbols with buffer
-                for (let i = -2; i < 5; i++) { // Увеличили диапазон для большего буфера
-                    const y = verticalPadding + (i * symbolSize + state.position) % (symbolSize * state.symbols.length);
+                // Draw visible symbols with extended buffer
+                for (let i = -4; i < 7; i++) { // Увеличили буфер символов
+                    const symbolPosition = (i * symbolSize + state.position);
+                    const y = verticalPadding + (symbolPosition % (symbolSize * state.symbols.length));
 
-                    // Проверка видимости символа
-                    if (y + symbolSize < 0 || y > this.canvas.height) continue;
-
-                    const symbolIndex = Math.floor(
-                        (state.symbols.length + Math.floor((state.position - i * symbolSize) / symbolSize)
-                    ) % state.symbols.length);
+                    // Calculate symbol index with proper wrapping
+                    const symbolIndex = Math.abs(
+                        (state.symbols.length + Math.floor((symbolPosition) / symbolSize)) % state.symbols.length
+                    );
 
                     const symbol = state.symbols[symbolIndex];
 
@@ -203,9 +200,7 @@ class SlotMachine {
                         symbolSize
                     );
 
-                    // Draw symbol with shadow for better visibility
-                    this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                    this.ctx.shadowBlur = 2;
+                    // Draw symbol
                     this.ctx.fillStyle = '#fff';
                     this.ctx.font = `${symbolSize * 0.6}px Arial`;
                     this.ctx.textAlign = 'center';
@@ -215,7 +210,6 @@ class SlotMachine {
                         reelIndex * reelWidth + horizontalPadding + symbolSize / 2,
                         y + symbolSize / 2
                     );
-                    this.ctx.shadowBlur = 0;
                 }
             });
 
