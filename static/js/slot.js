@@ -143,9 +143,7 @@ class SlotMachine {
 
         // Animation states
         const reelStates = Array(5).fill().map(() => ({
-            symbols: Array(20).fill().map(() => // Увеличили количество символов для плавности
-                this.symbols[Math.floor(Math.random() * this.symbols.length)]
-            ),
+            symbols: Array(20).fill().map(() => this.symbols[Math.floor(Math.random() * this.symbols.length)]),
             position: 0
         }));
 
@@ -170,46 +168,57 @@ class SlotMachine {
                 // Calculate spinning speed with smooth deceleration
                 let speed;
                 if (reelProgress < 0.7) {
-                    speed = 20; // Уменьшили максимальную скорость для стабильности
+                    speed = 15; // Сниженная скорость для лучшей видимости
                 } else {
                     const slowdownProgress = (reelProgress - 0.7) / 0.3;
-                    speed = 20 * (1 - Math.pow(slowdownProgress, 2));
+                    speed = 15 * (1 - Math.pow(slowdownProgress, 2));
                 }
 
                 // Update position with continuous scrolling
-                state.position = (state.position + speed) % (symbolSize * state.symbols.length);
+                state.position = (state.position + speed);
+                if (state.position >= symbolSize * state.symbols.length) {
+                    state.position = 0;
+                }
 
-                // Draw visible symbols with extended buffer
-                for (let i = -4; i < 7; i++) { // Увеличили буфер символов
-                    const symbolPosition = (i * symbolSize + state.position);
-                    const y = verticalPadding + (symbolPosition % (symbolSize * state.symbols.length));
+                // Draw visible symbols
+                for (let i = -2; i < 5; i++) {
+                    let symbolY = (i * symbolSize) + state.position;
 
-                    // Calculate symbol index with proper wrapping
-                    const symbolIndex = Math.abs(
-                        (state.symbols.length + Math.floor((symbolPosition) / symbolSize)) % state.symbols.length
-                    );
+                    // Wrap position for infinite scrolling
+                    while (symbolY > symbolSize * state.symbols.length) {
+                        symbolY -= symbolSize * state.symbols.length;
+                    }
+                    while (symbolY < -symbolSize) {
+                        symbolY += symbolSize * state.symbols.length;
+                    }
 
-                    const symbol = state.symbols[symbolIndex];
+                    const y = verticalPadding + symbolY;
 
-                    // Draw symbol background
-                    this.ctx.fillStyle = '#444';
-                    this.ctx.fillRect(
-                        reelIndex * reelWidth + horizontalPadding,
-                        y,
-                        symbolSize,
-                        symbolSize
-                    );
+                    // Only draw if symbol will be visible
+                    if (y + symbolSize >= 0 && y <= this.canvas.height) {
+                        const symbolIndex = Math.floor(((state.symbols.length - i) + Math.floor(state.position / symbolSize)) % state.symbols.length);
+                        const symbol = state.symbols[Math.abs(symbolIndex % state.symbols.length)];
 
-                    // Draw symbol
-                    this.ctx.fillStyle = '#fff';
-                    this.ctx.font = `${symbolSize * 0.6}px Arial`;
-                    this.ctx.textAlign = 'center';
-                    this.ctx.textBaseline = 'middle';
-                    this.ctx.fillText(
-                        this.getSymbolEmoji(symbol),
-                        reelIndex * reelWidth + horizontalPadding + symbolSize / 2,
-                        y + symbolSize / 2
-                    );
+                        // Draw symbol background
+                        this.ctx.fillStyle = '#444';
+                        this.ctx.fillRect(
+                            reelIndex * reelWidth + horizontalPadding,
+                            y,
+                            symbolSize,
+                            symbolSize
+                        );
+
+                        // Draw symbol
+                        this.ctx.fillStyle = '#fff';
+                        this.ctx.font = `${symbolSize * 0.6}px Arial`;
+                        this.ctx.textAlign = 'center';
+                        this.ctx.textBaseline = 'middle';
+                        this.ctx.fillText(
+                            this.getSymbolEmoji(symbol),
+                            reelIndex * reelWidth + horizontalPadding + symbolSize / 2,
+                            y + symbolSize / 2
+                        );
+                    }
                 }
             });
 
