@@ -2,7 +2,7 @@ class SlotMachine {
     constructor() {
         this.canvas = document.getElementById('slotCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.symbols = ['dog', 'house', 'bone', 'collar', 'paw', 'wild'];
+        this.symbols = ['dog', 'house', 'bone', 'collar', 'paw', 'wild', 'bowl', 'leash', 'toy', 'treat'];
         this.reels = Array(5).fill().map(() => Array(3).fill('dog'));
         this.spinning = false;
         this.currentBet = 10;
@@ -121,17 +121,15 @@ class SlotMachine {
     }
 
     async animateSpin() {
-        const totalSteps = 20; // Количество шагов анимации
-        const stepDelay = 50; // Задержка между шагами в мс
-        const reelDelay = 4; // Задержка между барабанами
+        const totalSteps = 20; 
+        const stepDelay = 50; 
+        const reelDelay = 4; 
 
-        // Создаем начальное состояние для каждого барабана
         const reelStates = Array(5).fill().map(() => ({
             symbols: Array(6).fill().map(() => this.symbols[Math.floor(Math.random() * this.symbols.length)]),
             currentStep: 0
         }));
 
-        // Функция для отрисовки одного кадра
         const drawFrame = () => {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -141,12 +139,10 @@ class SlotMachine {
             const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
 
             reelStates.forEach((reel, reelIndex) => {
-                // Отрисовываем символы
                 for (let i = 0; i < 3; i++) {
                     const symbolIndex = (reel.currentStep + i) % reel.symbols.length;
                     const symbol = reel.symbols[symbolIndex];
 
-                    // Фон символа
                     this.ctx.fillStyle = '#444';
                     this.ctx.fillRect(
                         reelIndex * reelWidth + horizontalPadding,
@@ -155,7 +151,6 @@ class SlotMachine {
                         symbolSize
                     );
 
-                    // Символ
                     this.ctx.fillStyle = '#fff';
                     this.ctx.font = `${symbolSize * 0.6}px Arial`;
                     this.ctx.textAlign = 'center';
@@ -169,16 +164,13 @@ class SlotMachine {
             });
         };
 
-        // Анимация для каждого барабана
         for (let step = 0; step < totalSteps; step++) {
             for (let reelIndex = 0; reelIndex < 5; reelIndex++) {
-                // Задержка старта для каждого следующего барабана
                 if (step < reelIndex * reelDelay) continue;
 
                 const reel = reelStates[reelIndex];
                 reel.currentStep = (reel.currentStep + 1) % reel.symbols.length;
 
-                // Добавляем новый случайный символ
                 if (step % 2 === 0) {
                     reel.symbols.push(this.symbols[Math.floor(Math.random() * this.symbols.length)]);
                     if (reel.symbols.length > 6) {
@@ -251,14 +243,12 @@ class SlotMachine {
                 const x = i * reelWidth + horizontalPadding;
                 const y = j * (symbolSize + verticalPadding) + verticalPadding;
 
-                // Фон символа
                 this.ctx.fillStyle = '#444';
                 if (this.bonusSpinsRemaining > 0 && this.wildPositions.some(pos => pos[0] === j && pos[1] === i)) {
                     this.ctx.fillStyle = '#664400';
                 }
                 this.ctx.fillRect(x, y, symbolSize, symbolSize);
 
-                // Символ
                 this.ctx.fillStyle = '#fff';
                 this.ctx.font = `${symbolSize * 0.6}px Arial`;
                 this.ctx.textAlign = 'center';
@@ -281,7 +271,11 @@ class SlotMachine {
             'bone': '🦴',
             'collar': '📿',
             'paw': '🐾',
-            'wild': '⭐'
+            'wild': '⭐',
+            'bowl': '🥣',
+            'leash': '➰',
+            'toy': '🎾',
+            'treat': '🍖'
         };
         return emojiMap[symbol] || symbol;
     }

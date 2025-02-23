@@ -93,7 +93,7 @@ def spin():
     if 'credits' not in session:
         return jsonify({'error': 'Session expired'}), 400
 
-    symbols = ['dog', 'house', 'bone', 'collar', 'paw', 'wild'] if not session.get('bonus_spins', 0) else ['dog', 'house', 'bone', 'collar', 'wild']
+    symbols = ['dog', 'house', 'bone', 'collar', 'paw', 'wild', 'bowl', 'leash', 'toy', 'treat'] if not session.get('bonus_spins', 0) else ['dog', 'house', 'bone', 'collar', 'wild', 'bowl', 'leash', 'toy', 'treat']
     try:
         bet = int(request.form.get('bet', 10))
         is_bonus_spin = bool(session.get('bonus_spins', 0))
@@ -171,13 +171,17 @@ def spin():
 
             if matches >= 3:
                 winning_lines_count += 1
-                # The Dog House original multipliers
+                # Updated multipliers with new symbols
                 multipliers = {
                     'dog': [50, 100, 200],      # 3,4,5 matches
                     'house': [25, 75, 150],
                     'bone': [15, 50, 100],
                     'collar': [10, 25, 75],
-                    'wild': [50, 100, 200]
+                    'wild': [50, 100, 200],
+                    'bowl': [20, 60, 120],
+                    'leash': [15, 45, 90],
+                    'toy': [12, 35, 80],
+                    'treat': [10, 30, 70]
                 }
 
                 symbol_type = first_symbol if first_symbol != 'wild' else 'wild'

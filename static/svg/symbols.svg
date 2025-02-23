@@ -30,6 +30,25 @@
   <symbol id="wild" viewBox="0 0 24 24">
     <path d="M20 4v16H4V4h16m2-2H2v20h20V2z"/>
     <text x="12" y="16" text-anchor="middle" font-size="12" fill="currentColor">W</text>
-    <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.8L19.2 8 12 11.2 4.8 8 12 4.8zM4 9.7l7 3.5v5.6l-7-3.5V9.7zm9 9.1v-5.6l7-3.5v5.6l-7 3.5z"/>
+  </symbol>
+
+  <!-- New Symbols -->
+  <symbol id="bowl" viewBox="0 0 24 24">
+    <path d="M20 12c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v2c0 3.31 2.69 6 6 6h4c3.31 0 6-2.69 6-6v-2zm-2 2c0 2.21-1.79 4-4 4h-4c-2.21 0-4-1.79-4-4v-2h12v2z"/>
+  </symbol>
+
+  <symbol id="leash" viewBox="0 0 24 24">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+    <path d="M12 6v12" stroke="currentColor" stroke-width="2"/>
+  </symbol>
+
+  <symbol id="toy" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8"/>
+    <path d="M12 8v8M8 12h8" stroke="white" stroke-width="2"/>
+  </symbol>
+
+  <symbol id="treat" viewBox="0 0 24 24">
+    <rect x="6" y="6" width="12" height="12" rx="2"/>
+    <circle cx="12" cy="12" r="2"/>
   </symbol>
 </svg>
