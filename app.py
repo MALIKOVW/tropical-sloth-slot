@@ -24,6 +24,17 @@ db.init_app(app)
 # Import models before creating tables
 from models import SpinResult, Statistics  # noqa: E402
 
+with app.app_context():
+    # Drop all tables and recreate them
+    db.drop_all()
+    db.create_all()
+
+    # Create initial Statistics record if it doesn't exist
+    if not Statistics.query.first():
+        initial_stats = Statistics()
+        db.session.add(initial_stats)
+        db.session.commit()
+
 # Define winning lines (The Dog House style)
 WINNING_LINES = [
     # Горизонтальные линии
@@ -224,6 +235,3 @@ def spin():
     except (ValueError, TypeError) as e:
         print(f"Error during spin: {str(e)}")
         return jsonify({'error': 'Invalid bet amount'}), 400
-
-with app.app_context():
-    db.create_all()
