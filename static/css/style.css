@@ -24,6 +24,7 @@ body {
 }
 
 .paytable {
+    width: 22%; /* Paytable width: 20-25% of total width */
     background: rgba(0, 0, 0, 0.6);
     border-radius: 10px;
     padding: 20px;
@@ -107,6 +108,7 @@ body {
     padding: 20px;
     border-radius: 10px;
     margin-bottom: 20px;
+    height: calc(15% - 40px); /* Control panel height: 15-20% of total height */
 }
 
 .controls-row {
@@ -168,11 +170,17 @@ body {
 }
 
 .btn-spin {
+    width: 90px; /* Spin button: 80-100px diameter */
+    height: 90px;
+    border-radius: 50%;
     background: linear-gradient(45deg, #1a9fff, #00ff9d);
     color: white;
     font-size: 24px !important;
-    min-width: 120px;
     box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-spin:hover {
@@ -182,10 +190,14 @@ body {
 
 /* Statistics styles */
 .statistics {
+    height: 70px; /* Statistics panel height: 60-80px */
     background: rgba(0, 0, 0, 0.3);
-    padding: 20px;
+    padding: 15px;
     border-radius: 10px;
     margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .statistics p {
@@ -200,6 +212,23 @@ body {
 }
 
 /* Responsive styles */
+@media (max-width: 1440px) {
+    .game-wrapper {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .paytable {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .controls {
+        height: auto;
+    }
+}
+
 @media (max-width: 992px) {
     .paytable-column {
         order: 2;
@@ -246,6 +275,17 @@ body {
 
     .symbol-pay .pays {
         font-size: 16px;
+    }
+    .btn-spin {
+        width: 80px;
+        height: 80px;
+        font-size: 20px !important;
+    }
+
+    .statistics {
+        height: auto;
+        flex-direction: column;
+        gap: 10px;
     }
 }
 

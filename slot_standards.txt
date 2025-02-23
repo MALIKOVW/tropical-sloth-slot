@@ -1,0 +1,36 @@
+
+=== Slot Machine Standards Research ===
+
+Source: https://www.casinoslotsonline.com/slots/how-slots-work
+Buy this domain.
+casinoslotsonline.com
+
+Standard Slot Machine Interface Guidelines:
+
+1. Display Dimensions:
+- Recommended aspect ratio: 16:9 or 4:3
+- Minimum width: 800px
+- Optimal width: 1024px-1440px
+- Symbol size: 120px-180px square
+
+2. Layout Standards:
+- 5x3 grid layout (most common)
+- Symbol padding: 10-15% of symbol size
+- Visible paylines: up to 20-25
+- Spacing between reels: 5-10% of symbol width
+
+3. Interface Elements:
+- Spin button: 80-100px diameter
+- Control panel height: 15-20% of total height
+- Paytable width: 20-25% of total width
+- Statistics panel height: 60-80px
+
+4. Animation Timing:
+- Spin duration: 2-3 seconds
+- Win animation: 2-4 seconds
+- Symbol transition: 0.3-0.5 seconds
+
+5. Responsive Design:
+- Mobile breakpoint: 768px
+- Tablet breakpoint: 1024px
+- Desktop optimization: 1440px
