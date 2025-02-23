@@ -205,12 +205,26 @@ class SlotMachine {
         const totalSymbolsHeight = symbolSize * 3;
         const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
 
+        // Draw static wilds first
+        if (this.bonusSpinsRemaining > 0 && this.wildPositions.length > 0) {
+            this.wildPositions.forEach(([row, col]) => {
+                const x = col * reelWidth + horizontalPadding;
+                const y = row * (symbolSize + verticalPadding) + verticalPadding;
+                this.drawSymbol('wild', x, y, symbolSize, true); // true indicates it's a static wild
+            });
+        }
+
         // Draw symbols
         for (let i = 0; i < 5; i++) {
             for (let j = 0; j < 3; j++) {
+                // Skip if this position has a static wild
+                if (this.bonusSpinsRemaining > 0 &&
+                    this.wildPositions.some(([row, col]) => row === j && col === i)) {
+                    continue;
+                }
+
                 const x = i * reelWidth + horizontalPadding;
                 const y = j * (symbolSize + verticalPadding) + verticalPadding;
-
                 const symbol = this.reels[i] && this.reels[i][j] ? this.reels[i][j] : this.symbols[0];
                 this.drawSymbol(symbol, x, y, symbolSize);
             }
@@ -387,9 +401,16 @@ class SlotMachine {
             this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
 
             const reelWidth = this.logicalWidth / 5;
-            const symbolSize = reelWidth * 0.9;
+            // Use the same symbol size calculation as in draw()
+            const maxSymbolSize = 180;
+            const minSymbolSize = 120;
+            const symbolSize = Math.min(
+                maxSymbolSize,
+                Math.max(minSymbolSize, reelWidth * 0.85)
+            );
             const horizontalPadding = (reelWidth - symbolSize) / 2;
-            const verticalPadding = (this.logicalHeight - (symbolSize * 3)) / 4;
+            const totalSymbolsHeight = symbolSize * 3;
+            const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
 
             // Draw static wilds first
             if (this.bonusSpinsRemaining > 0 && this.wildPositions.length > 0) {
