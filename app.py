@@ -55,7 +55,7 @@ def index():
         session['bonus_spins'] = 0
     if 'wild_positions' not in session:
         session['wild_positions'] = []
-    return render_template('index.html', credits=session['credits'], bonus_spins=session['bonus_spins'])
+    return render_template('index.html', credits=session['credits'])
 
 @app.route('/spin', methods=['POST'])
 def spin():
@@ -76,7 +76,6 @@ def spin():
                 return jsonify({'error': 'Insufficient credits'}), 400
             # Deduct bet amount
             session['credits'] = session['credits'] - bet
-            session.modified = True
 
         # Generate result
         result = []
@@ -99,7 +98,6 @@ def spin():
 
         if is_bonus_spin:
             session['wild_positions'] = wild_positions
-            session.modified = True
 
         # Calculate winnings and check for respins/bonus
         winnings = 0
@@ -115,7 +113,6 @@ def spin():
                 bonus_spins = scatter_count * 3  # Increased bonus spins
                 session['bonus_spins'] = session.get('bonus_spins', 0) + bonus_spins
                 session['wild_positions'] = []
-                session.modified = True
 
         # Calculate line wins with increased multipliers for 97% RTP
         for line in WINNING_LINES:
@@ -133,26 +130,29 @@ def spin():
                     break
 
             if matches >= 3:
-                # Increased multipliers for higher RTP
-                multiplier = {
-                    'dog': 8,      # Increased from 5
-                    'house': 6,    # Increased from 4
-                    'bone': 5,     # Increased from 3
-                    'collar': 4,   # Increased from 2
-                    'wild': 10     # Increased from 6
-                }.get(first_symbol if first_symbol != 'wild' else 'wild', 3)
+                # The Dog House original multipliers
+                multipliers = {
+                    'dog': [50, 100, 200],      # 3,4,5 matches
+                    'house': [25, 75, 150],
+                    'bone': [15, 50, 100],
+                    'collar': [10, 25, 75],
+                    'wild': [50, 100, 200]
+                }
 
-                win_amount = bet * multiplier * (matches - 2)
+                symbol_type = first_symbol if first_symbol != 'wild' else 'wild'
+                win_multiplier = multipliers.get(symbol_type, [5, 15, 50])[matches - 3]
+                win_amount = bet * win_multiplier
                 winnings += win_amount
 
         # Add winnings to credits
         if not is_respin:
-            session['credits'] = session['credits'] + winnings
-            session.modified = True
+            session['credits'] = int(session['credits'] + winnings)
 
         if is_bonus_spin:
             session['bonus_spins'] = max(0, session['bonus_spins'] - 1)
-            session.modified = True
+
+        # Force session to update
+        session.modified = True
 
         # Save spin result
         spin_result = SpinResult(
