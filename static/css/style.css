@@ -12,12 +12,6 @@ body {
     padding: 0;
 }
 
-.game-wrapper {
-    padding: 20px;
-    max-width: 2560px; /* Increased max-width for ultra-wide game field */
-    margin: 0 auto;
-}
-
 /* Paytable styles */
 .paytable-column {
     padding: 15px;
@@ -64,7 +58,8 @@ body {
 
 /* Game container styles */
 .game-container {
-    max-width: 100%;
+    max-width: 1440px; /* Maximum width as per standards */
+    min-width: 800px; /* Minimum width as per standards */
     margin: 0 auto;
     border-radius: 15px;
     padding: 20px;
@@ -99,13 +94,13 @@ body {
     padding: 20px;
     border-radius: 10px;
     margin: 20px auto;
-    width: 90%; /* Reduced from 100% to create some margin */
-    max-width: 2000px; /* Added max-width to control panel */
+    width: 100%;
+    max-width: 1440px;
 }
 
 .controls-row {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     gap: 20px;
 }
@@ -117,91 +112,44 @@ body {
     border-radius: 25px;
 }
 
-.bet-controls button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    font-size: 20px;
-    background: linear-gradient(45deg, #1a9fff, #00ff9d);
-    border: none;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-}
-
-.bet-controls button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 15px rgba(0, 255, 157, 0.5);
-}
-
-#currentBet {
-    font-size: 24px;
-    font-weight: bold;
-    color: #00ff9d;
-    min-width: 80px;
-    text-align: center;
-}
-
 .action-buttons {
     display: flex;
     gap: 10px;
     align-items: center;
-}
-
-.action-buttons button {
-    height: 50px;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 25px;
-    padding: 0 20px;
-    border: none;
-    transition: all 0.3s ease;
-}
-
-.btn-spin {
-    width: 90px; /* Spin button: 80-100px diameter */
-    height: 90px;
-    border-radius: 50%;
-    background: linear-gradient(45deg, #1a9fff, #00ff9d);
-    color: white;
-    font-size: 24px !important;
-    box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
-    padding: 0;
-    display: flex;
-    align-items: center;
     justify-content: center;
 }
 
-.btn-spin:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(0, 255, 157, 0.5);
-}
-
-/* Statistics styles */
-.statistics {
-    height: 70px; /* Statistics panel height: 60-80px */
-    padding: 15px;
-    border-radius: 10px;
-    margin-top: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.statistics p {
-    margin-bottom: 10px;
-    font-size: 16px;
-    color: #ccc;
-}
-
-.statistics span {
-    color: #00ff9d;
-    font-weight: bold;
-}
-
 /* Responsive styles */
+@media (max-width: 1440px) {
+    .game-container {
+        padding: 10px;
+    }
+    .controls {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .game-container {
+        min-width: unset;
+    }
+    .controls-row {
+        flex-direction: column;
+    }
+    .action-buttons {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .game-container {
+        padding: 5px;
+    }
+    .controls {
+        padding: 10px;
+    }
+}
+
 @media (max-width: 2560px) {
     .game-wrapper {
         padding: 15px;
@@ -214,17 +162,11 @@ body {
     }
 }
 
-@media (max-width: 1440px) {
-    .game-wrapper {
-        padding: 10px;
-    }
-}
 @media (max-width: 1280px) {
     .game-wrapper {
         padding: 10px;
     }
 }
-
 @media (max-width: 1024px) {
     .paytable {
         width: 100%;
@@ -330,7 +272,6 @@ body {
     color: #00ff9d;
     font-size: 48px;
     font-weight: bold;
-    text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
     animation: winPulse 2s forwards;
     z-index: 1000;
     padding: 30px 60px;
@@ -759,4 +700,9 @@ h1 {
     text-shadow: 0 0 25px rgba(0, 255, 157, 0.6);
     font-weight: bold;
     margin: 10px 0;
+}
+.game-wrapper {
+    padding: 20px;
+    max-width: 2560px; /* Increased max-width for ultra-wide game field */
+    margin: 0 auto;
 }
