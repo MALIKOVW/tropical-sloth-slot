@@ -23,6 +23,11 @@ class SlotMachine {
         this.draw();
         this.fetchStatistics();
         setInterval(() => this.fetchStatistics(), 60000);
+        this.winningLines = [];
+        this.animatingWin = false;
+        this.paylineContainer = document.createElement('div');
+        this.paylineContainer.id = 'paylineContainer';
+        document.querySelector('.game-container').appendChild(this.paylineContainer);
     }
 
     resizeCanvas() {
@@ -105,7 +110,7 @@ class SlotMachine {
 
             if (result.winnings > 0) {
                 audio.playWinSound();
-                this.showWinAnimation(result.winnings);
+                await this.showWinAnimation(result.winnings, result.winning_lines);
             }
 
             this.updateStats(result.winnings);
@@ -121,9 +126,9 @@ class SlotMachine {
     }
 
     async animateSpin() {
-        const totalSteps = 20; 
-        const stepDelay = 50; 
-        const reelDelay = 4; 
+        const totalSteps = 20;
+        const stepDelay = 50;
+        const reelDelay = 4;
 
         const reelStates = Array(5).fill().map(() => ({
             symbols: Array(6).fill().map(() => this.symbols[Math.floor(Math.random() * this.symbols.length)]),
@@ -212,12 +217,67 @@ class SlotMachine {
             `${((this.stats.totalWon / this.stats.totalBet) * 100).toFixed(1)}%`;
     }
 
-    showWinAnimation(amount) {
+    async showWinAnimation(amount, winningLines = []) {
+        this.animatingWin = true;
+        this.winningLines = winningLines;
+
         const winDisplay = document.createElement('div');
         winDisplay.className = 'win-animation';
         winDisplay.textContent = `WIN! ${amount}`;
         document.body.appendChild(winDisplay);
-        setTimeout(() => winDisplay.remove(), 2000);
+
+        for (const line of winningLines) {
+            await this.animatePayline(line);
+        }
+
+        setTimeout(() => {
+            winDisplay.remove();
+            this.clearPaylines();
+            this.animatingWin = false;
+        }, 2000);
+    }
+
+    async animatePayline(line) {
+        const reelWidth = this.canvas.width / 5;
+        const symbolSize = reelWidth * 0.8;
+        const horizontalPadding = (reelWidth - symbolSize) / 2;
+        const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
+
+        const payline = document.createElement('div');
+        payline.className = 'payline';
+        this.paylineContainer.appendChild(payline);
+
+        const startSymbol = line[0];
+        const endSymbol = line[line.length - 1];
+        const startX = startSymbol[1] * reelWidth + horizontalPadding + symbolSize / 2;
+        const startY = startSymbol[0] * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2;
+        const endX = endSymbol[1] * reelWidth + horizontalPadding + symbolSize / 2;
+        const endY = endSymbol[0] * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2;
+
+        const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+        const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+
+        payline.style.width = `${length}px`;
+        payline.style.left = `${startX}px`;
+        payline.style.top = `${startY}px`;
+        payline.style.transform = `rotate(${angle}deg)`;
+
+        line.forEach(([row, col]) => {
+            const symbol = document.createElement('div');
+            symbol.className = 'symbol-highlight';
+            symbol.style.position = 'absolute';
+            symbol.style.left = `${col * reelWidth + horizontalPadding}px`;
+            symbol.style.top = `${row * (symbolSize + verticalPadding) + verticalPadding}px`;
+            symbol.style.width = `${symbolSize}px`;
+            symbol.style.height = `${symbolSize}px`;
+            this.paylineContainer.appendChild(symbol);
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    clearPaylines() {
+        this.paylineContainer.innerHTML = '';
     }
 
     showBonusAnimation(spinsAwarded) {

@@ -155,6 +155,7 @@ def spin():
                 session['wild_positions'] = []
 
         # Calculate line wins with increased multipliers for 97% RTP
+        winning_lines_data = []  # Store winning line positions
         for line in WINNING_LINES:
             matches = 1
             first_symbol = result[line[0][0]][line[0][1]]
@@ -171,6 +172,7 @@ def spin():
 
             if matches >= 3:
                 winning_lines_count += 1
+                winning_lines_data.append(line[:matches])  # Store only the matching positions
                 # Updated multipliers with new symbols
                 multipliers = {
                     'dog': [50, 100, 200],      # 3,4,5 matches
@@ -234,7 +236,8 @@ def spin():
             'bonus_spins_awarded': bonus_spins,
             'bonus_spins_remaining': session.get('bonus_spins', 0),
             'needs_respin': needs_respin,
-            'wild_positions': wild_positions
+            'wild_positions': wild_positions,
+            'winning_lines': winning_lines_data  # Add winning lines to response
         })
     except (ValueError, TypeError) as e:
         print(f"Error during spin: {str(e)}")

@@ -10,6 +10,7 @@ body {
     background-color: #2a2a2a;
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    position: relative;
 }
 
 #slotCanvas {
@@ -118,7 +119,43 @@ body {
     }
 }
 
-/* Добавляем стили для бонусной информации */
+/* Added styles for payline animations */
+.payline {
+    position: absolute;
+    background: linear-gradient(90deg, rgba(255,215,0,0.3) 0%, rgba(255,215,0,0.6) 50%, rgba(255,215,0,0.3) 100%);
+    height: 3px;
+    pointer-events: none;
+    animation: paylineGlow 1s infinite;
+    z-index: 100;
+    transform-origin: left center;
+}
+
+@keyframes paylineGlow {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+
+.symbol-highlight {
+    animation: symbolPulse 0.5s infinite;
+}
+
+@keyframes symbolPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+
+#paylineContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
 .bonus-info {
     position: absolute;
     top: 10px;
@@ -131,7 +168,6 @@ body {
     padding: 8px 16px;
 }
 
-/* Добавляем анимацию для бонусных выигрышей */
 @keyframes bonusAward {
     0% { transform: scale(1); }
     50% { transform: scale(1.2); }
