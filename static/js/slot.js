@@ -9,6 +9,7 @@ class SlotMachine {
         this.specialSymbols = ['wild', 'scatter'];
 
         this.symbols = [...this.lowSymbols, ...this.highSymbols, ...this.specialSymbols];
+        this.symbolImages = {};
         this.reels = Array(5).fill().map(() => Array(3).fill('A'));
         this.spinning = false;
         this.currentBet = 0.20;
@@ -22,11 +23,14 @@ class SlotMachine {
             totalWon: 0
         };
 
-        this.resizeCanvas();
+        this.loadImages().then(() => {
+            this.resizeCanvas();
+            this.draw();
+        });
+
         window.addEventListener('resize', () => this.resizeCanvas());
         this.initializeEventListeners();
         this.updateBonusDisplay();
-        this.draw();
         this.fetchStatistics();
         setInterval(() => this.fetchStatistics(), 60000);
         this.winningLines = [];
@@ -34,6 +38,23 @@ class SlotMachine {
         this.paylineContainer = document.createElement('div');
         this.paylineContainer.id = 'paylineContainer';
         document.querySelector('.game-container').appendChild(this.paylineContainer);
+    }
+
+    async loadImages() {
+        const loadImage = (symbol) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve([symbol, img]);
+                img.onerror = reject;
+                img.src = `/static/images/symbols/${symbol}.png`;
+            });
+        };
+
+        const imagePromises = this.symbols.map(loadImage);
+        const loadedImages = await Promise.all(imagePromises);
+        loadedImages.forEach(([symbol, img]) => {
+            this.symbolImages[symbol] = img;
+        });
     }
 
     resizeCanvas() {
@@ -160,15 +181,10 @@ class SlotMachine {
                     );
                     this.ctx.fill();
 
-                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-                    this.ctx.font = `${symbolSize * 0.7}px Arial`;
-                    this.ctx.textAlign = 'center';
-                    this.ctx.textBaseline = 'middle';
-                    this.ctx.fillText(
-                        this.getSymbolEmoji(symbol),
-                        reelIndex * reelWidth + horizontalPadding + symbolSize / 2,
-                        i * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2
-                    );
+                    const img = this.symbolImages[symbol];
+                    if (img) {
+                        this.ctx.drawImage(img, reelIndex * reelWidth + horizontalPadding, i * (symbolSize + verticalPadding) + verticalPadding, symbolSize, symbolSize);
+                    }
                 }
             });
         };
@@ -306,7 +322,7 @@ class SlotMachine {
     }
 
     draw() {
-        if (!this.ctx || !this.canvas) return;
+        if (!this.ctx || !this.canvas || Object.keys(this.symbolImages).length === 0) return;
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -329,17 +345,11 @@ class SlotMachine {
                 this.ctx.roundRect(x, y, symbolSize, symbolSize, 10);
                 this.ctx.fill();
 
-                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-                this.ctx.font = `${symbolSize * 0.75}px Arial`;
-                this.ctx.textAlign = 'center';
-                this.ctx.textBaseline = 'middle';
-
                 const symbol = this.reels[i] && this.reels[i][j] ? this.reels[i][j] : this.symbols[0];
-                this.ctx.fillText(
-                    this.getSymbolEmoji(symbol),
-                    x + symbolSize / 2,
-                    y + symbolSize / 2
-                );
+                const img = this.symbolImages[symbol];
+                if (img) {
+                    this.ctx.drawImage(img, x, y, symbolSize, symbolSize);
+                }
             }
         }
     }

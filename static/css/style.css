@@ -34,24 +34,50 @@ body {
     backdrop-filter: blur(10px);
 }
 
-.btn-neon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    font-size: 20px;
-    line-height: 1;
-    background: linear-gradient(45deg, #1a9fff, #00ff9d);
+/* Add new styles for buttons using PNG images */
+#spinButton {
+    min-width: 120px;
+    height: 50px;
+    background: url('/static/images/ui/spin_button.png') no-repeat center center;
+    background-size: contain;
     border: none;
-    color: #fff;
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-    box-shadow: 0 0 15px rgba(0, 255, 157, 0.5);
+    color: transparent; /* Hide text as we're using image */
     transition: all 0.3s ease;
 }
 
-.btn-neon:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(0, 255, 157, 0.8);
+#spinButton:hover {
+    background-image: url('/static/images/ui/spin_button_hover.png');
+    transform: scale(1.05);
 }
+
+#spinButton:disabled {
+    background-image: url('/static/images/ui/spin_button_disabled.png');
+    transform: none;
+    opacity: 0.7;
+}
+
+.bet-controls button {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: all 0.3s ease;
+}
+
+#increaseBet {
+    background-image: url('/static/images/ui/increase_bet.png');
+}
+
+#decreaseBet {
+    background-image: url('/static/images/ui/decrease_bet.png');
+}
+
+.bet-controls button:hover {
+    transform: scale(1.1);
+}
+
 
 #currentBet {
     font-size: 24px;
@@ -121,33 +147,6 @@ body {
     0% { transform: scale(1); }
     50% { transform: scale(1.02); }
     100% { transform: scale(1); }
-}
-
-#spinButton {
-    min-width: 120px;
-    height: 50px;
-    font-size: 24px;
-    font-weight: bold;
-    background: linear-gradient(45deg, #1a9fff, #00ff9d);
-    border: none;
-    border-radius: 25px;
-    color: #fff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-    box-shadow: 0 0 20px rgba(0, 255, 157, 0.6);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-#spinButton:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(0, 255, 157, 0.8);
-}
-
-#spinButton:disabled {
-    background: linear-gradient(45deg, #666, #999);
-    transform: none;
-    box-shadow: none;
 }
 
 .win-animation {
@@ -278,17 +277,15 @@ body {
     border-radius: 50%;
     font-size: 20px;
     line-height: 1;
-    background: linear-gradient(45deg, #1a9fff, #00ff9d);
     border: none;
-    color: #fff;
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-    box-shadow: 0 0 15px rgba(0, 255, 157, 0.5);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
     transition: all 0.3s ease;
 }
 
 .bet-controls button:hover {
     transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(0, 255, 157, 0.8);
 }
 
 h1 {
