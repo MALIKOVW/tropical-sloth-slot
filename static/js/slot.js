@@ -330,13 +330,15 @@ class SlotMachine {
                 const x = i * reelWidth + horizontalPadding;
                 const y = j * (symbolSize + verticalPadding) + verticalPadding;
 
-                this.ctx.fillStyle = '#444';
+                // Make the background more transparent
+                this.ctx.fillStyle = 'rgba(68, 68, 68, 0.3)';
                 if (this.bonusSpinsRemaining > 0 && this.wildPositions.some(pos => pos[0] === j && pos[1] === i)) {
-                    this.ctx.fillStyle = '#664400';
+                    this.ctx.fillStyle = 'rgba(102, 68, 0, 0.4)';
                 }
                 this.ctx.fillRect(x, y, symbolSize, symbolSize);
 
-                this.ctx.fillStyle = '#fff';
+                // Make the symbols more visible against transparent background
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
                 this.ctx.font = `${symbolSize * 0.6}px Arial`;
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
