@@ -191,16 +191,16 @@ class SlotMachine {
 
         // Calculate reel and symbol dimensions based on standards
         const reelWidth = this.logicalWidth / 5;
-        // Symbol size: 160-240px (increased from 120-180px)
-        const maxSymbolSize = 240;
-        const minSymbolSize = 160;
+        // Symbol size: 120-180px as per standards
+        const maxSymbolSize = 180;
+        const minSymbolSize = 120;
         const symbolSize = Math.min(
             maxSymbolSize,
-            Math.max(minSymbolSize, reelWidth * 0.85)
+            Math.max(minSymbolSize, reelWidth * 0.75)
         );
 
-        // Calculate padding (15% of symbol size - increased from 12%)
-        const symbolPadding = symbolSize * 0.15;
+        // Calculate padding (12% of symbol size)
+        const symbolPadding = symbolSize * 0.12;
         const horizontalPadding = (reelWidth - symbolSize) / 2;
         const totalSymbolsHeight = symbolSize * 3;
         const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
@@ -402,11 +402,11 @@ class SlotMachine {
 
             const reelWidth = this.logicalWidth / 5;
             // Use the same symbol size calculation as in draw()
-            const maxSymbolSize = 240;
-            const minSymbolSize = 160;
+            const maxSymbolSize = 180;
+            const minSymbolSize = 120;
             const symbolSize = Math.min(
                 maxSymbolSize,
-                Math.max(minSymbolSize, reelWidth * 0.85)
+                Math.max(minSymbolSize, reelWidth * 0.75)
             );
             const horizontalPadding = (reelWidth - symbolSize) / 2;
             const totalSymbolsHeight = symbolSize * 3;
@@ -417,7 +417,7 @@ class SlotMachine {
                 this.wildPositions.forEach(([row, col]) => {
                     const x = col * reelWidth + horizontalPadding;
                     const y = row * (symbolSize + verticalPadding) + verticalPadding;
-                    this.drawSymbol('wild', x, y, symbolSize, true); // true indicates it's a static wild
+                    this.drawSymbol('wild', x, y, symbolSize, true);
                 });
             }
 
