@@ -149,6 +149,7 @@ def spin():
         bonus_spins = 0
         needs_respin = False
         winning_lines_count = 0
+        bonus_total_win = session.get('bonus_total_win', 0) if is_bonus_spin else 0
 
         # Check scatters only during base game
         if not is_bonus_spin:
@@ -212,9 +213,17 @@ def spin():
             session['credits'] = float(session['credits'] + winnings)
 
         if is_bonus_spin:
+            # Track total bonus win
+            session['bonus_total_win'] = session.get('bonus_total_win', 0) + winnings
+
+            # Reset bonus total win when bonus round ends
+            if session['bonus_spins'] == 1:  # This is the last spin
+                bonus_total_win = session['bonus_total_win']
+                session['bonus_total_win'] = 0
+
             session['bonus_spins'] = max(0, session['bonus_spins'] - 1)
             if session['bonus_spins'] == 0:
-                session['wild_positions'] = []  # Clear wild positions when bonus round ends
+                session['wild_positions'] = []
 
         session.modified = True
 
@@ -253,7 +262,8 @@ def spin():
             'bonus_spins_remaining': session.get('bonus_spins', 0),
             'needs_respin': needs_respin,
             'wild_positions': wild_positions,
-            'winning_lines': winning_lines_data
+            'winning_lines': winning_lines_data,
+            'bonus_total_win': bonus_total_win
         })
     except Exception as e:
         print(f"Error during spin: {str(e)}")

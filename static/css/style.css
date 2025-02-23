@@ -641,3 +641,37 @@ h1 {
     transform: none;
     box-shadow: none;
 }
+
+/* Bonus results animation styles */
+.win-animation.bonus-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.95);
+    padding: 40px 60px;
+    border-radius: 20px;
+    border: 3px solid #ffd700;
+    text-align: center;
+}
+
+.bonus-results-title {
+    font-size: 48px;
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    text-transform: uppercase;
+}
+
+.bonus-results-text {
+    font-size: 24px;
+    color: #fff;
+}
+
+.bonus-results-win {
+    font-size: 64px;
+    color: #00ff9d;
+    text-shadow: 0 0 25px rgba(0, 255, 157, 0.6);
+    font-weight: bold;
+    margin: 10px 0;
+}

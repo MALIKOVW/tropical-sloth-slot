@@ -322,8 +322,14 @@ class SlotMachine {
 
             // Update bonus spins count
             if (this.bonusSpinsRemaining !== result.bonus_spins_remaining) {
+                const previousBonusSpins = this.bonusSpinsRemaining;
                 this.bonusSpinsRemaining = result.bonus_spins_remaining;
                 this.updateBonusDisplay();
+
+                // Show bonus results when free spins end
+                if (previousBonusSpins > 0 && this.bonusSpinsRemaining === 0) {
+                    await this.showBonusResults(result.bonus_total_win);
+                }
 
                 // Clear wild positions when bonus round ends
                 if (this.bonusSpinsRemaining === 0) {
@@ -688,6 +694,25 @@ class SlotMachine {
         document.getElementById('confirmBuyFreespins').addEventListener('click', () => {
             this.buyFreespins();
         });
+    }
+
+    async showBonusResults(totalWin) {
+        const bonusResults = document.createElement('div');
+        bonusResults.className = 'win-animation bonus-results';
+        bonusResults.innerHTML = `
+            <div class="bonus-results-title">Поздравляем!</div>
+            <div class="bonus-results-text">Вы выиграли</div>
+            <div class="bonus-results-win">${totalWin.toFixed(2)} FUNS</div>
+            <div class="bonus-results-text">в 10 бесплатных спинах!</div>
+        `;
+        document.body.appendChild(bonusResults);
+
+        // Play celebration sound
+        audio.playBonusSound();
+
+        // Wait for animation
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        bonusResults.remove();
     }
 }
 
