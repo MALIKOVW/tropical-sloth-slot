@@ -76,12 +76,8 @@ body {
     transform: translate(-50%, -50%);
     width: calc(100% + 40px);
     height: calc(100% + 40px);
-    z-index: 3;
+    z-index: 1;
     pointer-events: none;
-    background-image: url('../images/rick-morty-frame.png'); /* Added image URL */
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
 }
 
 .game-field-wrapper canvas {
@@ -140,6 +136,8 @@ body {
 
 /* Controls styles */
 .controls {
+    position: relative;
+    z-index: 3;
     padding: 20px;
     border-radius: 10px;
     margin: 20px auto;
@@ -152,20 +150,6 @@ body {
     justify-content: center;
     align-items: center;
     gap: 20px;
-}
-
-.bet-controls {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    border-radius: 25px;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    justify-content: center;
 }
 
 /* Responsive styles */
