@@ -88,7 +88,7 @@ def spin():
                 if is_bonus_spin and [i, j] in wild_positions:
                     row.append('wild')
                 else:
-                    if random.random() < 0.1 and not is_respin:  # 10% chance for wild
+                    if random.random() < 0.15 and not is_respin:  # Increased wild chance to 15%
                         symbol = 'wild'
                         if is_bonus_spin:
                             wild_positions.append([i, j])
@@ -112,12 +112,12 @@ def spin():
             if scatter_count >= 4 and not any(result[i][4] == 'paw' for i in range(3)):
                 needs_respin = True
             elif scatter_count >= 5:
-                bonus_spins = scatter_count * 2
+                bonus_spins = scatter_count * 3  # Increased bonus spins
                 session['bonus_spins'] = session.get('bonus_spins', 0) + bonus_spins
                 session['wild_positions'] = []
                 session.modified = True
 
-        # Calculate line wins
+        # Calculate line wins with increased multipliers for 97% RTP
         for line in WINNING_LINES:
             matches = 1
             first_symbol = result[line[0][0]][line[0][1]]
@@ -133,14 +133,14 @@ def spin():
                     break
 
             if matches >= 3:
-                # Calculate win amount based on matches and symbol type
+                # Increased multipliers for higher RTP
                 multiplier = {
-                    'dog': 5,
-                    'house': 4,
-                    'bone': 3,
-                    'collar': 2,
-                    'wild': 6
-                }.get(first_symbol if first_symbol != 'wild' else 'wild', 2)
+                    'dog': 8,      # Increased from 5
+                    'house': 6,    # Increased from 4
+                    'bone': 5,     # Increased from 3
+                    'collar': 4,   # Increased from 2
+                    'wild': 10     # Increased from 6
+                }.get(first_symbol if first_symbol != 'wild' else 'wild', 3)
 
                 win_amount = bet * multiplier * (matches - 2)
                 winnings += win_amount
