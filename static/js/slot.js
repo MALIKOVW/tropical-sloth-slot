@@ -33,7 +33,7 @@ class SlotMachine {
 
     async spin() {
         if (this.spinning) return;
-        
+
         const credits = parseInt(document.getElementById('creditDisplay').textContent);
         if (credits < this.currentBet) {
             alert('Insufficient credits!');
@@ -44,43 +44,49 @@ class SlotMachine {
         document.getElementById('spinButton').disabled = true;
         audio.playSpinSound();
 
-        // Animate spinning
-        await this.animateSpin();
+        try {
+            // Animate spinning
+            await this.animateSpin();
 
-        // Make server request
-        const response = await fetch('/spin', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `bet=${this.currentBet}`
-        });
+            // Create form data
+            const formData = new FormData();
+            formData.append('bet', this.currentBet);
 
-        const result = await response.json();
-        
-        if (result.error) {
-            alert(result.error);
+            // Make server request
+            const response = await fetch('/spin', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.error) {
+                alert(result.error);
+                this.spinning = false;
+                document.getElementById('spinButton').disabled = false;
+                return;
+            }
+
+            // Update display
+            this.reels = result.result;
+            document.getElementById('creditDisplay').textContent = result.credits;
+
+            // Update statistics
+            this.updateStats(result.winnings);
+
+            if (result.winnings > 0) {
+                audio.playWinSound();
+                this.showWinAnimation(result.winnings);
+            }
+        } catch (error) {
+            console.error('Error during spin:', error);
+            alert('An error occurred during spin. Please try again.');
+        } finally {
+            audio.stopSpinSound();
             this.spinning = false;
             document.getElementById('spinButton').disabled = false;
-            return;
+            this.draw();
         }
-
-        // Update display
-        this.reels = result.result;
-        document.getElementById('creditDisplay').textContent = result.credits;
-
-        // Update statistics
-        this.updateStats(result.winnings);
-
-        if (result.winnings > 0) {
-            audio.playWinSound();
-            this.showWinAnimation(result.winnings);
-        }
-
-        audio.stopSpinSound();
-        this.spinning = false;
-        document.getElementById('spinButton').disabled = false;
-        this.draw();
     }
 
     async animateSpin() {
@@ -124,7 +130,7 @@ class SlotMachine {
 
     draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
+
         const symbolSize = this.canvas.width / 6;
         const padding = symbolSize / 4;
 
@@ -132,11 +138,11 @@ class SlotMachine {
             for (let j = 0; j < this.reels[i].length; j++) {
                 const x = i * (symbolSize + padding) + padding;
                 const y = j * (symbolSize + padding) + padding;
-                
+
                 // Draw symbol background
                 this.ctx.fillStyle = '#444';
                 this.ctx.fillRect(x, y, symbolSize, symbolSize);
-                
+
                 // Draw symbol
                 this.ctx.fillStyle = '#fff';
                 this.ctx.font = `${symbolSize/2}px Arial`;
