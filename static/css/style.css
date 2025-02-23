@@ -628,3 +628,16 @@ h1 {
     color: #00ff9d;
     text-shadow: 0 0 15px rgba(0, 255, 157, 0.5);
 }
+
+/* Styles for disabled buyFreespins button */
+#buyFreespinsBtn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: linear-gradient(45deg, #808080, #606060);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#buyFreespinsBtn.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}

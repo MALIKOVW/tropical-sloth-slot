@@ -143,7 +143,7 @@ class SlotMachine {
         if (symbol === 'wild' || symbol === 'scatter') {
             this.ctx.strokeStyle = symbol === 'wild' ? (isStatic ? '#ffd700' : '#ff9f43') : '#95a5a6';
             this.ctx.lineWidth = Math.max(2, symbolSize * (isStatic ? 0.05 : 0.03));
-            this.ctx.strokeRect(symbolX + padding/2, symbolY + padding/2, symbolSize - padding, symbolSize - padding);
+            this.ctx.strokeRect(symbolX + padding / 2, symbolY + padding / 2, symbolSize - padding, symbolSize - padding);
         }
     }
 
@@ -227,7 +227,7 @@ class SlotMachine {
         const maxWidth = Math.min(800, window.innerWidth < 768 ? containerWidth * 0.8 : containerWidth);
 
         // Устанавливаем соотношение сторон 4:3
-        const aspectRatio = 4/3;
+        const aspectRatio = 4 / 3;
         const height = maxWidth / aspectRatio;
 
         // Устанавливаем размеры отображения
@@ -258,13 +258,21 @@ class SlotMachine {
 
     updateBonusDisplay() {
         const bonusDisplay = document.getElementById('bonusSpinsCount');
+        const buyFreespinsBtn = document.getElementById('buyFreespinsBtn');
+
         if (this.bonusSpinsRemaining > 0) {
             bonusDisplay.textContent = `Free Spins: ${this.bonusSpinsRemaining}`;
             bonusDisplay.style.display = 'inline-block';
             bonusDisplay.classList.add('active-bonus');
+            // Disable buy button during bonus round
+            buyFreespinsBtn.disabled = true;
+            buyFreespinsBtn.classList.add('disabled');
         } else {
             bonusDisplay.style.display = 'none';
             bonusDisplay.classList.remove('active-bonus');
+            // Enable buy button when bonus round ends
+            buyFreespinsBtn.disabled = false;
+            buyFreespinsBtn.classList.remove('disabled');
         }
     }
 
@@ -309,7 +317,7 @@ class SlotMachine {
                 this.bonusSpinsRemaining = result.bonus_spins_remaining;
                 this.wildPositions = result.wild_positions || [];
                 this.updateBonusDisplay();
-                audio.playBonusSound(); // Add bonus trigger sound
+                audio.playBonusSound();
             }
 
             // Update bonus spins count
@@ -377,7 +385,7 @@ class SlotMachine {
             reelStates.forEach((reel, reelIndex) => {
                 for (let i = 0; i < 3; i++) {
                     // Skip if this position has a static wild
-                    if (this.bonusSpinsRemaining > 0 && 
+                    if (this.bonusSpinsRemaining > 0 &&
                         this.wildPositions.some(([row, col]) => row === i && col === reelIndex)) {
                         continue;
                     }

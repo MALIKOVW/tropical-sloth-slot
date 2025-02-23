@@ -123,8 +123,8 @@ def spin():
                 else:
                     # Check if this position can have a scatter
                     can_have_scatter = (j in scatter_reels and 
-                                      not any([pos[1] == j for pos in scatter_positions]) and 
-                                      not is_bonus_spin)
+                                        not any([pos[1] == j for pos in scatter_positions]) and 
+                                        not is_bonus_spin)
 
                     # Increased wild chance in bonus spins (25% vs 15% in base game)
                     wild_chance = 0.25 if is_bonus_spin else 0.15
@@ -282,6 +282,10 @@ def get_statistics():
 def buy_freespins():
     if 'credits' not in session:
         return jsonify({'error': 'Session expired'}), 400
+
+    # Check if bonus round is active
+    if session.get('bonus_spins', 0) > 0:
+        return jsonify({'error': 'Cannot buy free spins during bonus round'}), 400
 
     try:
         bet = float(request.form.get('bet', 0.20))
