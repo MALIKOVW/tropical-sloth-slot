@@ -221,18 +221,26 @@ class SlotMachine {
         this.animatingWin = true;
         this.winningLines = winningLines;
 
+        // Create win message
         const winDisplay = document.createElement('div');
         winDisplay.className = 'win-animation';
         winDisplay.textContent = `WIN! ${amount}`;
         document.body.appendChild(winDisplay);
 
+        // Clear any existing paylines
+        this.clearPaylines();
+
+        // Animate each winning line sequentially
         for (const line of winningLines) {
             await this.animatePayline(line);
+            // Wait between lines
+            await new Promise(resolve => setTimeout(resolve, 800));
+            this.clearPaylines();
         }
 
+        // Remove win display after all animations
         setTimeout(() => {
             winDisplay.remove();
-            this.clearPaylines();
             this.animatingWin = false;
         }, 2000);
     }
@@ -243,41 +251,57 @@ class SlotMachine {
         const horizontalPadding = (reelWidth - symbolSize) / 2;
         const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
 
-        const payline = document.createElement('div');
-        payline.className = 'payline';
-        this.paylineContainer.appendChild(payline);
+        // Create container for this payline animation
+        const paylineContainer = document.createElement('div');
+        paylineContainer.className = 'payline-group';
+        this.paylineContainer.appendChild(paylineContainer);
 
-        const startSymbol = line[0];
-        const endSymbol = line[line.length - 1];
-        const startX = startSymbol[1] * reelWidth + horizontalPadding + symbolSize / 2;
-        const startY = startSymbol[0] * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2;
-        const endX = endSymbol[1] * reelWidth + horizontalPadding + symbolSize / 2;
-        const endY = endSymbol[0] * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2;
-
-        const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
-        const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
-
-        payline.style.width = `${length}px`;
-        payline.style.left = `${startX}px`;
-        payline.style.top = `${startY}px`;
-        payline.style.transform = `rotate(${angle}deg)`;
-
-        line.forEach(([row, col]) => {
+        // Highlight symbols first
+        const highlightedSymbols = [];
+        for (const [row, col] of line) {
             const symbol = document.createElement('div');
             symbol.className = 'symbol-highlight';
-            symbol.style.position = 'absolute';
             symbol.style.left = `${col * reelWidth + horizontalPadding}px`;
             symbol.style.top = `${row * (symbolSize + verticalPadding) + verticalPadding}px`;
             symbol.style.width = `${symbolSize}px`;
             symbol.style.height = `${symbolSize}px`;
-            this.paylineContainer.appendChild(symbol);
-        });
+            paylineContainer.appendChild(symbol);
+            highlightedSymbols.push(symbol);
+        }
 
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Create and animate payline
+        if (line.length >= 2) {
+            const firstSymbol = line[0];
+            const lastSymbol = line[line.length - 1];
+
+            const startX = firstSymbol[1] * reelWidth + horizontalPadding + symbolSize / 2;
+            const startY = firstSymbol[0] * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2;
+            const endX = lastSymbol[1] * reelWidth + horizontalPadding + symbolSize / 2;
+            const endY = lastSymbol[0] * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2;
+
+            const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+            const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+
+            const payline = document.createElement('div');
+            payline.className = 'payline';
+            payline.style.width = `${length}px`;
+            payline.style.left = `${startX}px`;
+            payline.style.top = `${startY}px`;
+            payline.style.transform = `rotate(${angle}deg)`;
+            paylineContainer.appendChild(payline);
+        }
+
+        // Play win sound for this line
+        audio.playWinSound();
+
+        // Wait for animation duration
+        await new Promise(resolve => setTimeout(resolve, 1500));
     }
 
     clearPaylines() {
-        this.paylineContainer.innerHTML = '';
+        if (this.paylineContainer) {
+            this.paylineContainer.innerHTML = '';
+        }
     }
 
     showBonusAnimation(spinsAwarded) {
