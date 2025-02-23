@@ -370,6 +370,17 @@ body {
     color: #00ff9d !important;
     border: 2px solid #00ff9d;
     box-shadow: 0 0 15px rgba(0, 255, 157, 0.2);
+    transition: all 0.3s ease;
+}
+
+.bonus-info .badge.active-bonus {
+    animation: pulseGlow 1.5s infinite;
+}
+
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 15px rgba(0, 255, 157, 0.2); }
+    50% { box-shadow: 0 0 25px rgba(0, 255, 157, 0.4); }
+    100% { box-shadow: 0 0 15px rgba(0, 255, 157, 0.2); }
 }
 
 @keyframes winPulse {
@@ -592,4 +603,28 @@ h1 {
     background-color: #00ff9d;
     border-color: #00ff9d;
     color: #000;
+}
+
+.win-animation.bonus-award {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 40px;
+    border-radius: 20px;
+    border: 3px solid #00ff9d;
+}
+
+.bonus-award .bonus-title {
+    font-size: 48px;
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.bonus-award .spins-awarded {
+    font-size: 36px;
+    color: #00ff9d;
+    text-shadow: 0 0 15px rgba(0, 255, 157, 0.5);
 }

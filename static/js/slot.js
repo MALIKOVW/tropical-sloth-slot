@@ -258,8 +258,10 @@ class SlotMachine {
         if (this.bonusSpinsRemaining > 0) {
             bonusDisplay.textContent = `Free Spins: ${this.bonusSpinsRemaining}`;
             bonusDisplay.style.display = 'inline-block';
+            bonusDisplay.classList.add('active-bonus');
         } else {
             bonusDisplay.style.display = 'none';
+            bonusDisplay.classList.remove('active-bonus');
         }
     }
 
@@ -298,11 +300,24 @@ class SlotMachine {
             this.reels = result.result;
             document.getElementById('creditDisplay').textContent = result.credits.toFixed(2);
 
+            // Handle bonus spins award
             if (result.bonus_spins_awarded > 0) {
-                this.showBonusAnimation(result.bonus_spins_awarded);
+                await this.showBonusAnimation(result.bonus_spins_awarded);
                 this.bonusSpinsRemaining = result.bonus_spins_remaining;
                 this.wildPositions = result.wild_positions || [];
                 this.updateBonusDisplay();
+                audio.playBonusSound(); // Add bonus trigger sound
+            }
+
+            // Update bonus spins count
+            if (this.bonusSpinsRemaining !== result.bonus_spins_remaining) {
+                this.bonusSpinsRemaining = result.bonus_spins_remaining;
+                this.updateBonusDisplay();
+
+                // Clear wild positions when bonus round ends
+                if (this.bonusSpinsRemaining === 0) {
+                    this.wildPositions = [];
+                }
             }
 
             if (result.winnings > 0) {
@@ -311,6 +326,12 @@ class SlotMachine {
             }
 
             this.updateStats(result.winnings);
+
+            // Auto-trigger next free spin if available
+            if (this.bonusSpinsRemaining > 0 && this.autoSpinning) {
+                setTimeout(() => this.spin(), 1000);
+            }
+
         } catch (error) {
             console.error('Error during spin:', error);
             alert('An error occurred during spin. Please try again.');
@@ -476,12 +497,19 @@ class SlotMachine {
         }
     }
 
-    showBonusAnimation(spinsAwarded) {
+    async showBonusAnimation(spinsAwarded) {
         const bonusMessage = document.createElement('div');
         bonusMessage.className = 'win-animation bonus-award';
-        bonusMessage.textContent = `${spinsAwarded} FREE SPINS!`;
+        bonusMessage.innerHTML = `
+            <div class="bonus-title">BONUS GAME!</div>
+            <div class="spins-awarded">${spinsAwarded} FREE SPINS!</div>
+        `;
         document.body.appendChild(bonusMessage);
-        setTimeout(() => bonusMessage.remove(), 2000);
+
+        // Add celebration particles or effects here
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        bonusMessage.remove();
     }
 
     async fetchStatistics() {

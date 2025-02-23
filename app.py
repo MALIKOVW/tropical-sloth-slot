@@ -112,8 +112,8 @@ def spin():
         # Generate result with scatter only on reels 1, 3, and 5
         result = []
         wild_positions = session.get('wild_positions', []) if is_bonus_spin else []
-        scatter_reels = [0, 2, 4]  # Индексы барабанов 1, 3 и 5
-        scatter_positions = []  # Отслеживаем позиции скаттеров
+        scatter_reels = [0, 2, 4]  # Reels 1, 3, and 5
+        scatter_positions = []  # Track scatter positions
 
         for i in range(3):  # rows
             row = []
@@ -150,13 +150,13 @@ def spin():
         needs_respin = False
         winning_lines_count = 0
 
+        # Check scatters only during base game
         if not is_bonus_spin:
-            # Check scatters only on reels 1, 3, and 5
             scatter_count = len(scatter_positions)
             if scatter_count >= 3:
                 bonus_spins = scatter_count * 5  # 5 free spins per scatter
                 session['bonus_spins'] = session.get('bonus_spins', 0) + bonus_spins
-                session['wild_positions'] = []
+                session['wild_positions'] = []  # Reset wild positions for new bonus round
 
         # Calculate line wins
         winning_lines_data = []
@@ -195,15 +195,15 @@ def spin():
                     'toy2': [30, 150, 600],
 
                     # Special symbols
-                    'wild': [125, 625, 2500],  # Wild символ имеет самые высокие выплаты
+                    'wild': [125, 625, 2500],  # Wild symbol has the highest payouts
                 }
 
                 symbol_type = first_symbol if first_symbol != 'wild' else 'wild'
                 win_multiplier = multipliers.get(symbol_type, [5, 25, 100])[matches - 3]
 
-                # Увеличиваем выигрыш во время бонусных спинов
+                # Increase winnings during bonus spins
                 if is_bonus_spin:
-                    win_multiplier *= 2.7  # Увеличиваем множитель в бонусных спинах для достижения макс. выигрыша 6,750x
+                    win_multiplier *= 2.7  # Increase multiplier in bonus spins to achieve max win 6,750x
 
                 win_amount = bet * win_multiplier
                 winnings += win_amount
@@ -213,9 +213,12 @@ def spin():
 
         if is_bonus_spin:
             session['bonus_spins'] = max(0, session['bonus_spins'] - 1)
+            if session['bonus_spins'] == 0:
+                session['wild_positions'] = []  # Clear wild positions when bonus round ends
 
         session.modified = True
 
+        # Update statistics
         if winnings > 0:
             stats.total_wins += 1
             stats.total_won += winnings
@@ -287,15 +290,15 @@ def buy_freespins():
         if session['credits'] < cost:
             return jsonify({'error': 'Insufficient credits'}), 400
 
-        # Списываем стоимость
+        # Deduct the cost
         session['credits'] = session['credits'] - cost
 
-        # Начисляем 10 фриспинов
+        # Award 10 free spins
         bonus_spins = 10
         session['bonus_spins'] = session.get('bonus_spins', 0) + bonus_spins
         session['wild_positions'] = []
 
-        # Обновляем статистику
+        # Update statistics
         stats = Statistics.query.first()
         if stats:
             stats.total_bonus_games += 1
