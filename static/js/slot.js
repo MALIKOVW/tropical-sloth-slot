@@ -86,15 +86,14 @@ class SlotMachine {
         return symbolMap[symbol] || symbol;
     }
 
-    drawSymbol(symbol, x, y, size) {
-        // Добавляем отступ для лучшего разделения символов
+    drawSymbol(symbol, x, y, size, isStatic = false) {
         const padding = size * 0.1;
         const symbolSize = size - (padding * 2);
         const symbolX = x + padding;
         const symbolY = y + padding;
 
         // Рисуем фон с закругленными углами
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        this.ctx.fillStyle = isStatic ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.3)';
         this.ctx.beginPath();
         this.ctx.roundRect(symbolX, symbolY, symbolSize, symbolSize, 10);
         this.ctx.fill();
@@ -102,7 +101,11 @@ class SlotMachine {
         // Создаем градиент для символа
         const gradient = this.ctx.createLinearGradient(symbolX, symbolY, symbolX + symbolSize, symbolY + symbolSize);
 
-        if (this.lowSymbols.includes(symbol)) {
+        if (isStatic && symbol === 'wild') {
+            // Специальный градиент для статичного вилда
+            gradient.addColorStop(0, '#ffd700');
+            gradient.addColorStop(1, '#ff8c00');
+        } else if (this.lowSymbols.includes(symbol)) {
             gradient.addColorStop(0, '#5a9ff2');
             gradient.addColorStop(1, '#3181dd');
         } else if (this.highSymbols.includes(symbol)) {
@@ -123,8 +126,8 @@ class SlotMachine {
         this.ctx.textBaseline = 'middle';
 
         // Добавляем эффект свечения
-        this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-        this.ctx.shadowBlur = symbolSize * 0.1;
+        this.ctx.shadowColor = isStatic ? 'rgba(255, 215, 0, 0.8)' : 'rgba(255, 255, 255, 0.5)';
+        this.ctx.shadowBlur = symbolSize * (isStatic ? 0.2 : 0.1);
         this.ctx.shadowOffsetX = 0;
         this.ctx.shadowOffsetY = 0;
 
@@ -138,8 +141,8 @@ class SlotMachine {
 
         // Добавляем рамку для специальных символов
         if (symbol === 'wild' || symbol === 'scatter') {
-            this.ctx.strokeStyle = symbol === 'wild' ? '#ff9f43' : '#95a5a6';
-            this.ctx.lineWidth = Math.max(2, symbolSize * 0.03);
+            this.ctx.strokeStyle = symbol === 'wild' ? (isStatic ? '#ffd700' : '#ff9f43') : '#95a5a6';
+            this.ctx.lineWidth = Math.max(2, symbolSize * (isStatic ? 0.05 : 0.03));
             this.ctx.strokeRect(symbolX + padding/2, symbolY + padding/2, symbolSize - padding, symbolSize - padding);
         }
     }
@@ -361,12 +364,34 @@ class SlotMachine {
             const horizontalPadding = (reelWidth - symbolSize) / 2;
             const verticalPadding = (this.logicalHeight - (symbolSize * 3)) / 4;
 
+            // Draw static wilds first
+            if (this.bonusSpinsRemaining > 0 && this.wildPositions.length > 0) {
+                this.wildPositions.forEach(([row, col]) => {
+                    const x = col * reelWidth + horizontalPadding;
+                    const y = row * (symbolSize + verticalPadding) + verticalPadding;
+                    this.drawSymbol('wild', x, y, symbolSize, true); // true indicates it's a static wild
+                });
+            }
+
+            // Draw animated symbols
             reelStates.forEach((reel, reelIndex) => {
                 for (let i = 0; i < 3; i++) {
+                    // Skip if this position has a static wild
+                    if (this.bonusSpinsRemaining > 0 && 
+                        this.wildPositions.some(([row, col]) => row === i && col === reelIndex)) {
+                        continue;
+                    }
+
                     const symbolIndex = (reel.currentStep + i) % reel.symbols.length;
                     const symbol = reel.symbols[symbolIndex];
 
-                    this.drawSymbol(symbol, reelIndex * reelWidth + horizontalPadding, i * (symbolSize + verticalPadding) + verticalPadding, symbolSize);
+                    this.drawSymbol(
+                        symbol,
+                        reelIndex * reelWidth + horizontalPadding,
+                        i * (symbolSize + verticalPadding) + verticalPadding,
+                        symbolSize,
+                        false
+                    );
                 }
             });
         };
