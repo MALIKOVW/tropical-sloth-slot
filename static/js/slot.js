@@ -50,6 +50,16 @@ class SlotMachine {
         document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-0.10));
     }
 
+    getSymbolDisplay(symbol) {
+        const symbolMap = {
+            '10': '10', 'J': 'J', 'Q': 'Q', 'K': 'K', 'A': 'A',
+            'dog1': '🐕', 'dog2': '🐶', 'dog3': '🐩',
+            'toy1': '🎾', 'toy2': '🦴',
+            'wild': '🏠', 'scatter': '⭐'
+        };
+        return symbolMap[symbol] || symbol;
+    }
+
     drawSymbol(symbol, x, y, size) {
         // Background for symbol
         this.ctx.fillStyle = 'rgba(51, 51, 51, 0.2)';
@@ -77,15 +87,24 @@ class SlotMachine {
         }
 
         this.ctx.fillStyle = gradient;
-        this.ctx.font = `bold ${size * 0.5}px Arial`;
+        this.ctx.font = `bold ${size * 0.6}px Arial`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
 
         // Draw symbol with outer glow
         this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
         this.ctx.shadowBlur = 10;
-        this.ctx.fillText(symbol, x + size/2, y + size/2);
+        this.ctx.fillText(this.getSymbolDisplay(symbol), x + size/2, y + size/2);
         this.ctx.restore();
+
+        // Add special effects for wild and scatter
+        if (symbol === 'wild' || symbol === 'scatter') {
+            this.ctx.save();
+            this.ctx.strokeStyle = symbol === 'wild' ? '#ff9f43' : '#95a5a6';
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(x + 5, y + 5, size - 10, size - 10);
+            this.ctx.restore();
+        }
     }
 
     draw() {
