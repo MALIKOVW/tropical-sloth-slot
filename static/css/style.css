@@ -64,12 +64,24 @@ h1 {
     border-radius: 50%;
     font-size: 20px;
     line-height: 1;
+    background: linear-gradient(45deg, #1a9fff, #00ff9d);
+    border: none;
+    color: #fff;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 15px rgba(0, 255, 157, 0.5);
+    transition: all 0.3s ease;
+}
+
+.bet-controls button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(0, 255, 157, 0.8);
 }
 
 #currentBet {
     font-size: 24px;
     font-weight: bold;
-    color: #fff;
+    color: #00ff9d;
+    text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
 }
 
 #spinButton {
@@ -77,19 +89,48 @@ h1 {
     height: 50px;
     font-size: 24px;
     font-weight: bold;
-    background-color: #28a745;
+    background: linear-gradient(45deg, #00b0ff, #00ff9d);
     border: none;
+    border-radius: 25px;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 20px rgba(0, 255, 157, 0.6);
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+#spinButton:before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transform: rotate(45deg);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
 }
 
 #spinButton:hover {
     transform: scale(1.05);
-    background-color: #218838;
+    box-shadow: 0 0 30px rgba(0, 255, 157, 0.8);
 }
 
 #spinButton:disabled {
-    background-color: #6c757d;
+    background: linear-gradient(45deg, #666, #999);
     transform: none;
+    box-shadow: none;
 }
 
 .statistics {
@@ -103,7 +144,8 @@ h1 {
 .credits {
     font-size: 24px;
     font-weight: bold;
-    color: #ffd700;
+    color: #00ff9d;
+    text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
 }
 
 .win-message {
@@ -128,7 +170,6 @@ h1 {
     100% { transform: translate(-50%, -50%) scale(1); }
 }
 
-/* Update payline and symbol highlight styles */
 .payline {
     position: absolute;
     background: linear-gradient(90deg, 
