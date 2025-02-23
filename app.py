@@ -23,6 +23,30 @@ db.init_app(app)
 # Import models before creating tables
 from models import SpinResult  # noqa: E402
 
+# Define winning lines (The Dog House style)
+WINNING_LINES = [
+    # Горизонтальные линии
+    [(0,0), (0,1), (0,2), (0,3), (0,4)],  # Top row
+    [(1,0), (1,1), (1,2), (1,3), (1,4)],  # Middle row
+    [(2,0), (2,1), (2,2), (2,3), (2,4)],  # Bottom row
+
+    # V-образные линии
+    [(0,0), (1,1), (2,2), (1,3), (0,4)],
+    [(2,0), (1,1), (0,2), (1,3), (2,4)],
+
+    # Зигзагообразные линии
+    [(0,0), (1,1), (1,2), (1,3), (0,4)],
+    [(2,0), (1,1), (1,2), (1,3), (2,4)],
+
+    # W-образные линии
+    [(0,0), (2,1), (1,2), (2,3), (0,4)],
+    [(2,0), (0,1), (1,2), (0,3), (2,4)],
+
+    # Диагональные линии
+    [(0,0), (1,1), (2,2), (1,3), (0,4)],
+    [(2,0), (1,1), (0,2), (1,3), (2,4)]
+]
+
 @app.route('/')
 def index():
     if 'credits' not in session:
@@ -44,12 +68,15 @@ def spin():
         is_bonus_spin = bool(session.get('bonus_spins', 0))
         is_respin = bool(request.form.get('is_respin', False))
 
+        # Check if player has enough credits
         if not is_bonus_spin and not is_respin:
             if bet < 10 or bet > 100:
                 return jsonify({'error': 'Invalid bet amount'}), 400
             if session['credits'] < bet:
                 return jsonify({'error': 'Insufficient credits'}), 400
-            session['credits'] -= bet
+            # Deduct bet amount
+            session['credits'] = session['credits'] - bet
+            session.modified = True
 
         # Generate result
         result = []
@@ -72,6 +99,7 @@ def spin():
 
         if is_bonus_spin:
             session['wild_positions'] = wild_positions
+            session.modified = True
 
         # Calculate winnings and check for respins/bonus
         winnings = 0
@@ -81,34 +109,52 @@ def spin():
         if not is_bonus_spin:
             # Count scatter symbols (paw)
             scatter_count = sum(row.count('paw') for row in result)
-            scatter_positions = [(i, j) for i in range(3) for j in range(4) if result[i][j] == 'paw']
-
             if scatter_count >= 4 and not any(result[i][4] == 'paw' for i in range(3)):
                 needs_respin = True
             elif scatter_count >= 5:
                 bonus_spins = scatter_count * 2
                 session['bonus_spins'] = session.get('bonus_spins', 0) + bonus_spins
                 session['wild_positions'] = []
+                session.modified = True
 
         # Calculate line wins
-        for i in range(3):
+        for line in WINNING_LINES:
             matches = 1
-            symbol = result[i][0]
-            for j in range(1, 5):
-                current_symbol = result[i][j]
-                if current_symbol == 'wild' or symbol == 'wild' or current_symbol == symbol:
+            first_symbol = result[line[0][0]][line[0][1]]
+            if first_symbol == 'paw':  # Skip scatter symbols for line wins
+                continue
+
+            for i in range(1, len(line)):
+                current_pos = line[i]
+                current_symbol = result[current_pos[0]][current_pos[1]]
+                if current_symbol == 'wild' or first_symbol == 'wild' or current_symbol == first_symbol:
                     matches += 1
                 else:
                     break
-            if matches >= 3:
-                winnings += bet * (matches * 2)
 
+            if matches >= 3:
+                # Calculate win amount based on matches and symbol type
+                multiplier = {
+                    'dog': 5,
+                    'house': 4,
+                    'bone': 3,
+                    'collar': 2,
+                    'wild': 6
+                }.get(first_symbol if first_symbol != 'wild' else 'wild', 2)
+
+                win_amount = bet * multiplier * (matches - 2)
+                winnings += win_amount
+
+        # Add winnings to credits
         if not is_respin:
-            session['credits'] += winnings
+            session['credits'] = session['credits'] + winnings
+            session.modified = True
 
         if is_bonus_spin:
             session['bonus_spins'] = max(0, session['bonus_spins'] - 1)
+            session.modified = True
 
+        # Save spin result
         spin_result = SpinResult(
             bet_amount=bet,
             win_amount=winnings,
@@ -130,7 +176,8 @@ def spin():
             'needs_respin': needs_respin,
             'wild_positions': wild_positions
         })
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as e:
+        print(f"Error during spin: {str(e)}")
         return jsonify({'error': 'Invalid bet amount'}), 400
 
 with app.app_context():
