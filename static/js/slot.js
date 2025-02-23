@@ -153,15 +153,15 @@ class SlotMachine {
         const containerWidth = container.clientWidth;
 
         // Following industry standards but with wider field:
-        // - Minimum width: 1024px
-        // - Optimal width: 1280px-1920px
-        // - Aspect ratio: 16:9 for modern widescreen
-        const maxWidth = Math.min(1920, window.innerWidth < 768 ? containerWidth * 0.95 : containerWidth);
-        const minWidth = Math.max(1024, maxWidth);
+        // - Minimum width: 1280px (increased from 1024px)
+        // - Optimal width: 1440px-2560px (increased range)
+        // - Aspect ratio: 21:9 for ultra-wide view
+        const maxWidth = Math.min(2560, window.innerWidth < 768 ? containerWidth * 0.98 : containerWidth);
+        const minWidth = Math.max(1280, maxWidth);
         const width = Math.min(maxWidth, Math.max(minWidth, containerWidth));
 
-        // Set 16:9 aspect ratio for wider view
-        const aspectRatio = 16 / 9;
+        // Set 21:9 aspect ratio for ultra-wide view
+        const aspectRatio = 21 / 9;
         const height = width / aspectRatio;
 
         // Set display sizes
@@ -191,16 +191,16 @@ class SlotMachine {
 
         // Calculate reel and symbol dimensions based on standards
         const reelWidth = this.logicalWidth / 5;
-        // Symbol size: 120-180px as per standards
-        const maxSymbolSize = 180;
-        const minSymbolSize = 120;
+        // Symbol size: 160-240px (increased from 120-180px)
+        const maxSymbolSize = 240;
+        const minSymbolSize = 160;
         const symbolSize = Math.min(
             maxSymbolSize,
             Math.max(minSymbolSize, reelWidth * 0.85)
         );
 
-        // Calculate padding (10-15% of symbol size as per standards)
-        const symbolPadding = symbolSize * 0.12; // 12% padding
+        // Calculate padding (15% of symbol size - increased from 12%)
+        const symbolPadding = symbolSize * 0.15;
         const horizontalPadding = (reelWidth - symbolSize) / 2;
         const totalSymbolsHeight = symbolSize * 3;
         const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
@@ -210,7 +210,7 @@ class SlotMachine {
             this.wildPositions.forEach(([row, col]) => {
                 const x = col * reelWidth + horizontalPadding;
                 const y = row * (symbolSize + verticalPadding) + verticalPadding;
-                this.drawSymbol('wild', x, y, symbolSize, true); // true indicates it's a static wild
+                this.drawSymbol('wild', x, y, symbolSize, true);
             });
         }
 
@@ -402,8 +402,8 @@ class SlotMachine {
 
             const reelWidth = this.logicalWidth / 5;
             // Use the same symbol size calculation as in draw()
-            const maxSymbolSize = 180;
-            const minSymbolSize = 120;
+            const maxSymbolSize = 240;
+            const minSymbolSize = 160;
             const symbolSize = Math.min(
                 maxSymbolSize,
                 Math.max(minSymbolSize, reelWidth * 0.85)

@@ -14,7 +14,7 @@ body {
 
 .game-wrapper {
     padding: 20px;
-    max-width: 1920px; /* Increased max-width for wider game field */
+    max-width: 2560px; /* Increased max-width for ultra-wide game field */
     margin: 0 auto;
 }
 
@@ -107,8 +107,9 @@ body {
     background: rgba(0, 0, 0, 0.3);
     padding: 20px;
     border-radius: 10px;
-    margin-bottom: 20px;
-    height: calc(15% - 40px); /* Control panel height: 15-20% of total height */
+    margin: 20px auto;
+    width: 90%; /* Reduced from 100% to create some margin */
+    max-width: 2000px; /* Added max-width to control panel */
 }
 
 .controls-row {
@@ -212,7 +213,7 @@ body {
 }
 
 /* Responsive styles */
-@media (max-width: 1440px) {
+@media (max-width: 2560px) {
     .game-wrapper {
         padding: 15px;
     }
@@ -221,6 +222,12 @@ body {
 @media (max-width: 1920px) {
     .game-wrapper {
         padding: 15px;
+    }
+}
+
+@media (max-width: 1440px) {
+    .game-wrapper {
+        padding: 10px;
     }
 }
 
