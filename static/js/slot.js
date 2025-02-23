@@ -139,16 +139,116 @@ class SlotMachine {
 
     async animateSpin() {
         const frames = 30;
-        const duration = 2000;
+        const duration = 2000; // Total duration in ms
         const frameTime = duration / frames;
+        const reelStopDelay = 200; // Delay between each reel stopping
 
-        for (let i = 0; i < frames; i++) {
-            this.reels = Array(5).fill().map(() =>
-                Array(3).fill().map(() => this.symbols[Math.floor(Math.random() * this.symbols.length)])
+        // Create temporary canvas for symbol blur effect
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = this.canvas.width;
+        tempCanvas.height = this.canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // Animation state for each reel
+        const reelStates = Array(5).fill().map(() => ({
+            symbols: [],
+            offset: 0,
+            speed: 30,
+            stopping: false
+        }));
+
+        // Initialize symbols for each reel
+        reelStates.forEach(state => {
+            state.symbols = Array(10).fill().map(() =>
+                this.symbols[Math.floor(Math.random() * this.symbols.length)]
             );
-            this.draw();
-            await new Promise(resolve => setTimeout(resolve, frameTime));
-        }
+        });
+
+        const easeOutBack = (x) => {
+            const c1 = 1.70158;
+            const c3 = c1 + 1;
+            return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+        };
+
+        // Animation loop
+        const startTime = Date.now();
+        const animate = async () => {
+            const currentTime = Date.now() - startTime;
+            const progress = Math.min(currentTime / duration, 1);
+
+            // Clear both canvases
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+            // Update and draw each reel
+            reelStates.forEach((state, reelIndex) => {
+                const reelWidth = this.canvas.width / 5;
+                const symbolSize = reelWidth * 0.8;
+                const horizontalPadding = (reelWidth - symbolSize) / 2;
+                const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4; // Accessing verticalPadding
+
+                // Calculate reel-specific progress
+                const reelDelay = reelIndex * reelStopDelay;
+                const reelProgress = Math.max(0, Math.min(1, (currentTime - reelDelay) / (duration - reelDelay * 4)));
+
+                // Update offset based on progress
+                if (reelProgress < 1) {
+                    state.offset += state.speed;
+                    state.offset %= symbolSize * state.symbols.length;
+                } else {
+                    const finalOffset = easeOutBack(Math.min(1, (currentTime - (duration - reelDelay * 4)) / 300));
+                    state.offset = finalOffset * symbolSize;
+                }
+
+                // Draw symbols with blur effect during high-speed spinning
+                const blur = reelProgress < 0.8 ? 2 : 0;
+                if (blur > 0) {
+                    tempCtx.filter = `blur(${blur}px)`;
+                }
+
+                // Draw symbols
+                for (let i = -1; i < 4; i++) {
+                    const y = i * symbolSize + state.offset;
+                    const symbolIndex = Math.floor(((state.symbols.length - i) + Math.floor(state.offset / symbolSize)) % state.symbols.length);
+                    const symbol = state.symbols[symbolIndex];
+
+                    const ctx = blur > 0 ? tempCtx : this.ctx;
+                    ctx.fillStyle = '#444';
+                    ctx.fillRect(
+                        reelIndex * reelWidth + horizontalPadding,
+                        y + verticalPadding,
+                        symbolSize,
+                        symbolSize
+                    );
+
+                    ctx.fillStyle = '#fff';
+                    ctx.font = `${symbolSize * 0.6}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(
+                        this.getSymbolEmoji(symbol),
+                        reelIndex * reelWidth + horizontalPadding + symbolSize / 2,
+                        y + verticalPadding + symbolSize / 2
+                    );
+                }
+
+                // Apply blur effect to main canvas
+                if (blur > 0) {
+                    this.ctx.drawImage(tempCanvas, 0, 0);
+                }
+            });
+
+            // Continue animation if not complete
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+
+        // Start animation loop
+        await new Promise(resolve => {
+            animate();
+            setTimeout(resolve, duration);
+        });
     }
 
     updateStats(winnings) {
