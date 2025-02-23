@@ -2,10 +2,16 @@ class SlotMachine {
     constructor() {
         this.canvas = document.getElementById('slotCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.symbols = ['dog', 'house', 'bone', 'collar', 'paw', 'wild', 'bowl', 'leash', 'toy', 'treat'];
-        this.reels = Array(5).fill().map(() => Array(3).fill('dog'));
+
+        // Updated symbols list
+        this.lowSymbols = ['10', 'J', 'Q', 'K', 'A'];
+        this.highSymbols = ['dog1', 'dog2', 'dog3', 'toy1', 'toy2'];
+        this.specialSymbols = ['wild', 'scatter'];
+
+        this.symbols = [...this.lowSymbols, ...this.highSymbols, ...this.specialSymbols];
+        this.reels = Array(5).fill().map(() => Array(3).fill('A'));
         this.spinning = false;
-        this.currentBet = 10;
+        this.currentBet = 0.20;
         this.bonusSpinsRemaining = 0;
         this.wildPositions = [];
         this.stats = {
@@ -40,14 +46,14 @@ class SlotMachine {
 
     initializeEventListeners() {
         document.getElementById('spinButton').addEventListener('click', () => this.spin());
-        document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(10));
-        document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-10));
+        document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(0.10));
+        document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-0.10));
     }
 
     adjustBet(amount) {
-        const newBet = Math.max(10, Math.min(100, this.currentBet + amount));
-        this.currentBet = newBet;
-        document.getElementById('currentBet').textContent = newBet;
+        const newBet = Math.max(0.20, Math.min(100, this.currentBet + amount));
+        this.currentBet = Number(newBet.toFixed(2));
+        document.getElementById('currentBet').textContent = this.currentBet.toFixed(2);
         audio.playClickSound();
     }
 
@@ -64,7 +70,7 @@ class SlotMachine {
     async spin(isRespin = false) {
         if (this.spinning) return;
 
-        const credits = parseInt(document.getElementById('creditDisplay').textContent);
+        const credits = parseFloat(document.getElementById('creditDisplay').textContent);
         if (!this.bonusSpinsRemaining && !isRespin && credits < this.currentBet) {
             alert('Insufficient credits!');
             return;
@@ -94,12 +100,7 @@ class SlotMachine {
             }
 
             this.reels = result.result;
-            document.getElementById('creditDisplay').textContent = result.credits;
-
-            if (result.needs_respin) {
-                await this.showRespinAnimation();
-                await this.spin(true);
-            }
+            document.getElementById('creditDisplay').textContent = result.credits.toFixed(2);
 
             if (result.bonus_spins_awarded > 0) {
                 this.showBonusAnimation(result.bonus_spins_awarded);
@@ -215,7 +216,7 @@ class SlotMachine {
         document.getElementById('totalSpins').textContent = this.stats.totalSpins;
         document.getElementById('winRate').textContent =
             `${((this.stats.totalWins / this.stats.totalSpins) * 100).toFixed(1)}%`;
-        document.getElementById('biggestWin').textContent = this.stats.biggestWin;
+        document.getElementById('biggestWin').textContent = this.stats.biggestWin.toFixed(2);
         document.getElementById('rtp').textContent =
             `${((this.stats.totalWon / this.stats.totalBet) * 100).toFixed(1)}%`;
     }
@@ -226,7 +227,7 @@ class SlotMachine {
 
         const winDisplay = document.createElement('div');
         winDisplay.className = 'win-animation';
-        winDisplay.textContent = `WIN! ${amount}`;
+        winDisplay.textContent = `WIN! ${amount.toFixed(2)}`;
         document.body.appendChild(winDisplay);
 
         this.clearPaylines();
@@ -245,7 +246,7 @@ class SlotMachine {
 
     async animatePayline(line) {
         const reelWidth = this.canvas.width / 5;
-        const symbolSize = reelWidth * 0.95; 
+        const symbolSize = reelWidth * 0.95;
         const horizontalPadding = (reelWidth - symbolSize) / 2;
         const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
 
@@ -310,7 +311,7 @@ class SlotMachine {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         const reelWidth = this.canvas.width / 5;
-        const symbolSize = reelWidth * 0.95; 
+        const symbolSize = reelWidth * 0.95;
         const horizontalPadding = (reelWidth - symbolSize) / 2;
         const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
 
@@ -329,7 +330,7 @@ class SlotMachine {
                 this.ctx.fill();
 
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-                this.ctx.font = `${symbolSize * 0.75}px Arial`; 
+                this.ctx.font = `${symbolSize * 0.75}px Arial`;
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
 
@@ -345,16 +346,18 @@ class SlotMachine {
 
     getSymbolEmoji(symbol) {
         const emojiMap = {
-            'dog': '🐕',
-            'house': '🏠',
-            'bone': '🦴',
-            'collar': '📿',
-            'paw': '🐾',
-            'wild': '⭐',
-            'bowl': '🥣',
-            'leash': '➰',
-            'toy': '🎾',
-            'treat': '🍖'
+            '10': '🔟',
+            'J': 'J️⃣',
+            'Q': 'Q️⃣',
+            'K': 'K️⃣',
+            'A': 'A️⃣',
+            'dog1': '🐕',
+            'dog2': '🐶',
+            'dog3': '🐩',
+            'toy1': '🎾',
+            'toy2': '🧸',
+            'wild': '🏠',
+            'scatter': '🦴'
         };
         return emojiMap[symbol] || symbol;
     }
@@ -366,10 +369,10 @@ class SlotMachine {
 
             document.getElementById('totalSpins').textContent = stats.total_spins;
             document.getElementById('winRate').textContent = `${stats.win_rate}%`;
-            document.getElementById('biggestWin').textContent = stats.biggest_win;
+            document.getElementById('biggestWin').textContent = stats.biggest_win.toFixed(2);
             document.getElementById('rtp').textContent = `${stats.rtp}%`;
             document.getElementById('totalBonusGames').textContent = stats.total_bonus_games;
-            document.getElementById('totalWon').textContent = stats.total_won;
+            document.getElementById('totalWon').textContent = stats.total_won.toFixed(2);
         } catch (error) {
             console.error('Error fetching statistics:', error);
         }

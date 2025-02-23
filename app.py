@@ -21,26 +21,26 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 
 db.init_app(app)
 
-# Import models before creating tables
-from models import SpinResult, Statistics  # noqa: E402
+from models import SpinResult, Statistics
 
 with app.app_context():
-    # Drop all tables and recreate them
     db.drop_all()
     db.create_all()
-
-    # Create initial Statistics record if it doesn't exist
     if not Statistics.query.first():
         initial_stats = Statistics()
         db.session.add(initial_stats)
         db.session.commit()
 
-# Define winning lines (The Dog House style)
+# Define winning lines (20 lines)
 WINNING_LINES = [
     # Горизонтальные линии
     [(0,0), (0,1), (0,2), (0,3), (0,4)],  # Top row
     [(1,0), (1,1), (1,2), (1,3), (1,4)],  # Middle row
     [(2,0), (2,1), (2,2), (2,3), (2,4)],  # Bottom row
+
+    # Диагональные линии
+    [(0,0), (1,1), (2,2), (1,3), (0,4)],
+    [(2,0), (1,1), (0,2), (1,3), (2,4)],
 
     # V-образные линии
     [(0,0), (1,1), (2,2), (1,3), (0,4)],
@@ -49,25 +49,193 @@ WINNING_LINES = [
     # Зигзагообразные линии
     [(0,0), (1,1), (1,2), (1,3), (0,4)],
     [(2,0), (1,1), (1,2), (1,3), (2,4)],
+    [(0,0), (0,1), (1,2), (0,3), (0,4)],
+    [(2,0), (2,1), (1,2), (2,3), (2,4)],
 
-    # W-образные линии
-    [(0,0), (2,1), (1,2), (2,3), (0,4)],
-    [(2,0), (0,1), (1,2), (0,3), (2,4)],
-
-    # Диагональные линии
-    [(0,0), (1,1), (2,2), (1,3), (0,4)],
-    [(2,0), (1,1), (0,2), (1,3), (2,4)]
+    # Дополнительные линии
+    [(1,0), (0,1), (0,2), (0,3), (1,4)],
+    [(1,0), (2,1), (2,2), (2,3), (1,4)],
+    [(0,0), (2,1), (2,2), (2,3), (0,4)],
+    [(2,0), (0,1), (0,2), (0,3), (2,4)],
+    [(1,0), (0,1), (1,2), (0,3), (1,4)],
+    [(1,0), (2,1), (1,2), (2,3), (1,4)],
+    [(0,0), (1,1), (2,2), (1,3), (1,4)],
+    [(2,0), (1,1), (0,2), (1,3), (1,4)],
+    [(1,0), (1,1), (0,2), (1,3), (1,4)]
 ]
 
 @app.route('/')
 def index():
     if 'credits' not in session:
-        session['credits'] = 1000  # Starting credits
+        session['credits'] = 1000
     if 'bonus_spins' not in session:
         session['bonus_spins'] = 0
     if 'wild_positions' not in session:
         session['wild_positions'] = []
     return render_template('index.html', credits=session['credits'])
+
+@app.route('/spin', methods=['POST'])
+def spin():
+    if 'credits' not in session:
+        return jsonify({'error': 'Session expired'}), 400
+
+    # Symbols configuration
+    low_symbols = ['10', 'J', 'Q', 'K', 'A']
+    high_symbols = ['dog1', 'dog2', 'dog3', 'toy1', 'toy2']
+    special_symbols = ['wild', 'scatter']
+
+    all_symbols = low_symbols + high_symbols
+    if not session.get('bonus_spins', 0):
+        all_symbols.extend(special_symbols)
+
+    try:
+        bet = float(request.form.get('bet', 0.20))
+        is_bonus_spin = bool(session.get('bonus_spins', 0))
+        is_respin = bool(request.form.get('is_respin', False))
+
+        # Get or create statistics
+        stats = Statistics.query.first()
+        if not stats:
+            stats = Statistics()
+            db.session.add(stats)
+
+        if not is_bonus_spin and not is_respin:
+            if bet < 0.20 or bet > 100:
+                return jsonify({'error': 'Invalid bet amount'}), 400
+            if session['credits'] < bet:
+                return jsonify({'error': 'Insufficient credits'}), 400
+            session['credits'] = session['credits'] - bet
+
+            stats.total_spins += 1
+            stats.total_bet += bet
+
+        # Generate result
+        result = []
+        wild_positions = session.get('wild_positions', []) if is_bonus_spin else []
+
+        for i in range(3):
+            row = []
+            for j in range(5):
+                if is_bonus_spin and [i, j] in wild_positions:
+                    row.append('wild')
+                else:
+                    if random.random() < 0.15 and not is_respin:  # 15% chance for wild
+                        symbol = 'wild'
+                        if is_bonus_spin:
+                            wild_positions.append([i, j])
+                    else:
+                        symbol = random.choice(all_symbols)
+                    row.append(symbol)
+            result.append(row)
+
+        if is_bonus_spin:
+            session['wild_positions'] = wild_positions
+
+        # Calculate winnings
+        winnings = 0
+        bonus_spins = 0
+        needs_respin = False
+        winning_lines_count = 0
+
+        if not is_bonus_spin:
+            scatter_count = sum(row.count('scatter') for row in result)
+            if scatter_count >= 3:
+                bonus_spins = scatter_count * 5  # 5 free spins per scatter
+                session['bonus_spins'] = session.get('bonus_spins', 0) + bonus_spins
+                session['wild_positions'] = []
+
+        # Calculate line wins
+        winning_lines_data = []
+        for line in WINNING_LINES:
+            matches = 1
+            first_symbol = result[line[0][0]][line[0][1]]
+            if first_symbol == 'scatter':
+                continue
+
+            for i in range(1, len(line)):
+                current_pos = line[i]
+                current_symbol = result[current_pos[0]][current_pos[1]]
+                if current_symbol == 'wild' or first_symbol == 'wild' or current_symbol == first_symbol:
+                    matches += 1
+                else:
+                    break
+
+            if matches >= 3:
+                winning_lines_count += 1
+                winning_lines_data.append(line[:matches])
+
+                # Updated multipliers for 96.51% RTP
+                multipliers = {
+                    # Low paying symbols (3, 4, 5 matches)
+                    '10': [5, 25, 100],
+                    'J': [5, 25, 100],
+                    'Q': [10, 50, 200],
+                    'K': [15, 75, 300],
+                    'A': [20, 100, 400],
+
+                    # High paying symbols
+                    'dog1': [25, 125, 500],
+                    'dog2': [40, 200, 800],
+                    'dog3': [50, 250, 1000],
+                    'toy1': [30, 150, 600],
+                    'toy2': [35, 175, 700],
+
+                    # Special symbols
+                    'wild': [50, 250, 1000],
+                }
+
+                symbol_type = first_symbol if first_symbol != 'wild' else 'wild'
+                win_multiplier = multipliers.get(symbol_type, [5, 25, 100])[matches - 3]
+                win_amount = bet * win_multiplier
+                winnings += win_amount
+
+        if not is_respin:
+            session['credits'] = float(session['credits'] + winnings)
+
+        if is_bonus_spin:
+            session['bonus_spins'] = max(0, session['bonus_spins'] - 1)
+
+        session.modified = True
+
+        if winnings > 0:
+            stats.total_wins += 1
+            stats.total_won += winnings
+            if winnings > stats.biggest_win:
+                stats.biggest_win = winnings
+
+        if bonus_spins > 0:
+            stats.total_bonus_games += 1
+
+        stats.last_updated = datetime.utcnow()
+        db.session.commit()
+
+        spin_result = SpinResult(
+            bet_amount=bet,
+            win_amount=winnings,
+            result_matrix=json.dumps(result),
+            bonus_spins_awarded=bonus_spins,
+            is_bonus_spin=is_bonus_spin,
+            wild_positions=json.dumps(wild_positions),
+            is_respin=is_respin,
+            winning_lines=winning_lines_count,
+            symbol_counts=json.dumps({symbol: sum(row.count(symbol) for row in result) for symbol in all_symbols})
+        )
+        db.session.add(spin_result)
+        db.session.commit()
+
+        return jsonify({
+            'result': result,
+            'winnings': winnings,
+            'credits': session['credits'],
+            'bonus_spins_awarded': bonus_spins,
+            'bonus_spins_remaining': session.get('bonus_spins', 0),
+            'needs_respin': needs_respin,
+            'wild_positions': wild_positions,
+            'winning_lines': winning_lines_data
+        })
+    except Exception as e:
+        print(f"Error during spin: {str(e)}")
+        return jsonify({'error': 'An error occurred during spin'}), 400
 
 @app.route('/statistics')
 def get_statistics():
@@ -87,158 +255,3 @@ def get_statistics():
         'rtp': round((stats.total_won / stats.total_bet * 100) if stats.total_bet > 0 else 0, 2),
         'total_bonus_games': stats.total_bonus_games
     })
-
-@app.route('/spin', methods=['POST'])
-def spin():
-    if 'credits' not in session:
-        return jsonify({'error': 'Session expired'}), 400
-
-    symbols = ['dog', 'house', 'bone', 'collar', 'paw', 'wild', 'bowl', 'leash', 'toy', 'treat'] if not session.get('bonus_spins', 0) else ['dog', 'house', 'bone', 'collar', 'wild', 'bowl', 'leash', 'toy', 'treat']
-    try:
-        bet = int(request.form.get('bet', 10))
-        is_bonus_spin = bool(session.get('bonus_spins', 0))
-        is_respin = bool(request.form.get('is_respin', False))
-
-        # Get or create statistics
-        stats = Statistics.query.first()
-        if not stats:
-            stats = Statistics()
-            db.session.add(stats)
-
-        if not is_bonus_spin and not is_respin:
-            if bet < 10 or bet > 100:
-                return jsonify({'error': 'Invalid bet amount'}), 400
-            if session['credits'] < bet:
-                return jsonify({'error': 'Insufficient credits'}), 400
-            session['credits'] = session['credits'] - bet
-
-            # Update bet statistics
-            stats.total_spins += 1
-            stats.total_bet += bet
-
-        # Generate result
-        result = []
-        wild_positions = session.get('wild_positions', []) if is_bonus_spin else []
-
-        for i in range(3):
-            row = []
-            for j in range(5):
-                if is_bonus_spin and [i, j] in wild_positions:
-                    row.append('wild')
-                else:
-                    if random.random() < 0.15 and not is_respin:  # Increased wild chance to 15%
-                        symbol = 'wild'
-                        if is_bonus_spin:
-                            wild_positions.append([i, j])
-                    else:
-                        symbol = random.choice(symbols)
-                    row.append(symbol)
-            result.append(row)
-
-        if is_bonus_spin:
-            session['wild_positions'] = wild_positions
-
-        # Calculate winnings and check for respins/bonus
-        winnings = 0
-        bonus_spins = 0
-        needs_respin = False
-        winning_lines_count = 0
-
-        if not is_bonus_spin:
-            # Count scatter symbols (paw)
-            scatter_count = sum(row.count('paw') for row in result)
-            if scatter_count >= 4 and not any(result[i][4] == 'paw' for i in range(3)):
-                needs_respin = True
-            elif scatter_count >= 5:
-                bonus_spins = scatter_count * 3  # Increased bonus spins
-                session['bonus_spins'] = session.get('bonus_spins', 0) + bonus_spins
-                session['wild_positions'] = []
-
-        # Calculate line wins with increased multipliers for 97% RTP
-        winning_lines_data = []  # Store winning line positions
-        for line in WINNING_LINES:
-            matches = 1
-            first_symbol = result[line[0][0]][line[0][1]]
-            if first_symbol == 'paw':  # Skip scatter symbols for line wins
-                continue
-
-            for i in range(1, len(line)):
-                current_pos = line[i]
-                current_symbol = result[current_pos[0]][current_pos[1]]
-                if current_symbol == 'wild' or first_symbol == 'wild' or current_symbol == first_symbol:
-                    matches += 1
-                else:
-                    break
-
-            if matches >= 3:
-                winning_lines_count += 1
-                winning_lines_data.append(line[:matches])  # Store only the matching positions
-                # Updated multipliers with new symbols
-                multipliers = {
-                    'dog': [50, 100, 200],      # 3,4,5 matches
-                    'house': [25, 75, 150],
-                    'bone': [15, 50, 100],
-                    'collar': [10, 25, 75],
-                    'wild': [50, 100, 200],
-                    'bowl': [20, 60, 120],
-                    'leash': [15, 45, 90],
-                    'toy': [12, 35, 80],
-                    'treat': [10, 30, 70]
-                }
-
-                symbol_type = first_symbol if first_symbol != 'wild' else 'wild'
-                win_multiplier = multipliers.get(symbol_type, [5, 15, 50])[matches - 3]
-                win_amount = bet * win_multiplier
-                winnings += win_amount
-
-        # Add winnings to credits
-        if not is_respin:
-            session['credits'] = int(session['credits'] + winnings)
-
-        if is_bonus_spin:
-            session['bonus_spins'] = max(0, session['bonus_spins'] - 1)
-
-        # Force session to update
-        session.modified = True
-
-        # Update win statistics
-        if winnings > 0:
-            stats.total_wins += 1
-            stats.total_won += winnings
-            if winnings > stats.biggest_win:
-                stats.biggest_win = winnings
-
-        if bonus_spins > 0:
-            stats.total_bonus_games += 1
-
-        stats.last_updated = datetime.utcnow()
-        db.session.commit()
-
-        # Save spin result
-        spin_result = SpinResult(
-            bet_amount=bet,
-            win_amount=winnings,
-            result_matrix=json.dumps(result),
-            bonus_spins_awarded=bonus_spins,
-            is_bonus_spin=is_bonus_spin,
-            wild_positions=json.dumps(wild_positions),
-            is_respin=is_respin,
-            winning_lines=winning_lines_count,
-            symbol_counts=json.dumps({symbol: sum(row.count(symbol) for row in result) for symbol in symbols})
-        )
-        db.session.add(spin_result)
-        db.session.commit()
-
-        return jsonify({
-            'result': result,
-            'winnings': winnings,
-            'credits': session['credits'],
-            'bonus_spins_awarded': bonus_spins,
-            'bonus_spins_remaining': session.get('bonus_spins', 0),
-            'needs_respin': needs_respin,
-            'wild_positions': wild_positions,
-            'winning_lines': winning_lines_data  # Add winning lines to response
-        })
-    except (ValueError, TypeError) as e:
-        print(f"Error during spin: {str(e)}")
-        return jsonify({'error': 'Invalid bet amount'}), 400

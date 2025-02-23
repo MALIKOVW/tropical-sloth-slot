@@ -1,11 +1,53 @@
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
-  <symbol id="dog" viewBox="0 0 24 24">
+  <!-- Card Symbols -->
+  <symbol id="10" viewBox="0 0 24 24">
+    <rect x="2" y="2" width="20" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+    <text x="12" y="16" text-anchor="middle" font-size="12" fill="currentColor">10</text>
+  </symbol>
+
+  <symbol id="J" viewBox="0 0 24 24">
+    <rect x="2" y="2" width="20" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+    <text x="12" y="16" text-anchor="middle" font-size="12" fill="currentColor">J</text>
+  </symbol>
+
+  <symbol id="Q" viewBox="0 0 24 24">
+    <rect x="2" y="2" width="20" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+    <text x="12" y="16" text-anchor="middle" font-size="12" fill="currentColor">Q</text>
+  </symbol>
+
+  <symbol id="K" viewBox="0 0 24 24">
+    <rect x="2" y="2" width="20" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+    <text x="12" y="16" text-anchor="middle" font-size="12" fill="currentColor">K</text>
+  </symbol>
+
+  <symbol id="A" viewBox="0 0 24 24">
+    <rect x="2" y="2" width="20" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+    <text x="12" y="16" text-anchor="middle" font-size="12" fill="currentColor">A</text>
+  </symbol>
+
+  <!-- Dog Symbols -->
+  <symbol id="dog1" viewBox="0 0 24 24">
     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
     <circle cx="8" cy="9" r="1"/>
     <circle cx="16" cy="9" r="1"/>
     <path d="M12 16c-1.48 0-2.75-.81-3.45-2h6.9c-.7 1.19-1.97 2-3.45 2z"/>
   </symbol>
 
+  <symbol id="dog2" viewBox="0 0 24 24">
+    <path d="M4.5 12c0-4.42 3.58-8 8-8s8 3.58 8 8-3.58 8-8 8-8-3.58-8-8z"/>
+    <circle cx="9" cy="10" r="1.5"/>
+    <circle cx="15" cy="10" r="1.5"/>
+    <path d="M12 14c1.66 0 3 1.34 3 3H9c0-1.66 1.34-3 3-3z"/>
+  </symbol>
+
+  <symbol id="dog3" viewBox="0 0 24 24">
+    <path d="M3 12c0-4.97 4.03-9 9-9s9 4.03 9 9-4.03 9-9 9-9-4.03-9-9z"/>
+    <circle cx="10" cy="11" r="2"/>
+    <circle cx="14" cy="11" r="2"/>
+    <path d="M12 15c2.21 0 4 1.79 4 4H8c0-2.21 1.79-4 4-4z"/>
+  </symbol>
+
+  <!-- Existing Symbols -->
   <symbol id="house" viewBox="0 0 24 24">
     <path d="M12 3L4 9v12h16V9l-8-6zm6 16h-3v-6H9v6H6v-9l6-4.5 6 4.5v9z"/>
   </symbol>
@@ -27,28 +69,31 @@
     <circle cx="16" cy="12" r="2"/>
   </symbol>
 
-  <symbol id="wild" viewBox="0 0 24 24">
-    <path d="M20 4v16H4V4h16m2-2H2v20h20V2z"/>
-    <text x="12" y="16" text-anchor="middle" font-size="12" fill="currentColor">W</text>
-  </symbol>
-
-  <!-- New Symbols -->
-  <symbol id="bowl" viewBox="0 0 24 24">
-    <path d="M20 12c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v2c0 3.31 2.69 6 6 6h4c3.31 0 6-2.69 6-6v-2zm-2 2c0 2.21-1.79 4-4 4h-4c-2.21 0-4-1.79-4-4v-2h12v2z"/>
-  </symbol>
-
   <symbol id="leash" viewBox="0 0 24 24">
     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
     <path d="M12 6v12" stroke="currentColor" stroke-width="2"/>
   </symbol>
 
-  <symbol id="toy" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="8"/>
-    <path d="M12 8v8M8 12h8" stroke="white" stroke-width="2"/>
+
+  <!-- Toy Symbols -->
+  <symbol id="toy1" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2"/>
   </symbol>
 
-  <symbol id="treat" viewBox="0 0 24 24">
-    <rect x="6" y="6" width="12" height="12" rx="2"/>
-    <circle cx="12" cy="12" r="2"/>
+  <symbol id="toy2" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="6"/>
+    <path d="M12 6v12M6 12h12" stroke="white" stroke-width="2"/>
+  </symbol>
+
+  <!-- Special Symbols -->
+  <symbol id="wild" viewBox="0 0 24 24">
+    <path d="M12 3L4 9v12h16V9l-8-6zm6 16h-3v-6H9v6H6v-9l6-4.5 6 4.5v9z"/>
+    <text x="12" y="20" text-anchor="middle" font-size="8" fill="currentColor">WILD</text>
+  </symbol>
+
+  <symbol id="scatter" viewBox="0 0 24 24">
+    <path d="M8 3C6.34 3 5 4.34 5 6c0 1.66 1.34 3 3 3h8c1.66 0 3-1.34 3-3 0-1.66-1.34-3-3-3H8zm0 2h8c.55 0 1 .45 1 1s-.45 1-1 1H8c-.55 0-1-.45-1-1s.45-1 1-1z"/>
+    <text x="12" y="20" text-anchor="middle" font-size="8" fill="currentColor">FREE SPINS</text>
   </symbol>
 </svg>
