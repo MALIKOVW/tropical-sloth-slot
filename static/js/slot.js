@@ -3,6 +3,7 @@ class SlotMachine {
         this.canvas = document.getElementById('slotCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.symbols = ['dog', 'house', 'bone', 'collar', 'paw'];
+        // Initialize with 5 reels, 3 rows each
         this.reels = Array(5).fill().map(() => Array(3).fill('dog'));
         this.spinning = false;
         this.currentBet = 10;
@@ -25,8 +26,8 @@ class SlotMachine {
     resizeCanvas() {
         const container = this.canvas.parentElement;
         const containerWidth = container.clientWidth;
-        this.canvas.width = Math.min(800, containerWidth - 40); // 40px for padding
-        this.canvas.height = this.canvas.width * 0.75; // maintain 4:3 ratio
+        this.canvas.width = Math.min(800, containerWidth - 40);
+        this.canvas.height = this.canvas.width * 0.75;
         this.draw();
     }
 
@@ -57,14 +58,11 @@ class SlotMachine {
         audio.playSpinSound();
 
         try {
-            // Animate spinning
             await this.animateSpin();
 
-            // Create form data
             const formData = new FormData();
             formData.append('bet', this.currentBet);
 
-            // Make server request
             const response = await fetch('/spin', {
                 method: 'POST',
                 body: formData
@@ -74,22 +72,28 @@ class SlotMachine {
 
             if (result.error) {
                 alert(result.error);
-                this.spinning = false;
-                document.getElementById('spinButton').disabled = false;
                 return;
             }
 
-            // Update display
-            this.reels = result.result;
-            document.getElementById('creditDisplay').textContent = result.credits;
+            // Ensure result.result is a 2D array with 5 reels and 3 rows
+            if (Array.isArray(result.result) && result.result.length === 3) {
+                // Convert server's row-major format to column-major (reels)
+                this.reels = Array(5).fill().map((_, i) => 
+                    result.result.map(row => row[i] || this.symbols[0])
+                );
+            } else {
+                console.error('Invalid result format:', result.result);
+                this.reels = Array(5).fill().map(() => Array(3).fill(this.symbols[0]));
+            }
 
-            // Update statistics
-            this.updateStats(result.winnings);
+            document.getElementById('creditDisplay').textContent = result.credits;
 
             if (result.winnings > 0) {
                 audio.playWinSound();
                 this.showWinAnimation(result.winnings);
             }
+
+            this.updateStats(result.winnings);
         } catch (error) {
             console.error('Error during spin:', error);
             alert('An error occurred during spin. Please try again.');
@@ -103,12 +107,13 @@ class SlotMachine {
 
     async animateSpin() {
         const frames = 30;
-        const duration = 2000; // 2 seconds
+        const duration = 2000;
         const frameTime = duration / frames;
 
         for (let i = 0; i < frames; i++) {
-            this.reels = this.reels.map(reel => 
-                reel.map(() => this.symbols[Math.floor(Math.random() * this.symbols.length)])
+            // Ensure 5 reels during animation
+            this.reels = Array(5).fill().map(() => 
+                Array(3).fill().map(() => this.symbols[Math.floor(Math.random() * this.symbols.length)])
             );
             this.draw();
             await new Promise(resolve => setTimeout(resolve, frameTime));
@@ -146,14 +151,14 @@ class SlotMachine {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Calculate symbol size and padding based on canvas size
-        const reelWidth = this.canvas.width / 5; // 5 reels
-        const symbolSize = reelWidth * 0.8; // 80% of reel width
+        const reelWidth = this.canvas.width / 5;
+        const symbolSize = reelWidth * 0.8;
         const horizontalPadding = (reelWidth - symbolSize) / 2;
         const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
 
         // Draw each symbol
         for (let i = 0; i < this.reels.length; i++) {
-            for (let j = 0; j < this.reels[i].length; j++) {
+            for (let j = 0; j < 3; j++) {
                 const x = i * reelWidth + horizontalPadding;
                 const y = j * (symbolSize + verticalPadding) + verticalPadding;
 
@@ -167,14 +172,12 @@ class SlotMachine {
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
 
-                const symbol = this.reels[i][j];
-                if (symbol) {
-                    this.ctx.fillText(
-                        this.getSymbolEmoji(symbol),
-                        x + symbolSize/2,
-                        y + symbolSize/2
-                    );
-                }
+                const symbol = this.reels[i] && this.reels[i][j] ? this.reels[i][j] : this.symbols[0];
+                this.ctx.fillText(
+                    this.getSymbolEmoji(symbol),
+                    x + symbolSize/2,
+                    y + symbolSize/2
+                );
             }
         }
     }
