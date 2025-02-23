@@ -60,10 +60,10 @@ body {
 .game-field-wrapper {
     position: relative;
     width: 100%;
-    max-width: 1024px;
+    max-width: 800px;
     margin: 20px auto;
     padding: 20px;
-    min-height: 600px;
+    min-height: 500px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -71,17 +71,17 @@ body {
 
 .rick-morty-frame {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% + 40px);
+    height: calc(100% + 40px);
+    z-index: 3;
     pointer-events: none;
     background-image: url('../images/rick-morty-frame.png'); /* Added image URL */
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-
 }
 
 .game-field-wrapper canvas {
@@ -550,10 +550,14 @@ h1 {
     color: #fff;
 }
 
+/* Symbol size standardization */
 .symbol {
-    width: 100%;
-    height: 100%;
-    display: block;
+    width: 120px; /* According to slot standards */
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px; /* Adding padding between symbols */
 }
 
 .symbol svg {
@@ -749,9 +753,4 @@ h1 {
     text-shadow: 0 0 25px rgba(0, 255, 157, 0.6);
     font-weight: bold;
     margin: 10px 0;
-}
-.game-wrapper {
-    padding: 20px;
-    max-width: 1440px; 
-    margin: 0 auto;
 }
