@@ -62,9 +62,9 @@ body {
     width: 100%;
     max-width: 1440px;
     margin: 0 auto;
-    padding: 60px 40px;
+    padding: 40px;
     background-image: url('/static/images/rick-morty-frame.png');
-    background-size: 100% 100%;
+    background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
 }
@@ -74,13 +74,13 @@ body {
     height: auto;
     display: block;
     margin: 0 auto;
+    border-radius: 10px;
 }
-
 
 /* Update existing game container styles */
 .game-container {
-    max-width: 1440px; /* Maximum width as per standards */
-    min-width: 800px; /* Minimum width as per standards */
+    max-width: 1440px;
+    min-width: 800px;
     margin: 0 auto;
     padding: 20px;
 }
@@ -733,6 +733,6 @@ h1 {
 }
 .game-wrapper {
     padding: 20px;
-    max-width: 1440px; /* Maximum width as per standards */
+    max-width: 1440px; 
     margin: 0 auto;
 }
