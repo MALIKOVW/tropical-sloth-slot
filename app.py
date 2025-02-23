@@ -20,6 +20,9 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 
 db.init_app(app)
 
+# Import models before creating tables
+from models import SpinResult  # noqa: E402
+
 @app.route('/')
 def index():
     if 'credits' not in session:
@@ -61,7 +64,6 @@ def spin():
         if bonus_spins > 0:
             session['bonus_spins'] = session.get('bonus_spins', 0) + bonus_spins
 
-        from models import SpinResult
         spin_result = SpinResult(
             bet_amount=bet,
             win_amount=winnings,
@@ -108,4 +110,6 @@ def calculate_winnings(result, bet):
     return winnings, bonus_spins
 
 with app.app_context():
+    # Drop all tables and recreate them
+    db.drop_all()
     db.create_all()
