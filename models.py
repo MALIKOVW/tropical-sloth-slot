@@ -9,3 +9,5 @@ class SpinResult(db.Model):
     result_matrix = db.Column(db.String(255), nullable=False)
     bonus_spins_awarded = db.Column(db.Integer, default=0)
     is_bonus_spin = db.Column(db.Boolean, default=False)
+    wild_positions = db.Column(db.String(255), nullable=True)  # JSON string storing wild positions
+    is_respin = db.Column(db.Boolean, default=False)

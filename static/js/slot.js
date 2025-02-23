@@ -2,11 +2,12 @@ class SlotMachine {
     constructor() {
         this.canvas = document.getElementById('slotCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.symbols = ['dog', 'house', 'bone', 'collar', 'paw'];
+        this.symbols = ['dog', 'house', 'bone', 'collar', 'paw', 'wild'];
         this.reels = Array(5).fill().map(() => Array(3).fill('dog'));
         this.spinning = false;
         this.currentBet = 10;
         this.bonusSpinsRemaining = 0;
+        this.wildPositions = [];
         this.stats = {
             totalSpins: 0,
             totalWins: 0,
@@ -53,11 +54,11 @@ class SlotMachine {
         }
     }
 
-    async spin() {
+    async spin(isRespin = false) {
         if (this.spinning) return;
 
         const credits = parseInt(document.getElementById('creditDisplay').textContent);
-        if (!this.bonusSpinsRemaining && credits < this.currentBet) {
+        if (!this.bonusSpinsRemaining && !isRespin && credits < this.currentBet) {
             alert('Insufficient credits!');
             return;
         }
@@ -71,6 +72,7 @@ class SlotMachine {
 
             const formData = new FormData();
             formData.append('bet', this.currentBet);
+            formData.append('is_respin', isRespin);
 
             const response = await fetch('/spin', {
                 method: 'POST',
@@ -95,9 +97,15 @@ class SlotMachine {
 
             document.getElementById('creditDisplay').textContent = result.credits;
 
+            if (result.needs_respin) {
+                await this.showRespinAnimation();
+                await this.spin(true);
+            }
+
             if (result.bonus_spins_awarded > 0) {
                 this.showBonusAnimation(result.bonus_spins_awarded);
                 this.bonusSpinsRemaining = result.bonus_spins_remaining;
+                this.wildPositions = result.wild_positions || [];
                 this.updateBonusDisplay();
             }
 
@@ -116,6 +124,15 @@ class SlotMachine {
             document.getElementById('spinButton').disabled = false;
             this.draw();
         }
+    }
+
+    async showRespinAnimation() {
+        const message = document.createElement('div');
+        message.className = 'win-animation respin-message';
+        message.textContent = 'RESPIN!';
+        document.body.appendChild(message);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        message.remove();
     }
 
     async animateSpin() {
@@ -156,6 +173,7 @@ class SlotMachine {
         document.body.appendChild(winDisplay);
         setTimeout(() => winDisplay.remove(), 2000);
     }
+
     showBonusAnimation(spinsAwarded) {
         const bonusMessage = document.createElement('div');
         bonusMessage.className = 'win-animation bonus-award';
@@ -180,6 +198,9 @@ class SlotMachine {
                 const y = j * (symbolSize + verticalPadding) + verticalPadding;
 
                 this.ctx.fillStyle = '#444';
+                if (this.bonusSpinsRemaining > 0 && this.wildPositions.some(pos => pos[0] === j && pos[1] === i)) {
+                    this.ctx.fillStyle = '#664400';
+                }
                 this.ctx.fillRect(x, y, symbolSize, symbolSize);
 
                 this.ctx.fillStyle = '#fff';
@@ -203,7 +224,8 @@ class SlotMachine {
             'house': '🏠',
             'bone': '🦴',
             'collar': '📿',
-            'paw': '🐾'
+            'paw': '🐾',
+            'wild': '⭐'
         };
         return emojiMap[symbol] || symbol;
     }
