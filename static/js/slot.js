@@ -3,10 +3,10 @@ class SlotMachine {
         this.canvas = document.getElementById('slotCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.symbols = ['dog', 'house', 'bone', 'collar', 'paw'];
-        // Initialize with 5 reels, 3 rows each
         this.reels = Array(5).fill().map(() => Array(3).fill('dog'));
         this.spinning = false;
         this.currentBet = 10;
+        this.bonusSpinsRemaining = 0;
         this.stats = {
             totalSpins: 0,
             totalWins: 0,
@@ -15,11 +15,10 @@ class SlotMachine {
             totalWon: 0
         };
 
-        // Set canvas size based on container width
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
-
         this.initializeEventListeners();
+        this.updateBonusDisplay();
         this.draw();
     }
 
@@ -44,11 +43,21 @@ class SlotMachine {
         audio.playClickSound();
     }
 
+    updateBonusDisplay() {
+        const bonusDisplay = document.getElementById('bonusSpinsCount');
+        if (this.bonusSpinsRemaining > 0) {
+            bonusDisplay.textContent = `Free Spins: ${this.bonusSpinsRemaining}`;
+            bonusDisplay.style.display = 'inline-block';
+        } else {
+            bonusDisplay.style.display = 'none';
+        }
+    }
+
     async spin() {
         if (this.spinning) return;
 
         const credits = parseInt(document.getElementById('creditDisplay').textContent);
-        if (credits < this.currentBet) {
+        if (!this.bonusSpinsRemaining && credits < this.currentBet) {
             alert('Insufficient credits!');
             return;
         }
@@ -75,9 +84,7 @@ class SlotMachine {
                 return;
             }
 
-            // Ensure result.result is a 2D array with 5 reels and 3 rows
             if (Array.isArray(result.result) && result.result.length === 3) {
-                // Convert server's row-major format to column-major (reels)
                 this.reels = Array(5).fill().map((_, i) => 
                     result.result.map(row => row[i] || this.symbols[0])
                 );
@@ -87,6 +94,12 @@ class SlotMachine {
             }
 
             document.getElementById('creditDisplay').textContent = result.credits;
+
+            if (result.bonus_spins_awarded > 0) {
+                this.showBonusAnimation(result.bonus_spins_awarded);
+                this.bonusSpinsRemaining = result.bonus_spins_remaining;
+                this.updateBonusDisplay();
+            }
 
             if (result.winnings > 0) {
                 audio.playWinSound();
@@ -111,7 +124,6 @@ class SlotMachine {
         const frameTime = duration / frames;
 
         for (let i = 0; i < frames; i++) {
-            // Ensure 5 reels during animation
             this.reels = Array(5).fill().map(() => 
                 Array(3).fill().map(() => this.symbols[Math.floor(Math.random() * this.symbols.length)])
             );
@@ -144,29 +156,32 @@ class SlotMachine {
         document.body.appendChild(winDisplay);
         setTimeout(() => winDisplay.remove(), 2000);
     }
+    showBonusAnimation(spinsAwarded) {
+        const bonusMessage = document.createElement('div');
+        bonusMessage.className = 'win-animation bonus-award';
+        bonusMessage.textContent = `${spinsAwarded} FREE SPINS!`;
+        document.body.appendChild(bonusMessage);
+        setTimeout(() => bonusMessage.remove(), 2000);
+    }
 
     draw() {
         if (!this.ctx || !this.canvas) return;
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Calculate symbol size and padding based on canvas size
         const reelWidth = this.canvas.width / 5;
         const symbolSize = reelWidth * 0.8;
         const horizontalPadding = (reelWidth - symbolSize) / 2;
         const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
 
-        // Draw each symbol
         for (let i = 0; i < this.reels.length; i++) {
             for (let j = 0; j < 3; j++) {
                 const x = i * reelWidth + horizontalPadding;
                 const y = j * (symbolSize + verticalPadding) + verticalPadding;
 
-                // Draw symbol background
                 this.ctx.fillStyle = '#444';
                 this.ctx.fillRect(x, y, symbolSize, symbolSize);
 
-                // Draw symbol
                 this.ctx.fillStyle = '#fff';
                 this.ctx.font = `${symbolSize * 0.6}px Arial`;
                 this.ctx.textAlign = 'center';
@@ -194,7 +209,6 @@ class SlotMachine {
     }
 }
 
-// Initialize the slot machine when the page loads
 window.addEventListener('load', () => {
     audio.init();
     const slot = new SlotMachine();

@@ -117,3 +117,27 @@ body {
         transform: translate(-50%, -100%);
     }
 }
+
+/* Добавляем стили для бонусной информации */
+.bonus-info {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+}
+
+.bonus-info .badge {
+    font-size: 1.2em;
+    padding: 8px 16px;
+}
+
+/* Добавляем анимацию для бонусных выигрышей */
+@keyframes bonusAward {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.bonus-award {
+    animation: bonusAward 0.5s ease-in-out;
+}

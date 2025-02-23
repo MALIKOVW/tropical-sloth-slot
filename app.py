@@ -2,6 +2,8 @@ import os
 from flask import Flask, render_template, jsonify, session, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
+import random
+import json
 
 class Base(DeclarativeBase):
     pass
@@ -22,27 +24,28 @@ db.init_app(app)
 def index():
     if 'credits' not in session:
         session['credits'] = 1000  # Starting credits
-    return render_template('index.html', credits=session['credits'])
+    if 'bonus_spins' not in session:
+        session['bonus_spins'] = 0
+    return render_template('index.html', credits=session['credits'], bonus_spins=session['bonus_spins'])
 
 @app.route('/spin', methods=['POST'])
 def spin():
-    import random
-
     if 'credits' not in session:
         return jsonify({'error': 'Session expired'}), 400
 
     symbols = ['dog', 'house', 'bone', 'collar', 'paw']
     try:
         bet = int(request.form.get('bet', 10))
+        is_bonus_spin = bool(session.get('bonus_spins', 0))
 
-        if bet < 10 or bet > 100:
-            return jsonify({'error': 'Invalid bet amount'}), 400
-
-        if session['credits'] < bet:
-            return jsonify({'error': 'Insufficient credits'}), 400
-
-        # Deduct bet
-        session['credits'] -= bet
+        if not is_bonus_spin:
+            if bet < 10 or bet > 100:
+                return jsonify({'error': 'Invalid bet amount'}), 400
+            if session['credits'] < bet:
+                return jsonify({'error': 'Insufficient credits'}), 400
+            session['credits'] -= bet
+        else:
+            session['bonus_spins'] -= 1
 
         # Generate result
         result = [
@@ -51,20 +54,39 @@ def spin():
             [random.choice(symbols) for _ in range(5)]
         ]
 
-        # Calculate winnings
-        winnings = calculate_winnings(result, bet)
+        # Calculate winnings and bonus spins
+        winnings, bonus_spins = calculate_winnings(result, bet)
         session['credits'] += winnings
+
+        if bonus_spins > 0:
+            session['bonus_spins'] = session.get('bonus_spins', 0) + bonus_spins
+
+        from models import SpinResult
+        spin_result = SpinResult(
+            bet_amount=bet,
+            win_amount=winnings,
+            result_matrix=json.dumps(result),
+            bonus_spins_awarded=bonus_spins,
+            is_bonus_spin=is_bonus_spin
+        )
+        db.session.add(spin_result)
+        db.session.commit()
 
         return jsonify({
             'result': result,
             'winnings': winnings,
-            'credits': session['credits']
+            'credits': session['credits'],
+            'bonus_spins_awarded': bonus_spins,
+            'bonus_spins_remaining': session.get('bonus_spins', 0)
         })
     except (ValueError, TypeError):
         return jsonify({'error': 'Invalid bet amount'}), 400
 
 def calculate_winnings(result, bet):
-    # Simple winning logic - matches on middle row
+    winnings = 0
+    bonus_spins = 0
+
+    # Check middle row for regular wins
     middle_row = result[1]
     matches = 1
     symbol = middle_row[0]
@@ -76,8 +98,14 @@ def calculate_winnings(result, bet):
             break
 
     if matches >= 3:
-        return bet * (matches * 2)
-    return 0
+        winnings = bet * (matches * 2)
+
+    # Check for bonus game trigger (3 or more 'paw' symbols anywhere)
+    paw_count = sum(row.count('paw') for row in result)
+    if paw_count >= 3:
+        bonus_spins = paw_count * 2  # 2 free spins per paw symbol
+
+    return winnings, bonus_spins
 
 with app.app_context():
     db.create_all()

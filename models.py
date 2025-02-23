@@ -7,3 +7,5 @@ class SpinResult(db.Model):
     bet_amount = db.Column(db.Integer, nullable=False)
     win_amount = db.Column(db.Integer, nullable=False)
     result_matrix = db.Column(db.String(255), nullable=False)
+    bonus_spins_awarded = db.Column(db.Integer, default=0)
+    is_bonus_spin = db.Column(db.Boolean, default=False)
