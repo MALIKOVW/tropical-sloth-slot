@@ -256,40 +256,43 @@ class SlotMachine {
         paylineContainer.className = 'payline-group';
         this.paylineContainer.appendChild(paylineContainer);
 
-        // Highlight symbols first
-        const highlightedSymbols = [];
-        for (const [row, col] of line) {
-            const symbol = document.createElement('div');
-            symbol.className = 'symbol-highlight';
-            symbol.style.left = `${col * reelWidth + horizontalPadding}px`;
-            symbol.style.top = `${row * (symbolSize + verticalPadding) + verticalPadding}px`;
-            symbol.style.width = `${symbolSize}px`;
-            symbol.style.height = `${symbolSize}px`;
-            paylineContainer.appendChild(symbol);
-            highlightedSymbols.push(symbol);
-        }
-
-        // Create and animate payline
+        // Calculate positions for connected line first
         if (line.length >= 2) {
-            const firstSymbol = line[0];
-            const lastSymbol = line[line.length - 1];
+            const points = line.map(([row, col]) => ({
+                x: col * reelWidth + horizontalPadding + symbolSize / 2,
+                y: row * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2
+            }));
 
-            const startX = firstSymbol[1] * reelWidth + horizontalPadding + symbolSize / 2;
-            const startY = firstSymbol[0] * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2;
-            const endX = lastSymbol[1] * reelWidth + horizontalPadding + symbolSize / 2;
-            const endY = lastSymbol[0] * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2;
+            // Create connecting lines between each consecutive pair of points
+            for (let i = 0; i < points.length - 1; i++) {
+                const start = points[i];
+                const end = points[i + 1];
 
-            const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
-            const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+                const length = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+                const angle = Math.atan2(end.y - start.y, end.x - start.x) * 180 / Math.PI;
 
-            const payline = document.createElement('div');
-            payline.className = 'payline';
-            payline.style.width = `${length}px`;
-            payline.style.left = `${startX}px`;
-            payline.style.top = `${startY}px`;
-            payline.style.transform = `rotate(${angle}deg)`;
-            paylineContainer.appendChild(payline);
+                const payline = document.createElement('div');
+                payline.className = 'payline';
+                payline.style.width = `${length}px`;
+                payline.style.left = `${start.x}px`;
+                payline.style.top = `${start.y}px`;
+                payline.style.transform = `rotate(${angle}deg)`;
+                paylineContainer.appendChild(payline);
+            }
         }
+
+        // Add symbol highlights with slight delay
+        setTimeout(() => {
+            for (const [row, col] of line) {
+                const symbol = document.createElement('div');
+                symbol.className = 'symbol-highlight';
+                symbol.style.left = `${col * reelWidth + horizontalPadding}px`;
+                symbol.style.top = `${row * (symbolSize + verticalPadding) + verticalPadding}px`;
+                symbol.style.width = `${symbolSize}px`;
+                symbol.style.height = `${symbolSize}px`;
+                paylineContainer.appendChild(symbol);
+            }
+        }, 200);
 
         // Play win sound for this line
         audio.playWinSound();
