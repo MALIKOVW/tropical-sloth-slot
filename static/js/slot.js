@@ -3,7 +3,6 @@ class SlotMachine {
         this.canvas = document.getElementById('slotCanvas');
         this.ctx = this.canvas.getContext('2d');
 
-        // Updated symbols list
         this.lowSymbols = ['10', 'J', 'Q', 'K', 'A'];
         this.highSymbols = ['dog1', 'dog2', 'dog3', 'toy1', 'toy2'];
         this.specialSymbols = ['wild', 'scatter'];
@@ -22,11 +21,11 @@ class SlotMachine {
             totalWon: 0
         };
 
-        // Initialize
         this.resizeCanvas();
         this.draw();
         window.addEventListener('resize', () => this.resizeCanvas());
         this.initializeEventListeners();
+        this.initializeNewEventListeners();
         this.updateBonusDisplay();
         this.fetchStatistics();
         setInterval(() => this.fetchStatistics(), 60000);
@@ -35,12 +34,22 @@ class SlotMachine {
         this.paylineContainer = document.createElement('div');
         this.paylineContainer.id = 'paylineContainer';
         document.querySelector('.game-container').appendChild(this.paylineContainer);
+
+        this.turboMode = false;
+        this.autoSpinning = false;
+        this.autoSpinCount = 0;
+        this.stopBalance = 0;
+        this.spinDelay = 50; 
+        this.turboDelay = 25; 
+
+        this.autoSpinModal = new bootstrap.Modal(document.getElementById('autoSpinModal'));
+        this.buyFreespinsModal = new bootstrap.Modal(document.getElementById('buyFreespinsModal'));
     }
 
     initializeEventListeners() {
         const spinButton = document.getElementById('spinButton');
         if (spinButton) {
-            spinButton.textContent = 'SPIN';  // Add text to button
+            spinButton.textContent = 'SPIN';  
             spinButton.addEventListener('click', () => this.spin());
         }
 
@@ -48,6 +57,48 @@ class SlotMachine {
         document.getElementById('decreaseBet').textContent = '-';
         document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(0.10));
         document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-0.10));
+    }
+
+    initializeNewEventListeners() {
+        document.getElementById('turboSpinBtn').addEventListener('click', () => {
+            this.turboMode = !this.turboMode;
+            const btn = document.getElementById('turboSpinBtn');
+            btn.classList.toggle('active');
+            this.spinDelay = this.turboMode ? this.turboDelay : 50;
+        });
+
+        document.getElementById('autoSpinBtn').addEventListener('click', () => {
+            if (this.autoSpinning) {
+                this.stopAutoSpin();
+            } else {
+                this.autoSpinModal.show();
+            }
+        });
+
+        document.getElementById('startAutoSpin').addEventListener('click', () => {
+            const selectedCount = document.querySelector('input[name="autoSpinCount"]:checked');
+            const stopBalance = document.getElementById('stopBalance').value;
+
+            if (!selectedCount) {
+                alert('Please select number of spins');
+                return;
+            }
+
+            this.autoSpinCount = parseInt(selectedCount.value);
+            this.stopBalance = parseFloat(stopBalance) || 0;
+            this.autoSpinModal.hide();
+            this.startAutoSpin();
+        });
+
+        document.getElementById('buyFreespinsBtn').addEventListener('click', () => {
+            const cost = this.currentBet * 10;
+            document.getElementById('freespinsCost').textContent = cost.toFixed(2);
+            this.buyFreespinsModal.show();
+        });
+
+        document.getElementById('confirmBuyFreespins').addEventListener('click', () => {
+            this.buyFreespins();
+        });
     }
 
     getSymbolDisplay(symbol) {
@@ -61,17 +112,14 @@ class SlotMachine {
     }
 
     drawSymbol(symbol, x, y, size) {
-        // Background for symbol
         this.ctx.fillStyle = 'rgba(51, 51, 51, 0.2)';
         this.ctx.beginPath();
         this.ctx.roundRect(x, y, size, size, 10);
         this.ctx.fill();
 
-        // Symbol text with gradient
         this.ctx.save();
         const gradient = this.ctx.createLinearGradient(x, y, x + size, y + size);
 
-        // Different colors for different symbol types
         if (this.lowSymbols.includes(symbol)) {
             gradient.addColorStop(0, '#4a90e2');
             gradient.addColorStop(1, '#2171cd');
@@ -91,13 +139,11 @@ class SlotMachine {
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
 
-        // Draw symbol with outer glow
         this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
         this.ctx.shadowBlur = 10;
         this.ctx.fillText(this.getSymbolDisplay(symbol), x + size/2, y + size/2);
         this.ctx.restore();
 
-        // Add special effects for wild and scatter
         if (symbol === 'wild' || symbol === 'scatter') {
             this.ctx.save();
             this.ctx.strokeStyle = symbol === 'wild' ? '#ff9f43' : '#95a5a6';
@@ -140,9 +186,6 @@ class SlotMachine {
 
         const imagePromises = this.symbols.map(loadImage);
         const loadedImages = await Promise.all(imagePromises);
-        //loadedImages.forEach(([symbol, img]) => {
-        //    this.symbolImages[symbol] = img;
-        //});
     }
     loadSymbols() {
         fetch('/static/svg/symbols.svg')
@@ -260,8 +303,8 @@ class SlotMachine {
     }
 
     async animateSpin() {
-        const totalSteps = 20;
-        const stepDelay = 50;
+        const totalSteps = this.turboMode ? 10 : 20;
+        const stepDelay = this.turboMode ? this.turboDelay : this.spinDelay;
         const reelDelay = 4;
 
         const reelStates = Array(5).fill().map(() => ({
@@ -364,7 +407,6 @@ class SlotMachine {
         const horizontalPadding = (reelWidth - symbolSize) / 2;
         const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
 
-        // Получаем позицию канваса для корректного позиционирования подсветки
         const canvasRect = this.canvas.getBoundingClientRect();
 
         if (line.length >= 2) {
@@ -391,7 +433,6 @@ class SlotMachine {
             }
         }
 
-        // Подсветка символов с учетом позиции канваса
         for (const [row, col] of line) {
             const x = col * reelWidth + horizontalPadding + canvasRect.left;
             const y = row * (symbolSize + verticalPadding) + verticalPadding + canvasRect.top;
@@ -436,6 +477,81 @@ class SlotMachine {
             document.getElementById('totalWon').textContent = stats.total_won.toFixed(2);
         } catch (error) {
             console.error('Error fetching statistics:', error);
+        }
+    }
+
+    async startAutoSpin() {
+        if (this.spinning) return;
+
+        this.autoSpinning = true;
+        document.getElementById('autoSpinBtn').classList.add('active');
+
+        while (this.autoSpinning) {
+            const credits = parseFloat(document.getElementById('creditDisplay').textContent);
+
+            if (this.stopBalance > 0 && credits <= this.stopBalance) {
+                this.stopAutoSpin();
+                alert('Auto spin stopped: Balance limit reached');
+                break;
+            }
+
+            if (this.autoSpinCount > 0) {
+                this.autoSpinCount--;
+                if (this.autoSpinCount === 0) {
+                    this.stopAutoSpin();
+                }
+            }
+
+            await this.spin();
+
+            if (this.autoSpinning && !this.spinning) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+    }
+
+    stopAutoSpin() {
+        this.autoSpinning = false;
+        this.autoSpinCount = 0;
+        document.getElementById('autoSpinBtn').classList.remove('active');
+    }
+
+    async buyFreespins() {
+        const cost = this.currentBet * 10;
+        const credits = parseFloat(document.getElementById('creditDisplay').textContent);
+
+        if (credits < cost) {
+            alert('Insufficient credits!');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('bet', this.currentBet);
+            formData.append('buy_freespins', true);
+
+            const response = await fetch('/buy_freespins', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+
+            document.getElementById('creditDisplay').textContent = result.credits.toFixed(2);
+            this.bonusSpinsRemaining = result.bonus_spins_remaining;
+            this.updateBonusDisplay();
+            this.showBonusAnimation(result.bonus_spins_awarded);
+
+        } catch (error) {
+            console.error('Error buying free spins:', error);
+            alert('An error occurred while buying free spins');
+        } finally {
+            this.buyFreespinsModal.hide();
         }
     }
 }

@@ -274,3 +274,40 @@ def get_statistics():
         'rtp': round((stats.total_won / stats.total_bet * 100) if stats.total_bet > 0 else 0, 2),
         'total_bonus_games': stats.total_bonus_games
     })
+
+@app.route('/buy_freespins', methods=['POST'])
+def buy_freespins():
+    if 'credits' not in session:
+        return jsonify({'error': 'Session expired'}), 400
+
+    try:
+        bet = float(request.form.get('bet', 0.20))
+        cost = bet * 10
+
+        if session['credits'] < cost:
+            return jsonify({'error': 'Insufficient credits'}), 400
+
+        # Списываем стоимость
+        session['credits'] = session['credits'] - cost
+
+        # Начисляем 10 фриспинов
+        bonus_spins = 10
+        session['bonus_spins'] = session.get('bonus_spins', 0) + bonus_spins
+        session['wild_positions'] = []
+
+        # Обновляем статистику
+        stats = Statistics.query.first()
+        if stats:
+            stats.total_bonus_games += 1
+            stats.total_bet += cost
+            db.session.commit()
+
+        return jsonify({
+            'credits': session['credits'],
+            'bonus_spins_awarded': bonus_spins,
+            'bonus_spins_remaining': session['bonus_spins']
+        })
+
+    except Exception as e:
+        print(f"Error buying free spins: {str(e)}")
+        return jsonify({'error': 'An error occurred while buying free spins'}), 400

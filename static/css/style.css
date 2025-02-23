@@ -342,3 +342,95 @@ h1 {
 .symbol.winning {
     animation: symbolWin 0.5s ease-in-out infinite;
 }
+
+/* Добавляем стили для новых кнопок и модальных окон */
+.spin-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+#turboSpinBtn, #autoSpinBtn, #buyFreespinsBtn {
+    min-width: 100px;
+    height: 40px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+#turboSpinBtn {
+    background: linear-gradient(45deg, #00bcd4, #2196f3);
+    border: none;
+    color: white;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+#autoSpinBtn {
+    background: linear-gradient(45deg, #9c27b0, #673ab7);
+    border: none;
+    color: white;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+#buyFreespinsBtn {
+    background: linear-gradient(45deg, #ffc107, #ff9800);
+    border: none;
+    color: white;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+#turboSpinBtn:hover, #autoSpinBtn:hover, #buyFreespinsBtn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+/* Стили для модальных окон */
+.modal-content {
+    background-color: #2a2a2a;
+    color: white;
+    border: 1px solid #444;
+}
+
+.modal-header {
+    border-bottom: 1px solid #444;
+}
+
+.modal-footer {
+    border-top: 1px solid #444;
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.form-control {
+    background-color: #333;
+    border: 1px solid #444;
+    color: white;
+}
+
+.form-control:focus {
+    background-color: #444;
+    border-color: #666;
+    color: white;
+    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
+}
+
+.btn-outline-primary {
+    color: #00ff9d;
+    border-color: #00ff9d;
+}
+
+.btn-outline-primary:hover {
+    background-color: #00ff9d;
+    border-color: #00ff9d;
+    color: #000;
+}
+
+.btn-check:checked + .btn-outline-primary {
+    background-color: #00ff9d;
+    border-color: #00ff9d;
+    color: #000;
+}
