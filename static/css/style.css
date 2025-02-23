@@ -25,10 +25,8 @@ body {
 
 .paytable {
     width: 22%; /* Paytable width: 20-25% of total width */
-    background: rgba(0, 0, 0, 0.6);
     border-radius: 10px;
     padding: 20px;
-    backdrop-filter: blur(5px);
 }
 
 .paytable h3 {
@@ -45,7 +43,6 @@ body {
     justify-content: space-between;
     margin-bottom: 10px;
     padding: 5px 10px;
-    background: rgba(255, 255, 255, 0.1);
     border-radius: 5px;
 }
 
@@ -56,7 +53,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.3);
     border-radius: 5px;
 }
 
@@ -70,10 +66,8 @@ body {
 .game-container {
     max-width: 100%;
     margin: 0 auto;
-    background-color: rgba(0, 0, 0, 0.4);
     border-radius: 15px;
     padding: 20px;
-    backdrop-filter: blur(10px);
 }
 
 .top-bar {
@@ -88,7 +82,6 @@ body {
     font-weight: bold;
     color: #00ff9d;
     text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
-    background: rgba(0, 0, 0, 0.3);
     padding: 10px 20px;
     border-radius: 10px;
 }
@@ -99,12 +92,10 @@ body {
     height: auto;
     border-radius: 10px;
     margin-bottom: 20px;
-    background: rgba(0, 0, 0, 0.2);
 }
 
 /* Controls styles */
 .controls {
-    background: rgba(0, 0, 0, 0.3);
     padding: 20px;
     border-radius: 10px;
     margin: 20px auto;
@@ -122,7 +113,6 @@ body {
 .bet-controls {
     display: flex;
     align-items: center;
-    background: rgba(0, 0, 0, 0.3);
     padding: 10px;
     border-radius: 25px;
 }
@@ -192,7 +182,6 @@ body {
 /* Statistics styles */
 .statistics {
     height: 70px; /* Statistics panel height: 60-80px */
-    background: rgba(0, 0, 0, 0.3);
     padding: 15px;
     border-radius: 10px;
     margin-top: 20px;
@@ -230,7 +219,6 @@ body {
         padding: 10px;
     }
 }
-
 @media (max-width: 1280px) {
     .game-wrapper {
         padding: 10px;
@@ -319,9 +307,9 @@ body {
     animation: glow 2s infinite;
 }
 
-/* Modal styles */
+/* Modals */
 .modal-content {
-    background-color: #2a2a2a;
+    background-color: #000000;
     color: white;
     border: 1px solid #444;
 }
@@ -334,10 +322,62 @@ body {
     border-top: 1px solid #444;
 }
 
-.btn-close {
-    filter: invert(1) grayscale(100%) brightness(200%);
+.win-animation {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #00ff9d;
+    font-size: 48px;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+    animation: winPulse 2s forwards;
+    z-index: 1000;
+    padding: 30px 60px;
+    border-radius: 20px;
+    border: 2px solid #00ff9d;
+    box-shadow: 0 0 30px rgba(0, 255, 157, 0.3);
+    cursor: pointer;
+    background-color: #000000;
 }
 
+.win-animation::after {
+    content: 'Click to skip';
+    display: block;
+    font-size: 16px;
+    margin-top: 10px;
+    color: #ffffff;
+}
+
+.respin-message {
+    background-color: #000000;
+}
+
+.bonus-award {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    background-color: #000000;
+    padding: 40px;
+    border-radius: 20px;
+    border: 3px solid #00ff9d;
+}
+
+
+.bonus-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    background-color: #000000;
+    padding: 40px 60px;
+    border-radius: 20px;
+    border: 3px solid #ffd700;
+    text-align: center;
+}
 
 /* Existing animations and effects from original file */
 .payline {
@@ -378,11 +418,12 @@ body {
 }
 
 .statistics {
-    background-color: rgba(51, 51, 51, 0.2);
-    padding: 20px;
+    padding: 15px;
     border-radius: 10px;
     margin-top: 20px;
-    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 @keyframes paylineGlow {
@@ -397,58 +438,8 @@ body {
     100% { transform: scale(1); }
 }
 
-.win-animation {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #00ff9d;
-    font-size: 48px;
-    font-weight: bold;
-    text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
-    animation: winPulse 2s forwards;
-    z-index: 1000;
-    background: rgba(0,0,0,0.7);
-    padding: 30px 60px;
-    border-radius: 20px;
-    border: 2px solid #00ff9d;
-    box-shadow: 0 0 30px rgba(0, 255, 157, 0.3);
-    cursor: pointer; /* Indicate clickable */
-}
-
-.win-animation::after {
-    content: 'Click to skip';
-    display: block;
-    font-size: 16px;
-    margin-top: 10px;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.bonus-info {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 100;
-}
-
-.bonus-info .badge {
-    font-size: 1.2em;
-    padding: 8px 16px;
-    background: rgba(0, 255, 157, 0.1) !important;
-    color: #00ff9d !important;
-    border: 2px solid #00ff9d;
-    box-shadow: 0 0 15px rgba(0, 255, 157, 0.2);
-    transition: all 0.3s ease;
-}
-
-.bonus-info .badge.active-bonus {
-    animation: pulseGlow 1.5s infinite;
-}
-
-@keyframes pulseGlow {
-    0% { box-shadow: 0 0 15px rgba(0, 255, 157, 0.2); }
-    50% { box-shadow: 0 0 25px rgba(0, 255, 157, 0.4); }
-    100% { box-shadow: 0 0 15px rgba(0, 255, 157, 0.2); }
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
 }
 
 @keyframes winPulse {
@@ -471,6 +462,31 @@ body {
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.8);
     }
+}
+
+.bonus-info {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+}
+
+.bonus-info .badge {
+    font-size: 1.2em;
+    padding: 8px 16px;
+    border: 2px solid #00ff9d;
+    box-shadow: 0 0 15px rgba(0, 255, 157, 0.2);
+    transition: all 0.3s ease;
+}
+
+.bonus-info .badge.active-bonus {
+    animation: pulseGlow 1.5s infinite;
+}
+
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 15px rgba(0, 255, 157, 0.2); }
+    50% { box-shadow: 0 0 25px rgba(0, 255, 157, 0.4); }
+    100% { box-shadow: 0 0 15px rgba(0, 255, 157, 0.2); }
 }
 
 .rick-morty-logo {
@@ -499,7 +515,7 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(255, 215, 0, 0.9);
+    background-color: #ffd700;
     color: #000;
     padding: 20px 40px;
     border-radius: 10px;
@@ -531,8 +547,9 @@ body {
     animation: shimmer 2s infinite;
 }
 
+/* Alert styles */
 .alert-info {
-    background-color: rgba(23, 162, 184, 0.9);
+    background-color: #17a2b8;
     border: none;
     color: white;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
@@ -679,7 +696,7 @@ h1 {
     align-items: center;
     justify-content: center;
     gap: 20px;
-    background: rgba(0, 0, 0, 0.9);
+    background: #000000;
     padding: 40px;
     border-radius: 20px;
     border: 3px solid #00ff9d;
@@ -717,7 +734,7 @@ h1 {
     align-items: center;
     justify-content: center;
     gap: 15px;
-    background: rgba(0, 0, 0, 0.95);
+    background: #000000;
     padding: 40px 60px;
     border-radius: 20px;
     border: 3px solid #ffd700;

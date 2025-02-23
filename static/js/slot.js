@@ -87,14 +87,13 @@ class SlotMachine {
     }
 
     drawSymbol(symbol, x, y, size, isStatic = false) {
-        // Calculate padding (12% of symbol size)
         const padding = size * 0.12;
         const symbolSize = size - (padding * 2);
         const symbolX = x + padding;
         const symbolY = y + padding;
 
         // Draw background with rounded corners
-        this.ctx.fillStyle = isStatic ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.3)';
+        this.ctx.fillStyle = '#000000';
         this.ctx.beginPath();
         this.ctx.roundRect(symbolX, symbolY, symbolSize, symbolSize, 10);
         this.ctx.fill();
@@ -103,7 +102,6 @@ class SlotMachine {
         const gradient = this.ctx.createLinearGradient(symbolX, symbolY, symbolX + symbolSize, symbolY + symbolSize);
 
         if (isStatic && symbol === 'wild') {
-            // Special gradient for static wild
             gradient.addColorStop(0, '#ffd700');
             gradient.addColorStop(1, '#ff8c00');
         } else if (this.lowSymbols.includes(symbol)) {
@@ -120,14 +118,13 @@ class SlotMachine {
             gradient.addColorStop(1, '#8f9c9d');
         }
 
-        // Apply text styles
         this.ctx.fillStyle = gradient;
         this.ctx.font = `bold ${symbolSize * 0.7}px Arial`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
 
         // Add glow effect for static wilds
-        this.ctx.shadowColor = isStatic ? 'rgba(255, 215, 0, 0.8)' : 'rgba(255, 255, 255, 0.5)';
+        this.ctx.shadowColor = isStatic ? '#ffd700' : '#ffffff';
         this.ctx.shadowBlur = symbolSize * (isStatic ? 0.2 : 0.1);
         this.ctx.shadowOffsetX = 0;
         this.ctx.shadowOffsetY = 0;
