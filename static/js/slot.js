@@ -21,6 +21,8 @@ class SlotMachine {
         this.initializeEventListeners();
         this.updateBonusDisplay();
         this.draw();
+        this.fetchStatistics();
+        setInterval(() => this.fetchStatistics(), 60000);
     }
 
     resizeCanvas() {
@@ -87,7 +89,7 @@ class SlotMachine {
             }
 
             if (Array.isArray(result.result) && result.result.length === 3) {
-                this.reels = Array(5).fill().map((_, i) => 
+                this.reels = Array(5).fill().map((_, i) =>
                     result.result.map(row => row[i] || this.symbols[0])
                 );
             } else {
@@ -141,7 +143,7 @@ class SlotMachine {
         const frameTime = duration / frames;
 
         for (let i = 0; i < frames; i++) {
-            this.reels = Array(5).fill().map(() => 
+            this.reels = Array(5).fill().map(() =>
                 Array(3).fill().map(() => this.symbols[Math.floor(Math.random() * this.symbols.length)])
             );
             this.draw();
@@ -159,10 +161,10 @@ class SlotMachine {
         this.stats.totalWon += winnings;
 
         document.getElementById('totalSpins').textContent = this.stats.totalSpins;
-        document.getElementById('winRate').textContent = 
+        document.getElementById('winRate').textContent =
             `${((this.stats.totalWins / this.stats.totalSpins) * 100).toFixed(1)}%`;
         document.getElementById('biggestWin').textContent = this.stats.biggestWin;
-        document.getElementById('rtp').textContent = 
+        document.getElementById('rtp').textContent =
             `${((this.stats.totalWon / this.stats.totalBet) * 100).toFixed(1)}%`;
     }
 
@@ -211,8 +213,8 @@ class SlotMachine {
                 const symbol = this.reels[i] && this.reels[i][j] ? this.reels[i][j] : this.symbols[0];
                 this.ctx.fillText(
                     this.getSymbolEmoji(symbol),
-                    x + symbolSize/2,
-                    y + symbolSize/2
+                    x + symbolSize / 2,
+                    y + symbolSize / 2
                 );
             }
         }
@@ -228,6 +230,22 @@ class SlotMachine {
             'wild': '⭐'
         };
         return emojiMap[symbol] || symbol;
+    }
+
+    async fetchStatistics() {
+        try {
+            const response = await fetch('/statistics');
+            const stats = await response.json();
+
+            document.getElementById('totalSpins').textContent = stats.total_spins;
+            document.getElementById('winRate').textContent = `${stats.win_rate}%`;
+            document.getElementById('biggestWin').textContent = stats.biggest_win;
+            document.getElementById('rtp').textContent = `${stats.rtp}%`;
+            document.getElementById('totalBonusGames').textContent = stats.total_bonus_games;
+            document.getElementById('totalWon').textContent = stats.total_won;
+        } catch (error) {
+            console.error('Error fetching statistics:', error);
+        }
     }
 }
 

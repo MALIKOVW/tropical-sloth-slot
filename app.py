@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 import random
 import json
+from datetime import datetime
 
 class Base(DeclarativeBase):
     pass
@@ -21,7 +22,7 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 db.init_app(app)
 
 # Import models before creating tables
-from models import SpinResult  # noqa: E402
+from models import SpinResult, Statistics  # noqa: E402
 
 # Define winning lines (The Dog House style)
 WINNING_LINES = [
@@ -57,6 +58,25 @@ def index():
         session['wild_positions'] = []
     return render_template('index.html', credits=session['credits'])
 
+@app.route('/statistics')
+def get_statistics():
+    stats = Statistics.query.first()
+    if not stats:
+        stats = Statistics()
+        db.session.add(stats)
+        db.session.commit()
+
+    return jsonify({
+        'total_spins': stats.total_spins,
+        'total_wins': stats.total_wins,
+        'win_rate': round((stats.total_wins / stats.total_spins * 100) if stats.total_spins > 0 else 0, 2),
+        'biggest_win': stats.biggest_win,
+        'total_bet': stats.total_bet,
+        'total_won': stats.total_won,
+        'rtp': round((stats.total_won / stats.total_bet * 100) if stats.total_bet > 0 else 0, 2),
+        'total_bonus_games': stats.total_bonus_games
+    })
+
 @app.route('/spin', methods=['POST'])
 def spin():
     if 'credits' not in session:
@@ -68,14 +88,22 @@ def spin():
         is_bonus_spin = bool(session.get('bonus_spins', 0))
         is_respin = bool(request.form.get('is_respin', False))
 
-        # Check if player has enough credits
+        # Get or create statistics
+        stats = Statistics.query.first()
+        if not stats:
+            stats = Statistics()
+            db.session.add(stats)
+
         if not is_bonus_spin and not is_respin:
             if bet < 10 or bet > 100:
                 return jsonify({'error': 'Invalid bet amount'}), 400
             if session['credits'] < bet:
                 return jsonify({'error': 'Insufficient credits'}), 400
-            # Deduct bet amount
             session['credits'] = session['credits'] - bet
+
+            # Update bet statistics
+            stats.total_spins += 1
+            stats.total_bet += bet
 
         # Generate result
         result = []
@@ -153,6 +181,19 @@ def spin():
 
         # Force session to update
         session.modified = True
+
+        # Update win statistics
+        if winnings > 0:
+            stats.total_wins += 1
+            stats.total_won += winnings
+            if winnings > stats.biggest_win:
+                stats.biggest_win = winnings
+
+        if bonus_spins > 0:
+            stats.total_bonus_games += 1
+
+        stats.last_updated = datetime.utcnow()
+        db.session.commit()
 
         # Save spin result
         spin_result = SpinResult(
