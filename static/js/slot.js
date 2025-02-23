@@ -360,14 +360,17 @@ class SlotMachine {
 
     async animatePayline(line) {
         const reelWidth = this.canvas.width / 5;
-        const symbolSize = reelWidth * 0.95;
+        const symbolSize = reelWidth * 0.8;
         const horizontalPadding = (reelWidth - symbolSize) / 2;
         const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
 
+        // Получаем позицию канваса для корректного позиционирования подсветки
+        const canvasRect = this.canvas.getBoundingClientRect();
+
         if (line.length >= 2) {
             const points = line.map(([row, col]) => ({
-                x: col * reelWidth + horizontalPadding + symbolSize / 2,
-                y: row * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2
+                x: col * reelWidth + horizontalPadding + symbolSize / 2 + canvasRect.left,
+                y: row * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2 + canvasRect.top
             }));
 
             for (let i = 0; i < points.length - 1; i++) {
@@ -388,9 +391,10 @@ class SlotMachine {
             }
         }
 
+        // Подсветка символов с учетом позиции канваса
         for (const [row, col] of line) {
-            const x = col * reelWidth + horizontalPadding;
-            const y = row * (symbolSize + verticalPadding) + verticalPadding;
+            const x = col * reelWidth + horizontalPadding + canvasRect.left;
+            const y = row * (symbolSize + verticalPadding) + verticalPadding + canvasRect.top;
 
             const highlight = document.createElement('div');
             highlight.className = 'symbol-highlight';

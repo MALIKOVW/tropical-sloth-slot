@@ -118,7 +118,7 @@ body {
 }
 
 .payline {
-    position: absolute;
+    position: fixed;
     height: 3px;
     background: linear-gradient(90deg, 
         rgba(255,255,0,0) 0%,
@@ -135,7 +135,7 @@ body {
 }
 
 .symbol-highlight {
-    position: absolute;
+    position: fixed;
     border: 2px solid rgba(255,255,0,0.8);
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(255,255,0,0.6);
@@ -145,12 +145,13 @@ body {
 }
 
 #paylineContainer {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
+    z-index: 998;
 }
 
 .statistics {
