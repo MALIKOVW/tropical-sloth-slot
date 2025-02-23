@@ -152,16 +152,16 @@ class SlotMachine {
         const container = this.canvas.parentElement;
         const containerWidth = container.clientWidth;
 
-        // Following industry standards:
-        // - Minimum width: 800px
-        // - Optimal width: 1024px-1440px
-        // - Aspect ratio: 4:3
-        const maxWidth = Math.min(1440, window.innerWidth < 768 ? containerWidth * 0.95 : containerWidth);
-        const minWidth = Math.max(800, maxWidth);
+        // Following industry standards but with wider field:
+        // - Minimum width: 1024px
+        // - Optimal width: 1280px-1920px
+        // - Aspect ratio: 16:9 for modern widescreen
+        const maxWidth = Math.min(1920, window.innerWidth < 768 ? containerWidth * 0.95 : containerWidth);
+        const minWidth = Math.max(1024, maxWidth);
         const width = Math.min(maxWidth, Math.max(minWidth, containerWidth));
 
-        // Set 4:3 aspect ratio as per standards
-        const aspectRatio = 4 / 3;
+        // Set 16:9 aspect ratio for wider view
+        const aspectRatio = 16 / 9;
         const height = width / aspectRatio;
 
         // Set display sizes
@@ -503,14 +503,31 @@ class SlotMachine {
 
         this.clearPaylines();
 
+        // Add click or touch event listener to skip animation
+        const skipHandler = async () => {
+            document.removeEventListener('click', skipHandler);
+            document.removeEventListener('touchstart', skipHandler);
+            this.clearPaylines();
+            winDisplay.remove();
+            this.animatingWin = false;
+        };
+
+        document.addEventListener('click', skipHandler);
+        document.addEventListener('touchstart', skipHandler);
+
         for (const line of winningLines) {
+            if (!this.animatingWin) break; // Stop if animation was skipped
             await this.animatePayline(line);
-            await new Promise(resolve => setTimeout(resolve, 800));
+            if (this.animatingWin) { // Only wait if not skipped
+                await new Promise(resolve => setTimeout(resolve, 800));
+            }
             this.clearPaylines();
         }
 
         setTimeout(() => {
-            winDisplay.remove();
+            if (winDisplay.parentNode) {
+                winDisplay.remove();
+            }
             this.animatingWin = false;
         }, 2000);
     }
@@ -604,6 +621,12 @@ class SlotMachine {
     async startAutoSpin() {
         if (this.spinning) return;
 
+        // Disable auto-spin during free spins
+        if (this.bonusSpinsRemaining > 0) {
+            alert('Auto-spin is not available during free spins');
+            return;
+        }
+
         this.autoSpinning = true;
         document.getElementById('autoSpinBtn').classList.add('active');
 
@@ -624,6 +647,12 @@ class SlotMachine {
             }
 
             await this.spin();
+
+            // Stop auto-spin if free spins are triggered
+            if (this.bonusSpinsRemaining > 0) {
+                this.stopAutoSpin();
+                break;
+            }
 
             if (this.autoSpinning && !this.spinning) {
                 await new Promise(resolve => setTimeout(resolve, 500));

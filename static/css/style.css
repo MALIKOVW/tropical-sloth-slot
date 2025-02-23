@@ -14,7 +14,7 @@ body {
 
 .game-wrapper {
     padding: 20px;
-    max-width: 1400px;
+    max-width: 1920px; /* Increased max-width for wider game field */
     margin: 0 auto;
 }
 
@@ -218,6 +218,18 @@ body {
     }
 }
 
+@media (max-width: 1920px) {
+    .game-wrapper {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 1280px) {
+    .game-wrapper {
+        padding: 10px;
+    }
+}
+
 @media (max-width: 1024px) {
     .paytable {
         width: 100%;
@@ -394,6 +406,15 @@ body {
     border-radius: 20px;
     border: 2px solid #00ff9d;
     box-shadow: 0 0 30px rgba(0, 255, 157, 0.3);
+    cursor: pointer; /* Indicate clickable */
+}
+
+.win-animation::after {
+    content: 'Click to skip';
+    display: block;
+    font-size: 16px;
+    margin-top: 10px;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .bonus-info {
