@@ -14,7 +14,19 @@ class SlotMachine {
             totalWon: 0
         };
 
+        // Set canvas size based on container width
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+
         this.initializeEventListeners();
+        this.draw();
+    }
+
+    resizeCanvas() {
+        const container = this.canvas.parentElement;
+        const containerWidth = container.clientWidth;
+        this.canvas.width = Math.min(800, containerWidth - 40); // 40px for padding
+        this.canvas.height = this.canvas.width * 0.75; // maintain 4:3 ratio
         this.draw();
     }
 
@@ -129,15 +141,21 @@ class SlotMachine {
     }
 
     draw() {
+        if (!this.ctx || !this.canvas) return;
+
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        const symbolSize = this.canvas.width / 6;
-        const padding = symbolSize / 4;
+        // Calculate symbol size and padding based on canvas size
+        const reelWidth = this.canvas.width / 5; // 5 reels
+        const symbolSize = reelWidth * 0.8; // 80% of reel width
+        const horizontalPadding = (reelWidth - symbolSize) / 2;
+        const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
 
+        // Draw each symbol
         for (let i = 0; i < this.reels.length; i++) {
             for (let j = 0; j < this.reels[i].length; j++) {
-                const x = i * (symbolSize + padding) + padding;
-                const y = j * (symbolSize + padding) + padding;
+                const x = i * reelWidth + horizontalPadding;
+                const y = j * (symbolSize + verticalPadding) + verticalPadding;
 
                 // Draw symbol background
                 this.ctx.fillStyle = '#444';
@@ -145,14 +163,18 @@ class SlotMachine {
 
                 // Draw symbol
                 this.ctx.fillStyle = '#fff';
-                this.ctx.font = `${symbolSize/2}px Arial`;
+                this.ctx.font = `${symbolSize * 0.6}px Arial`;
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
-                this.ctx.fillText(
-                    this.getSymbolEmoji(this.reels[i][j]),
-                    x + symbolSize/2,
-                    y + symbolSize/2
-                );
+
+                const symbol = this.reels[i][j];
+                if (symbol) {
+                    this.ctx.fillText(
+                        this.getSymbolEmoji(symbol),
+                        x + symbolSize/2,
+                        y + symbolSize/2
+                    );
+                }
             }
         }
     }
