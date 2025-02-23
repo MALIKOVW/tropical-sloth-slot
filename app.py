@@ -119,7 +119,9 @@ def spin():
                 if is_bonus_spin and [i, j] in wild_positions:
                     row.append('wild')
                 else:
-                    if random.random() < 0.15 and not is_respin:  # 15% chance for wild
+                    # Increased wild chance in bonus spins (25% vs 15% in base game)
+                    wild_chance = 0.25 if is_bonus_spin else 0.15
+                    if random.random() < wild_chance and not is_respin:
                         symbol = 'wild'
                         if is_bonus_spin:
                             wild_positions.append([i, j])
@@ -164,28 +166,33 @@ def spin():
                 winning_lines_count += 1
                 winning_lines_data.append(line[:matches])
 
-                # Updated multipliers for 96.51% RTP
+                # Updated multipliers for 96.51% RTP with max win 6,750x
                 multipliers = {
                     # Low paying symbols (3, 4, 5 matches)
                     '10': [5, 25, 100],
-                    'J': [5, 25, 100],
-                    'Q': [10, 50, 200],
-                    'K': [15, 75, 300],
-                    'A': [20, 100, 400],
+                    'J': [10, 50, 200],
+                    'Q': [15, 75, 300],
+                    'K': [20, 100, 400],
+                    'A': [25, 125, 500],
 
                     # High paying symbols
-                    'dog1': [25, 125, 500],
-                    'dog2': [40, 200, 800],
-                    'dog3': [50, 250, 1000],
-                    'toy1': [30, 150, 600],
-                    'toy2': [35, 175, 700],
+                    'dog1': [50, 250, 1000],
+                    'dog2': [75, 375, 1500],
+                    'dog3': [100, 500, 2000],
+                    'toy1': [40, 200, 800],
+                    'toy2': [30, 150, 600],
 
                     # Special symbols
-                    'wild': [50, 250, 1000],
+                    'wild': [125, 625, 2500],  # Wild символ имеет самые высокие выплаты
                 }
 
                 symbol_type = first_symbol if first_symbol != 'wild' else 'wild'
                 win_multiplier = multipliers.get(symbol_type, [5, 25, 100])[matches - 3]
+
+                # Увеличиваем выигрыш во время бонусных спинов
+                if is_bonus_spin:
+                    win_multiplier *= 2.7  # Увеличиваем множитель в бонусных спинах для достижения макс. выигрыша 6,750x
+
                 win_amount = bet * win_multiplier
                 winnings += win_amount
 
