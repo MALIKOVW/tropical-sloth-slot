@@ -131,6 +131,7 @@ def spin():
         winnings = 0
         bonus_spins = 0
         needs_respin = False
+        winning_lines_count = 0
 
         if not is_bonus_spin:
             # Count scatter symbols (paw)
@@ -158,6 +159,7 @@ def spin():
                     break
 
             if matches >= 3:
+                winning_lines_count += 1
                 # The Dog House original multipliers
                 multipliers = {
                     'dog': [50, 100, 200],      # 3,4,5 matches
@@ -203,7 +205,9 @@ def spin():
             bonus_spins_awarded=bonus_spins,
             is_bonus_spin=is_bonus_spin,
             wild_positions=json.dumps(wild_positions),
-            is_respin=is_respin
+            is_respin=is_respin,
+            winning_lines=winning_lines_count,
+            symbol_counts=json.dumps({symbol: sum(row.count(symbol) for row in result) for symbol in symbols})
         )
         db.session.add(spin_result)
         db.session.commit()
