@@ -71,3 +71,49 @@ body {
     font-weight: bold;
     color: #ffd700;
 }
+
+.win-message {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 215, 0, 0.9);
+    color: #000;
+    padding: 20px 40px;
+    border-radius: 10px;
+    font-size: 32px;
+    font-weight: bold;
+    animation: winPulse 1s infinite;
+    z-index: 1000;
+}
+
+@keyframes winPulse {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+.win-animation {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: gold;
+    font-size: 48px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    animation: fadeOutUp 2s forwards;
+    z-index: 1000;
+}
+
+@keyframes fadeOutUp {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -100%);
+    }
+}

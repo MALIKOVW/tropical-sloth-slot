@@ -19,24 +19,26 @@
 
         <div class="game-container">
             <canvas id="slotCanvas" width="800" height="600"></canvas>
-            
+
             <div class="controls mt-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="credits">
                         Credits: <span id="creditDisplay">{{ credits }}</span>
                     </div>
-                    
+
                     <div class="bet-controls">
                         <button class="btn btn-secondary" id="decreaseBet">-</button>
                         <span id="currentBet" class="mx-3">10</span>
                         <button class="btn btn-secondary" id="increaseBet">+</button>
                     </div>
-                    
+
                     <button id="spinButton" class="btn btn-primary btn-lg">
                         SPIN
                     </button>
                 </div>
             </div>
+
+            <div class="win-message" id="winMessage"></div>
 
             <div class="statistics mt-4">
                 <h3>Statistics</h3>
@@ -55,6 +57,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.min.js"></script>
+    <script src="/static/js/generate-sounds.js"></script>
     <script src="/static/js/audio.js"></script>
     <script src="/static/js/slot.js"></script>
 </body>
