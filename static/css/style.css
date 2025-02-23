@@ -173,39 +173,42 @@ h1 {
 .payline {
     position: absolute;
     background: linear-gradient(90deg, 
-        rgba(255,215,0,0) 0%,
-        rgba(255,215,0,1) 20%,
-        rgba(255,215,0,1) 80%,
-        rgba(255,215,0,0) 100%);
-    height: 6px;
+        rgba(255,255,0,0) 0%,
+        rgba(255,255,0,1) 20%,
+        rgba(255,255,0,1) 80%,
+        rgba(255,255,0,0) 100%);
+    height: 8px;
     pointer-events: none;
-    animation: paylineGlow 1.5s infinite;
+    animation: paylineGlow 1s infinite;
     z-index: 100;
     transform-origin: left center;
-    border-radius: 3px;
-    box-shadow: 0 0 15px rgba(255,215,0,0.8);
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(255,255,0,0.8),
+                0 0 30px rgba(255,255,0,0.6),
+                0 0 40px rgba(255,255,0,0.4);
 }
 
 @keyframes paylineGlow {
-    0% { opacity: 0.6; box-shadow: 0 0 10px rgba(255,215,0,0.5); }
-    50% { opacity: 1; box-shadow: 0 0 20px rgba(255,215,0,0.9); }
-    100% { opacity: 0.6; box-shadow: 0 0 10px rgba(255,215,0,0.5); }
+    0% { opacity: 0.8; filter: brightness(1); }
+    50% { opacity: 1; filter: brightness(1.5); }
+    100% { opacity: 0.8; filter: brightness(1); }
 }
 
 .symbol-highlight {
     position: absolute;
-    border: 4px solid gold;
+    border: 3px solid rgba(255,255,0,0.8);
     border-radius: 10px;
-    box-shadow: 0 0 20px rgba(255,215,0,0.8);
+    box-shadow: 0 0 15px rgba(255,255,0,0.6),
+                0 0 25px rgba(255,255,0,0.4);
     animation: symbolPulse 1s infinite;
-    background: rgba(255,215,0,0.15);
+    background: rgba(255,255,0,0.1);
     z-index: 90;
 }
 
 @keyframes symbolPulse {
-    0% { transform: scale(1); border-color: gold; box-shadow: 0 0 15px rgba(255,215,0,0.7); }
-    50% { transform: scale(1.08); border-color: #ffd700; box-shadow: 0 0 25px rgba(255,215,0,0.9); }
-    100% { transform: scale(1); border-color: gold; box-shadow: 0 0 15px rgba(255,215,0,0.7); }
+    0% { transform: scale(1); border-color: rgba(255,255,0,0.8); }
+    50% { transform: scale(1.05); border-color: rgba(255,255,0,1); }
+    100% { transform: scale(1); border-color: rgba(255,255,0,0.8); }
 }
 
 #paylineContainer {
