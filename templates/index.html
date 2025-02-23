@@ -12,59 +12,111 @@
     <link href="/static/css/style.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container-fluid px-4 py-3">
-        <div class="text-center mb-4">
-            <h1>The Dog House Slots</h1>
-            <div class="alert alert-info">Educational simulator - No real money involved</div>
-        </div>
-
-        <div class="game-container">
-            <canvas id="slotCanvas" width="800" height="600"></canvas>
-
-            <div class="bonus-info" id="bonusInfo">
-                <span class="badge bg-warning text-dark" id="bonusSpinsCount"></span>
-            </div>
-
-            <div class="controls">
-                <div class="d-flex justify-content-between align-items-center flex-wrap">
-                    <div class="credits">
-                        Credits: <span id="creditDisplay">{{ credits }}</span>
+    <div class="container-fluid game-wrapper">
+        <div class="row">
+            <!-- Paytable Column -->
+            <div class="col-md-3 paytable-column">
+                <div class="paytable">
+                    <h3>Paytable</h3>
+                    <div class="symbol-pay">
+                        <span class="symbol wild">🏠</span>
+                        <span class="pays">x2500</span>
                     </div>
-
-                    <div class="bet-controls">
-                        <button class="btn btn-neon" id="decreaseBet">-</button>
-                        <span id="currentBet" class="mx-3">10</span>
-                        <button class="btn btn-neon" id="increaseBet">+</button>
+                    <div class="symbol-pay">
+                        <span class="symbol dog3">🐩</span>
+                        <span class="pays">x2000</span>
                     </div>
-
-                    <div class="spin-controls">
-                        <button id="buyFreespinsBtn" class="btn btn-warning">
-                            Buy Free Spins
-                        </button>
-                        <button id="turboSpinBtn" class="btn btn-info">
-                            Turbo Spin
-                        </button>
-                        <button id="autoSpinBtn" class="btn btn-secondary">
-                            Auto Spin
-                        </button>
-                        <button id="spinButton" class="btn">
-                            SPIN
-                        </button>
+                    <div class="symbol-pay">
+                        <span class="symbol dog2">🐶</span>
+                        <span class="pays">x1500</span>
+                    </div>
+                    <div class="symbol-pay">
+                        <span class="symbol dog1">🐕</span>
+                        <span class="pays">x1000</span>
+                    </div>
+                    <div class="symbol-pay">
+                        <span class="symbol toy1">🎾</span>
+                        <span class="pays">x800</span>
+                    </div>
+                    <div class="symbol-pay">
+                        <span class="symbol toy2">🦴</span>
+                        <span class="pays">x600</span>
+                    </div>
+                    <div class="symbol-pay">
+                        <span class="symbol">A</span>
+                        <span class="pays">x500</span>
+                    </div>
+                    <div class="symbol-pay">
+                        <span class="symbol">K</span>
+                        <span class="pays">x400</span>
+                    </div>
+                    <div class="symbol-pay">
+                        <span class="symbol">Q</span>
+                        <span class="pays">x300</span>
+                    </div>
+                    <div class="symbol-pay">
+                        <span class="symbol">J</span>
+                        <span class="pays">x200</span>
+                    </div>
+                    <div class="symbol-pay">
+                        <span class="symbol">10</span>
+                        <span class="pays">x100</span>
                     </div>
                 </div>
             </div>
 
-            <div class="statistics mt-4">
-                <div class="row">
-                    <div class="col">
-                        <p>Total Spins: <span id="totalSpins">0</span></p>
-                        <p>Win Rate: <span id="winRate">0%</span></p>
-                        <p>Total Bonus Games: <span id="totalBonusGames">0</span></p>
+            <!-- Game Column -->
+            <div class="col-md-9">
+                <div class="game-container">
+                    <div class="top-bar">
+                        <div class="balance-display">
+                            Credits: <span id="creditDisplay">{{ credits }}</span>
+                        </div>
+                        <div class="bonus-info" id="bonusInfo">
+                            <span class="badge bg-warning text-dark" id="bonusSpinsCount"></span>
+                        </div>
                     </div>
-                    <div class="col">
-                        <p>Biggest Win: <span id="biggestWin">0</span></p>
-                        <p>Return to Player: <span id="rtp">0%</span></p>
-                        <p>Total Won: <span id="totalWon">0</span></p>
+
+                    <canvas id="slotCanvas"></canvas>
+
+                    <div class="controls">
+                        <div class="controls-row">
+                            <div class="bet-controls">
+                                <button class="btn btn-neon" id="decreaseBet">-</button>
+                                <span id="currentBet" class="mx-3">0.20</span>
+                                <button class="btn btn-neon" id="increaseBet">+</button>
+                            </div>
+
+                            <div class="action-buttons">
+                                <button id="buyFreespinsBtn" class="btn btn-warning">
+                                    Buy Free Spins
+                                </button>
+                                <button id="turboSpinBtn" class="btn btn-info">
+                                    Turbo
+                                </button>
+                                <button id="autoSpinBtn" class="btn btn-secondary">
+                                    Auto
+                                </button>
+                                <button id="spinButton" class="btn btn-spin">
+                                    SPIN
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="statistics">
+                        <div class="row">
+                            <div class="col">
+                                <p>Total Spins: <span id="totalSpins">0</span></p>
+                                <p>Win Rate: <span id="winRate">0%</span></p>
+                                <p>Total Bonus Games: <span id="totalBonusGames">0</span></p>
+                            </div>
+                            <div class="col">
+                                <p>Biggest Win: <span id="biggestWin">0</span></p>
+                                <p>Return to Player: <span id="rtp">0%</span></p>
+                                <p>Total Won: <span id="totalWon">0</span></p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -87,57 +87,79 @@ class SlotMachine {
     }
 
     drawSymbol(symbol, x, y, size) {
-        this.ctx.fillStyle = 'rgba(51, 51, 51, 0.2)';
+        // Добавляем отступ для лучшего разделения символов
+        const padding = size * 0.1;
+        const symbolSize = size - (padding * 2);
+        const symbolX = x + padding;
+        const symbolY = y + padding;
+
+        // Рисуем фон с закругленными углами
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
         this.ctx.beginPath();
-        this.ctx.roundRect(x, y, size, size, 10);
+        this.ctx.roundRect(symbolX, symbolY, symbolSize, symbolSize, 10);
         this.ctx.fill();
 
-        this.ctx.save();
-        const gradient = this.ctx.createLinearGradient(x, y, x + size, y + size);
+        // Создаем градиент для символа
+        const gradient = this.ctx.createLinearGradient(symbolX, symbolY, symbolX + symbolSize, symbolY + symbolSize);
 
         if (this.lowSymbols.includes(symbol)) {
-            gradient.addColorStop(0, '#4a90e2');
-            gradient.addColorStop(1, '#2171cd');
+            gradient.addColorStop(0, '#5a9ff2');
+            gradient.addColorStop(1, '#3181dd');
         } else if (this.highSymbols.includes(symbol)) {
-            gradient.addColorStop(0, '#f39c12');
-            gradient.addColorStop(1, '#d35400');
+            gradient.addColorStop(0, '#ff9f22');
+            gradient.addColorStop(1, '#e36410');
         } else if (symbol === 'wild') {
-            gradient.addColorStop(0, '#ff9f43');
-            gradient.addColorStop(1, '#ff7f00');
+            gradient.addColorStop(0, '#ffaf53');
+            gradient.addColorStop(1, '#ff8f10');
         } else if (symbol === 'scatter') {
-            gradient.addColorStop(0, '#95a5a6');
-            gradient.addColorStop(1, '#7f8c8d');
+            gradient.addColorStop(0, '#a5b5b6');
+            gradient.addColorStop(1, '#8f9c9d');
         }
 
+        // Применяем стили для текста
         this.ctx.fillStyle = gradient;
-        this.ctx.font = `bold ${size * 0.6}px Arial`;
+        this.ctx.font = `bold ${symbolSize * 0.7}px Arial`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
 
+        // Добавляем эффект свечения
         this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-        this.ctx.shadowBlur = 10;
-        this.ctx.fillText(this.getSymbolDisplay(symbol), x + size / 2, y + size / 2);
-        this.ctx.restore();
+        this.ctx.shadowBlur = symbolSize * 0.1;
+        this.ctx.shadowOffsetX = 0;
+        this.ctx.shadowOffsetY = 0;
 
+        // Рисуем символ по центру ячейки
+        const textX = symbolX + symbolSize / 2;
+        const textY = symbolY + symbolSize / 2;
+        this.ctx.fillText(this.getSymbolDisplay(symbol), textX, textY);
+
+        // Сбрасываем эффекты
+        this.ctx.shadowBlur = 0;
+
+        // Добавляем рамку для специальных символов
         if (symbol === 'wild' || symbol === 'scatter') {
-            this.ctx.save();
             this.ctx.strokeStyle = symbol === 'wild' ? '#ff9f43' : '#95a5a6';
-            this.ctx.lineWidth = 2;
-            this.ctx.strokeRect(x + 5, y + 5, size - 10, size - 10);
-            this.ctx.restore();
+            this.ctx.lineWidth = Math.max(2, symbolSize * 0.03);
+            this.ctx.strokeRect(symbolX + padding/2, symbolY + padding/2, symbolSize - padding, symbolSize - padding);
         }
     }
 
     draw() {
         if (!this.ctx || !this.canvas) return;
 
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // Очищаем канвас
+        this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
 
-        const reelWidth = this.canvas.width / 5;
-        const symbolSize = reelWidth * 0.8;
+        // Вычисляем размеры для барабанов
+        const reelWidth = this.logicalWidth / 5;
+        const symbolSize = Math.min(reelWidth * 0.9, this.logicalHeight / 3.5);
+
+        // Вычисляем отступы для центрирования
         const horizontalPadding = (reelWidth - symbolSize) / 2;
-        const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
+        const totalSymbolsHeight = symbolSize * 3;
+        const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
 
+        // Рисуем символы
         for (let i = 0; i < 5; i++) {
             for (let j = 0; j < 3; j++) {
                 const x = i * reelWidth + horizontalPadding;
@@ -197,20 +219,31 @@ class SlotMachine {
     resizeCanvas() {
         const container = this.canvas.parentElement;
         const containerWidth = container.clientWidth;
-        const maxWidth = Math.min(800, containerWidth - 40);
 
-        // Maintain aspect ratio
-        this.canvas.width = maxWidth;
-        this.canvas.height = maxWidth * 0.75;
+        // Определяем максимальную ширину для канваса (80% от контейнера на мобильных)
+        const maxWidth = Math.min(800, window.innerWidth < 768 ? containerWidth * 0.8 : containerWidth);
 
-        // Update canvas scale based on device pixel ratio
-        const scale = window.devicePixelRatio;
-        this.canvas.style.width = `${this.canvas.width}px`;
-        this.canvas.style.height = `${this.canvas.height}px`;
-        this.canvas.width *= scale;
-        this.canvas.height *= scale;
+        // Устанавливаем соотношение сторон 4:3
+        const aspectRatio = 4/3;
+        const height = maxWidth / aspectRatio;
+
+        // Устанавливаем размеры отображения
+        this.canvas.style.width = `${maxWidth}px`;
+        this.canvas.style.height = `${height}px`;
+
+        // Устанавливаем физические размеры с учетом плотности пикселей
+        const scale = window.devicePixelRatio || 1;
+        this.canvas.width = maxWidth * scale;
+        this.canvas.height = height * scale;
+
+        // Сохраняем логические размеры для расчетов
+        this.logicalWidth = maxWidth;
+        this.logicalHeight = height;
+
+        // Нормализуем систему координат
         this.ctx.scale(scale, scale);
-        this.draw();
+        this.ctx.imageSmoothingEnabled = true;
+        this.ctx.imageSmoothingQuality = 'high';
     }
 
     adjustBet(amount) {
@@ -300,12 +333,12 @@ class SlotMachine {
         }));
 
         const drawFrame = () => {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
 
-            const reelWidth = this.canvas.width / 5;
-            const symbolSize = reelWidth * 0.8;
+            const reelWidth = this.logicalWidth / 5;
+            const symbolSize = reelWidth * 0.9;
             const horizontalPadding = (reelWidth - symbolSize) / 2;
-            const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
+            const verticalPadding = (this.logicalHeight - (symbolSize * 3)) / 4;
 
             reelStates.forEach((reel, reelIndex) => {
                 for (let i = 0; i < 3; i++) {
@@ -389,10 +422,10 @@ class SlotMachine {
     }
 
     async animatePayline(line) {
-        const reelWidth = this.canvas.width / 5;
-        const symbolSize = reelWidth * 0.8;
+        const reelWidth = this.logicalWidth / 5;
+        const symbolSize = reelWidth * 0.9;
         const horizontalPadding = (reelWidth - symbolSize) / 2;
-        const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
+        const verticalPadding = (this.logicalHeight - (symbolSize * 3)) / 4;
 
         const canvasRect = this.canvas.getBoundingClientRect();
 

@@ -1,4 +1,4 @@
-/* Базовые стили остаются без изменений */
+/* Base styles */
 body {
     background-color: #1a1a1a;
     font-family: 'Arial', sans-serif;
@@ -8,214 +8,279 @@ body {
     background-attachment: fixed;
     min-height: 100vh;
     color: #fff;
+    margin: 0;
+    padding: 0;
 }
 
-.game-container {
-    max-width: 800px;
-    margin: 0 auto;
+.game-wrapper {
     padding: 20px;
-    background-color: transparent;
-    border-radius: 15px;
-    position: relative;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-#slotCanvas {
-    width: 100%;
-    height: auto;
-    background-color: rgba(51, 51, 51, 0.02);
+/* Paytable styles */
+.paytable-column {
+    padding: 15px;
+}
+
+.paytable {
+    background: rgba(0, 0, 0, 0.6);
     border-radius: 10px;
+    padding: 20px;
     backdrop-filter: blur(5px);
 }
 
-.controls {
-    background-color: rgba(51, 51, 51, 0.1);
+.paytable h3 {
+    color: #00ff9d;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+    text-transform: uppercase;
+}
+
+.symbol-pay {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+}
+
+.symbol-pay .symbol {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+}
+
+.symbol-pay .pays {
+    color: #00ff9d;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Game container styles */
+.game-container {
+    max-width: 100%;
+    margin: 0 auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 15px;
     padding: 20px;
-    border-radius: 10px;
-    margin-top: 20px;
     backdrop-filter: blur(10px);
 }
 
-/* Адаптивные стили для элементов управления */
-.controls .d-flex {
-    gap: 15px;
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
-@media (max-width: 768px) {
-    .controls .d-flex {
-        flex-direction: column;
-        align-items: stretch !important;
-    }
-
-    .bet-controls, .credits, .spin-controls {
-        width: 100%;
-        text-align: center;
-    }
-
-    .spin-controls {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-    }
-
-    #spinButton {
-        grid-column: span 2;
-    }
-}
-
-/* Обновленные стили для кнопок */
-#spinButton {
-    min-width: 120px;
-    height: 50px;
-    font-size: clamp(18px, 4vw, 24px);
+.balance-display {
+    font-size: 24px;
     font-weight: bold;
-    background: linear-gradient(45deg, #1a9fff, #00ff9d);
-    border: none;
+    color: #00ff9d;
+    text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+
+/* Canvas styles */
+#slotCanvas {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Controls styles */
+.controls {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.bet-controls {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px;
     border-radius: 25px;
-    color: #fff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-    box-shadow: 0 0 20px rgba(0, 255, 157, 0.6);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    padding: 0 20px;
-}
-
-#spinButton:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(0, 255, 157, 0.8);
-}
-
-#spinButton:disabled {
-    background: linear-gradient(45deg, #666, #999);
-    transform: none;
-    box-shadow: none;
-    opacity: 0.7;
 }
 
 .bet-controls button {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    font-size: clamp(16px, 3vw, 24px);
-    line-height: 1;
+    font-size: 20px;
     background: linear-gradient(45deg, #1a9fff, #00ff9d);
     border: none;
-    color: #fff;
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-    box-shadow: 0 0 15px rgba(0, 255, 157, 0.5);
-    transition: all 0.3s ease;
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
 }
 
 .bet-controls button:hover {
     transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(0, 255, 157, 0.8);
+    box-shadow: 0 0 15px rgba(0, 255, 157, 0.5);
 }
 
 #currentBet {
-    font-size: clamp(18px, 4vw, 24px);
+    font-size: 24px;
     font-weight: bold;
     color: #00ff9d;
-    text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+    min-width: 80px;
+    text-align: center;
 }
 
-.credits {
-    font-size: clamp(18px, 4vw, 24px);
-    font-weight: bold;
-    color: #00ff9d;
-    text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
-/* Адаптивные стили для новых кнопок */
-#turboSpinBtn, #autoSpinBtn, #buyFreespinsBtn {
-    min-width: 100px;
-    height: 40px;
-    font-size: clamp(14px, 3vw, 16px);
+.action-buttons button {
+    height: 50px;
+    font-size: 16px;
     font-weight: bold;
-    border-radius: 20px;
+    border-radius: 25px;
+    padding: 0 20px;
+    border: none;
     transition: all 0.3s ease;
-    white-space: nowrap;
-    padding: 0 15px;
 }
 
-@media (max-width: 576px) {
-    #turboSpinBtn, #autoSpinBtn, #buyFreespinsBtn {
+.btn-spin {
+    background: linear-gradient(45deg, #1a9fff, #00ff9d);
+    color: white;
+    font-size: 24px !important;
+    min-width: 120px;
+    box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
+}
+
+.btn-spin:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(0, 255, 157, 0.5);
+}
+
+/* Statistics styles */
+.statistics {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.statistics p {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #ccc;
+}
+
+.statistics span {
+    color: #00ff9d;
+    font-weight: bold;
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+    .paytable-column {
+        order: 2;
+    }
+
+    .controls-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .bet-controls, .action-buttons {
         width: 100%;
-        margin: 5px 0;
+        justify-content: center;
+    }
+
+    .action-buttons {
+        flex-wrap: wrap;
+    }
+
+    .btn-spin {
+        width: 100%;
+        order: -1;
     }
 }
 
-/* Адаптивные стили для модальных окон */
-.modal-dialog {
-    margin: 20px;
-    max-width: min(90%, 500px);
+@media (max-width: 768px) {
+    .game-wrapper {
+        padding: 10px;
+    }
+
+    .paytable {
+        margin-bottom: 20px;
+    }
+
+    .symbol-pay {
+        padding: 3px 8px;
+    }
+
+    .symbol-pay .symbol {
+        font-size: 20px;
+        width: 30px;
+        height: 30px;
+    }
+
+    .symbol-pay .pays {
+        font-size: 16px;
+    }
 }
 
+/* Animation effects */
+@keyframes glow {
+    0% { box-shadow: 0 0 5px rgba(0, 255, 157, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(0, 255, 157, 0.8); }
+    100% { box-shadow: 0 0 5px rgba(0, 255, 157, 0.5); }
+}
+
+.btn-spin {
+    animation: glow 2s infinite;
+}
+
+/* Modal styles */
 .modal-content {
     background-color: #2a2a2a;
     color: white;
     border: 1px solid #444;
 }
 
-.modal-body {
-    padding: 20px;
+.modal-header {
+    border-bottom: 1px solid #444;
 }
 
-.btn-group {
-    flex-wrap: wrap;
-    gap: 5px;
+.modal-footer {
+    border-top: 1px solid #444;
 }
 
-@media (max-width: 576px) {
-    .btn-group {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-    }
-
-    .btn-outline-primary {
-        width: 100%;
-        margin: 2px;
-    }
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
 }
 
-/* Адаптивные стили для статистики */
-.statistics {
-    background-color: rgba(51, 51, 51, 0.2);
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 20px;
-    backdrop-filter: blur(10px);
-}
 
-@media (max-width: 576px) {
-    .statistics .row {
-        flex-direction: column;
-    }
-
-    .statistics .col {
-        margin-bottom: 15px;
-    }
-
-    .statistics p {
-        margin-bottom: 8px;
-        font-size: 14px;
-    }
-}
-
-/* Адаптивные стили для заголовка */
-h1 {
-    font-size: clamp(24px, 6vw, 36px);
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    margin-bottom: 20px;
-}
-
-.alert {
-    font-size: clamp(14px, 3vw, 16px);
-    margin-bottom: 20px;
-}
-
+/* Existing animations and effects from original file */
 .payline {
     position: fixed;
     height: 3px;
@@ -387,7 +452,6 @@ h1 {
     animation: shimmer 2s infinite;
 }
 
-
 .alert-info {
     background-color: rgba(23, 162, 184, 0.9);
     border: none;
@@ -438,7 +502,7 @@ h1 {
     animation: symbolWin 0.5s ease-in-out infinite;
 }
 
-/* Добавляем стили для новых кнопок и модальных окон */
+/* Styles for new buttons and modals from original file */
 .spin-controls {
     display: flex;
     align-items: center;
@@ -481,7 +545,7 @@ h1 {
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
 }
 
-/* Стили для модальных окон */
+/* Modal styles from original file */
 .modal-content {
     background-color: #2a2a2a;
     color: white;
