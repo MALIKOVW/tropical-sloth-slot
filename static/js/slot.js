@@ -88,15 +88,7 @@ class SlotMachine {
                 return;
             }
 
-            if (Array.isArray(result.result) && result.result.length === 3) {
-                this.reels = Array(5).fill().map((_, i) =>
-                    result.result.map(row => row[i] || this.symbols[0])
-                );
-            } else {
-                console.error('Invalid result format:', result.result);
-                this.reels = Array(5).fill().map(() => Array(3).fill(this.symbols[0]));
-            }
-
+            this.reels = result.result;
             document.getElementById('creditDisplay').textContent = result.credits;
 
             if (result.needs_respin) {
@@ -128,111 +120,87 @@ class SlotMachine {
         }
     }
 
-    async showRespinAnimation() {
-        const message = document.createElement('div');
-        message.className = 'win-animation respin-message';
-        message.textContent = 'RESPIN!';
-        document.body.appendChild(message);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        message.remove();
-    }
-
     async animateSpin() {
-        const duration = 2000; // Total duration in ms
-        const reelStopDelay = 300; // Delay between each reel stopping
+        const totalSteps = 20; // Количество шагов анимации
+        const stepDelay = 50; // Задержка между шагами в мс
+        const reelDelay = 4; // Задержка между барабанами
 
-        // Animation states
+        // Создаем начальное состояние для каждого барабана
         const reelStates = Array(5).fill().map(() => ({
-            symbols: Array(20).fill().map(() => this.symbols[Math.floor(Math.random() * this.symbols.length)]),
-            position: 0
+            symbols: Array(6).fill().map(() => this.symbols[Math.floor(Math.random() * this.symbols.length)]),
+            currentStep: 0
         }));
 
-        const startTime = Date.now();
-        const animate = () => {
-            const currentTime = Date.now() - startTime;
-            const progress = Math.min(currentTime / duration, 1);
-
+        // Функция для отрисовки одного кадра
+        const drawFrame = () => {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-            // Calculate dimensions
             const reelWidth = this.canvas.width / 5;
             const symbolSize = reelWidth * 0.8;
             const horizontalPadding = (reelWidth - symbolSize) / 2;
             const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
 
-            // Draw each reel
-            reelStates.forEach((state, reelIndex) => {
-                const reelDelay = reelIndex * reelStopDelay;
-                const reelProgress = Math.max(0, Math.min(1, (currentTime - reelDelay) / (duration - reelDelay * 4)));
+            reelStates.forEach((reel, reelIndex) => {
+                // Отрисовываем символы
+                for (let i = 0; i < 3; i++) {
+                    const symbolIndex = (reel.currentStep + i) % reel.symbols.length;
+                    const symbol = reel.symbols[symbolIndex];
 
-                // Calculate spinning speed with smooth deceleration
-                let speed;
-                if (reelProgress < 0.7) {
-                    speed = 15; // Сниженная скорость для лучшей видимости
-                } else {
-                    const slowdownProgress = (reelProgress - 0.7) / 0.3;
-                    speed = 15 * (1 - Math.pow(slowdownProgress, 2));
-                }
+                    // Фон символа
+                    this.ctx.fillStyle = '#444';
+                    this.ctx.fillRect(
+                        reelIndex * reelWidth + horizontalPadding,
+                        i * (symbolSize + verticalPadding) + verticalPadding,
+                        symbolSize,
+                        symbolSize
+                    );
 
-                // Update position with continuous scrolling
-                state.position = (state.position + speed);
-                if (state.position >= symbolSize * state.symbols.length) {
-                    state.position = 0;
-                }
-
-                // Draw visible symbols
-                for (let i = -2; i < 5; i++) {
-                    let symbolY = (i * symbolSize) + state.position;
-
-                    // Wrap position for infinite scrolling
-                    while (symbolY > symbolSize * state.symbols.length) {
-                        symbolY -= symbolSize * state.symbols.length;
-                    }
-                    while (symbolY < -symbolSize) {
-                        symbolY += symbolSize * state.symbols.length;
-                    }
-
-                    const y = verticalPadding + symbolY;
-
-                    // Only draw if symbol will be visible
-                    if (y + symbolSize >= 0 && y <= this.canvas.height) {
-                        const symbolIndex = Math.floor(((state.symbols.length - i) + Math.floor(state.position / symbolSize)) % state.symbols.length);
-                        const symbol = state.symbols[Math.abs(symbolIndex % state.symbols.length)];
-
-                        // Draw symbol background
-                        this.ctx.fillStyle = '#444';
-                        this.ctx.fillRect(
-                            reelIndex * reelWidth + horizontalPadding,
-                            y,
-                            symbolSize,
-                            symbolSize
-                        );
-
-                        // Draw symbol
-                        this.ctx.fillStyle = '#fff';
-                        this.ctx.font = `${symbolSize * 0.6}px Arial`;
-                        this.ctx.textAlign = 'center';
-                        this.ctx.textBaseline = 'middle';
-                        this.ctx.fillText(
-                            this.getSymbolEmoji(symbol),
-                            reelIndex * reelWidth + horizontalPadding + symbolSize / 2,
-                            y + symbolSize / 2
-                        );
-                    }
+                    // Символ
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.font = `${symbolSize * 0.6}px Arial`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(
+                        this.getSymbolEmoji(symbol),
+                        reelIndex * reelWidth + horizontalPadding + symbolSize / 2,
+                        i * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2
+                    );
                 }
             });
-
-            // Continue animation if not complete
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
         };
 
-        // Start animation loop
-        await new Promise(resolve => {
-            animate();
-            setTimeout(resolve, duration);
-        });
+        // Анимация для каждого барабана
+        for (let step = 0; step < totalSteps; step++) {
+            for (let reelIndex = 0; reelIndex < 5; reelIndex++) {
+                // Задержка старта для каждого следующего барабана
+                if (step < reelIndex * reelDelay) continue;
+
+                const reel = reelStates[reelIndex];
+                reel.currentStep = (reel.currentStep + 1) % reel.symbols.length;
+
+                // Добавляем новый случайный символ
+                if (step % 2 === 0) {
+                    reel.symbols.push(this.symbols[Math.floor(Math.random() * this.symbols.length)]);
+                    if (reel.symbols.length > 6) {
+                        reel.symbols.shift();
+                    }
+                }
+            }
+
+            drawFrame();
+            await new Promise(resolve => setTimeout(resolve, stepDelay));
+        }
+    }
+
+    showRespinAnimation() {
+        const message = document.createElement('div');
+        message.className = 'win-animation respin-message';
+        message.textContent = 'RESPIN!';
+        document.body.appendChild(message);
+        return new Promise(resolve => setTimeout(() => {
+            message.remove();
+            resolve();
+        }, 2000));
     }
 
     updateStats(winnings) {
@@ -278,17 +246,19 @@ class SlotMachine {
         const horizontalPadding = (reelWidth - symbolSize) / 2;
         const verticalPadding = (this.canvas.height - (symbolSize * 3)) / 4;
 
-        for (let i = 0; i < this.reels.length; i++) {
+        for (let i = 0; i < 5; i++) {
             for (let j = 0; j < 3; j++) {
                 const x = i * reelWidth + horizontalPadding;
                 const y = j * (symbolSize + verticalPadding) + verticalPadding;
 
+                // Фон символа
                 this.ctx.fillStyle = '#444';
                 if (this.bonusSpinsRemaining > 0 && this.wildPositions.some(pos => pos[0] === j && pos[1] === i)) {
                     this.ctx.fillStyle = '#664400';
                 }
                 this.ctx.fillRect(x, y, symbolSize, symbolSize);
 
+                // Символ
                 this.ctx.fillStyle = '#fff';
                 this.ctx.font = `${symbolSize * 0.6}px Arial`;
                 this.ctx.textAlign = 'center';
