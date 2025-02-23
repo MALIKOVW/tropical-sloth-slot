@@ -86,7 +86,7 @@ def spin():
 
     all_symbols = low_symbols + high_symbols
     if not session.get('bonus_spins', 0):
-        all_symbols.extend(special_symbols)
+        all_symbols.append('wild')  # Only add wild to regular spins pool, scatter will be handled separately
 
     try:
         bet = float(request.form.get('bet', 0.20))
@@ -109,19 +109,26 @@ def spin():
             stats.total_spins += 1
             stats.total_bet += bet
 
-        # Generate result
+        # Generate result with scatter only on reels 1, 3, and 5
         result = []
         wild_positions = session.get('wild_positions', []) if is_bonus_spin else []
+        scatter_reels = [0, 2, 4]  # Индексы барабанов 1, 3 и 5
 
-        for i in range(3):
+        for i in range(3):  # rows
             row = []
-            for j in range(5):
+            for j in range(5):  # reels
                 if is_bonus_spin and [i, j] in wild_positions:
                     row.append('wild')
                 else:
+                    # Check if this position can have a scatter
+                    can_have_scatter = j in scatter_reels and not any(row.count('scatter') for k in range(len(row)))
+
                     # Increased wild chance in bonus spins (25% vs 15% in base game)
                     wild_chance = 0.25 if is_bonus_spin else 0.15
-                    if random.random() < wild_chance and not is_respin:
+
+                    if can_have_scatter and not is_bonus_spin and random.random() < 0.15:  # 15% chance for scatter
+                        symbol = 'scatter'
+                    elif random.random() < wild_chance and not is_respin:
                         symbol = 'wild'
                         if is_bonus_spin:
                             wild_positions.append([i, j])
@@ -140,7 +147,7 @@ def spin():
         winning_lines_count = 0
 
         if not is_bonus_spin:
-            scatter_count = sum(row.count('scatter') for row in result)
+            scatter_count = sum(1 for j in scatter_reels for i in range(3) if result[i][j] == 'scatter')
             if scatter_count >= 3:
                 bonus_spins = scatter_count * 5  # 5 free spins per scatter
                 session['bonus_spins'] = session.get('bonus_spins', 0) + bonus_spins
