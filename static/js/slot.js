@@ -26,24 +26,20 @@ class SlotMachine {
 
         // Initialize responsive canvas
         this.resizeCanvas();
-        window.addEventListener('resize', () => {
-            this.resizeCanvas();
-            this.draw();
-        });
+        window.addEventListener('resize', () => this.resizeCanvas());
 
-        // Load 3D models
-        this.loadModels();
-        this.initializeEventListeners();
+        // Load 3D models and initialize
+        this.init();
     }
 
-    async loadModels() {
+    async init() {
         try {
             await symbolRenderer.loadModels();
             console.log('3D models loaded successfully');
             this.draw();
+            this.initializeEventListeners();
         } catch (error) {
-            console.error('Error loading 3D models:', error);
-            this.draw();
+            console.error('Error initializing slot machine:', error);
         }
     }
 
@@ -59,7 +55,7 @@ class SlotMachine {
         this.canvas.style.width = `${width}px`;
         this.canvas.style.height = `${height}px`;
 
-        const scale = Math.min(window.devicePixelRatio || 1, 2); // Ограничиваем масштаб для производительности
+        const scale = Math.min(window.devicePixelRatio || 1, 2);
         this.canvas.width = width * scale;
         this.canvas.height = height * scale;
 
@@ -67,6 +63,8 @@ class SlotMachine {
         this.logicalHeight = height;
 
         this.ctx.scale(scale, scale);
+
+        requestAnimationFrame(() => this.draw());
     }
 
     drawFallbackSymbol(symbol, x, y, size) {
@@ -103,7 +101,7 @@ class SlotMachine {
         const totalSymbolsHeight = symbolSize * 3;
         const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
 
-        // Настраиваем временный canvas один раз
+        // Update temporary canvas size
         this.tempCanvas.width = symbolSize;
         this.tempCanvas.height = symbolSize;
 
@@ -113,14 +111,14 @@ class SlotMachine {
                 const y = j * (symbolSize + verticalPadding) + verticalPadding;
                 const symbol = this.reels[i][j];
 
-                // Попытка отрендерить 3D модель
+                // Try to render 3D model
                 const rendered = symbolRenderer.renderSymbol(symbol, this.tempCanvas, symbolSize);
 
                 if (rendered) {
-                    // Если 3D рендер успешен, копируем результат
+                    // If 3D render successful, copy to main canvas
                     this.ctx.drawImage(this.tempCanvas, x, y);
                 } else {
-                    // Иначе показываем fallback символ
+                    // Fallback to 2D symbol
                     this.drawFallbackSymbol(symbol, x, y, symbolSize);
                 }
             }
@@ -200,6 +198,12 @@ class SlotMachine {
                         reel.symbols.shift();
                     }
                 }
+
+                // Update visible symbols during animation
+                for (let j = 0; j < 3; j++) {
+                    const symbolIndex = (reel.currentStep + j) % reel.symbols.length;
+                    this.reels[reelIndex][j] = reel.symbols[symbolIndex];
+                }
             }
 
             this.draw();
@@ -258,13 +262,14 @@ class SlotMachine {
         document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(0.10));
         document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-0.10));
 
-        // Cleanup handler
+        // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
             symbolRenderer.dispose();
         });
     }
 }
 
+// Initialize slot machine when page loads
 window.addEventListener('load', () => {
     const slot = new SlotMachine();
 

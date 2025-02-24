@@ -31,6 +31,11 @@ class SymbolRenderer {
 
         this.scene.add(this.ambientLight);
         this.scene.add(this.directionalLight);
+
+        // Enable error logging
+        THREE.onError = (error) => {
+            console.error('THREE.js error:', error);
+        };
     }
 
     async loadModels() {
@@ -87,7 +92,8 @@ class SymbolRenderer {
                 canvas,
                 alpha: true,
                 antialias: true,
-                powerPreference: 'high-performance'
+                powerPreference: 'high-performance',
+                precision: 'mediump' // Use medium precision for better performance
             });
             renderer.setSize(size, size);
             renderer.setClearColor(0x000000, 0);
@@ -120,21 +126,30 @@ class SymbolRenderer {
     }
 
     dispose() {
-        // Очистка ресурсов при необходимости
-        this.renderers.forEach(renderer => renderer.dispose());
-        this.renderers.clear();
-        Object.values(this.models).forEach(model => {
-            model.traverse(child => {
-                if (child.geometry) child.geometry.dispose();
-                if (child.material) {
-                    if (Array.isArray(child.material)) {
-                        child.material.forEach(material => material.dispose());
-                    } else {
-                        child.material.dispose();
-                    }
-                }
-            });
+        // Очистка ресурсов
+        this.renderers.forEach(renderer => {
+            if (renderer && renderer.dispose) {
+                renderer.dispose();
+            }
         });
+        this.renderers.clear();
+
+        // Очистка моделей
+        Object.values(this.models).forEach(model => {
+            if (model && model.traverse) {
+                model.traverse(child => {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(material => material.dispose());
+                        } else {
+                            child.material.dispose();
+                        }
+                    }
+                });
+            }
+        });
+        this.models = {};
     }
 
     getSymbolValue(symbol) {
