@@ -259,8 +259,7 @@ class SlotMachine {
         document.getElementById('spinButton').disabled = true;
 
         try {
-            await this.animateSpin();
-
+            // Сначала получаем результат от сервера
             const formData = new FormData();
             formData.append('bet', this.currentBet);
 
@@ -278,6 +277,10 @@ class SlotMachine {
                 throw new Error(result.error);
             }
 
+            // Запускаем анимацию
+            await this.animateSpin(result.result);
+
+            // После анимации устанавливаем финальный результат
             this.reels = result.result;
             document.getElementById('creditDisplay').textContent = result.credits.toFixed(2);
             this.draw();
@@ -291,14 +294,14 @@ class SlotMachine {
         }
     }
 
-    async animateSpin() {
-        const totalSteps = 30; // Увеличиваем количество шагов для более плавной анимации
+    async animateSpin(finalResult) {
+        const totalSteps = 30;
         const stepDelay = 50;
         const symbols = Object.keys(this.symbolDefinitions);
 
         // Параметры для эластичного отскока
-        const bounceAmplitude = 20; // Амплитуда отскока в пикселях
-        const bounceDuration = 300; // Длительность отскока в миллисекундах
+        const bounceAmplitude = 20;
+        const bounceDuration = 300;
 
         // Анимация вращения
         for (let step = 0; step < totalSteps; step++) {
@@ -310,23 +313,20 @@ class SlotMachine {
 
                 // Рассчитываем скорость вращения (замедление к концу)
                 const progress = step / totalSteps;
-                const speedFactor = Math.pow(1 - progress, 2); // Квадратичное замедление
+                const speedFactor = Math.pow(1 - progress, 2);
 
-                // Определяем количество символов для прокрутки в этом кадре
-                const symbolsToScroll = Math.max(1, Math.floor(5 * speedFactor));
-
-                // Генерируем случайные символы для анимации
-                for (let j = 0; j < 3; j++) {
-                    const randomIndex = Math.floor(Math.random() * symbols.length);
-                    this.reels[reelIndex][j] = symbols[(randomIndex + symbolsToScroll) % symbols.length];
+                // Генерируем случайные символы для анимации, кроме последнего шага
+                if (step < totalSteps - 1) {
+                    for (let j = 0; j < 3; j++) {
+                        const randomIndex = Math.floor(Math.random() * symbols.length);
+                        this.reels[reelIndex][j] = symbols[randomIndex];
+                    }
+                } else {
+                    // На последнем шаге устанавливаем финальные символы для этого барабана
+                    for (let j = 0; j < 3; j++) {
+                        this.reels[reelIndex][j] = finalResult[reelIndex][j];
+                    }
                 }
-            }
-
-            // Эффект размытия во время быстрого вращения
-            if (step < totalSteps * 0.7) {
-                this.ctx.filter = 'blur(2px)';
-            } else {
-                this.ctx.filter = 'none';
             }
 
             this.draw();
@@ -350,8 +350,7 @@ class SlotMachine {
             await new Promise(resolve => requestAnimationFrame(resolve));
         }
 
-        // Финальная отрисовка без смещения
-        this.ctx.filter = 'none';
+        // Финальная отрисовка
         this.draw();
     }
 }

@@ -826,21 +826,11 @@ h1 {
 }
 
 /* Animation effects */
-@keyframes spinBlur {
-    0% { filter: blur(0px); }
-    50% { filter: blur(2px); }
-    100% { filter: blur(0px); }
-}
-
 @keyframes bounceStop {
     0% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
     75% { transform: translateY(5px); }
     100% { transform: translateY(0); }
-}
-
-.spinning {
-    animation: spinBlur 0.3s linear infinite;
 }
 
 .stopping {
