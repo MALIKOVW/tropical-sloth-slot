@@ -115,6 +115,9 @@ body {
     position: relative;
     display: block;
     z-index: 1;
+    transition: transform 0.3s ease-out;
+    will-change: transform;
+    backface-visibility: hidden;
 }
 
 /* Update existing game container styles */
@@ -820,4 +823,26 @@ h1 {
     text-shadow: 0 0 25px rgba(0, 255, 157, 0.6);
     font-weight: bold;
     margin: 10px 0;
+}
+
+/* Animation effects */
+@keyframes spinBlur {
+    0% { filter: blur(0px); }
+    50% { filter: blur(2px); }
+    100% { filter: blur(0px); }
+}
+
+@keyframes bounceStop {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+    75% { transform: translateY(5px); }
+    100% { transform: translateY(0); }
+}
+
+.spinning {
+    animation: spinBlur 0.3s linear infinite;
+}
+
+.stopping {
+    animation: bounceStop 0.5s ease-out;
 }

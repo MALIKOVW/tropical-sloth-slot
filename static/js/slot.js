@@ -200,7 +200,7 @@ class SlotMachine {
         this.ctx.font = `${size * 0.5}px Arial`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(this.getSymbolDisplay(symbol), x + size/2, y + size/2);
+        this.ctx.fillText(this.getSymbolDisplay(symbol), x + size / 2, y + size / 2);
     }
 
     getSymbolDisplay(symbol) {
@@ -292,22 +292,41 @@ class SlotMachine {
     }
 
     async animateSpin() {
-        const totalSteps = 20;
+        const totalSteps = 30; // Увеличиваем количество шагов для более плавной анимации
         const stepDelay = 50;
-        const reelDelay = 4;
-
         const symbols = Object.keys(this.symbolDefinitions);
 
+        // Параметры для эластичного отскока
+        const bounceAmplitude = 20; // Амплитуда отскока в пикселях
+        const bounceDuration = 300; // Длительность отскока в миллисекундах
+
+        // Анимация вращения
         for (let step = 0; step < totalSteps; step++) {
             const startTime = performance.now();
 
             for (let reelIndex = 0; reelIndex < 5; reelIndex++) {
-                if (step < reelIndex * reelDelay) continue;
+                // Задержка старта для каждого барабана
+                if (step < reelIndex * 2) continue;
 
-                // Generate random symbols for animation
+                // Рассчитываем скорость вращения (замедление к концу)
+                const progress = step / totalSteps;
+                const speedFactor = Math.pow(1 - progress, 2); // Квадратичное замедление
+
+                // Определяем количество символов для прокрутки в этом кадре
+                const symbolsToScroll = Math.max(1, Math.floor(5 * speedFactor));
+
+                // Генерируем случайные символы для анимации
                 for (let j = 0; j < 3; j++) {
-                    this.reels[reelIndex][j] = symbols[Math.floor(Math.random() * symbols.length)];
+                    const randomIndex = Math.floor(Math.random() * symbols.length);
+                    this.reels[reelIndex][j] = symbols[(randomIndex + symbolsToScroll) % symbols.length];
                 }
+            }
+
+            // Эффект размытия во время быстрого вращения
+            if (step < totalSteps * 0.7) {
+                this.ctx.filter = 'blur(2px)';
+            } else {
+                this.ctx.filter = 'none';
             }
 
             this.draw();
@@ -316,6 +335,24 @@ class SlotMachine {
             const remainingDelay = Math.max(0, stepDelay - elapsedTime);
             await new Promise(resolve => setTimeout(resolve, remainingDelay));
         }
+
+        // Эффект отскока в конце
+        const bounceStart = performance.now();
+        while (performance.now() - bounceStart < bounceDuration) {
+            const bounceProgress = (performance.now() - bounceStart) / bounceDuration;
+            const offset = Math.sin(bounceProgress * Math.PI) * bounceAmplitude * (1 - bounceProgress);
+
+            this.ctx.save();
+            this.ctx.translate(0, offset);
+            this.draw();
+            this.ctx.restore();
+
+            await new Promise(resolve => requestAnimationFrame(resolve));
+        }
+
+        // Финальная отрисовка без смещения
+        this.ctx.filter = 'none';
+        this.draw();
     }
 }
 
