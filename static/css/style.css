@@ -101,7 +101,7 @@ body {
 .game-field-wrapper {
     position: relative;
     width: 100%;
-    max-width: 660px;
+    max-width: 440px; /* 5 символов * 80px + отступы */
     margin: 20px auto;
     padding: 10px;
     background-color: rgba(0, 0, 0, 0.3);
@@ -613,12 +613,12 @@ h1 {
 
 /* Symbol size standardization */
 .symbol {
-    width: 120px;
-    height: 120px;
+    width: 80px;
+    height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 10px;
+    margin: 5px;
 }
 
 .symbol img {
