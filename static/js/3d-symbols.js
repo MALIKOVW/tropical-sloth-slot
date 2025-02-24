@@ -37,6 +37,7 @@ class SymbolRenderer {
         this.onLoad = null;
         this.totalModels = Object.keys(this.symbolValues).length;
         this.loadedModels = 0;
+        this.totalProgress = 0;
 
         // Enable error logging
         THREE.onError = (error) => {
@@ -47,6 +48,8 @@ class SymbolRenderer {
     async loadModels() {
         console.log('Starting to load models...');
         const loadPromises = [];
+        let totalLoadedSize = 0;
+        let totalSize = 0;
 
         for (const [symbol, data] of Object.entries(this.symbolValues)) {
             console.log(`Loading model for symbol: ${symbol}`);
@@ -70,18 +73,30 @@ class SymbolRenderer {
                         this.models[symbol] = model;
                         this.loadedModels++;
 
+                        // Calculate overall progress
+                        const currentProgress = (this.loadedModels / this.totalModels) * 100;
                         if (this.onProgress) {
                             this.onProgress(this.loadedModels, this.totalModels);
+                            console.log(`Loading progress: ${currentProgress}%`);
                         }
-                        if (this.onLoad) {
+
+                        if (this.loadedModels === this.totalModels && this.onLoad) {
+                            console.log('All models loaded successfully');
                             this.onLoad();
                         }
 
                         resolve();
                     },
                     (progress) => {
-                        const percent = (progress.loaded / progress.total * 100).toFixed(2);
-                        console.log(`Loading progress for ${symbol}: ${percent}%`);
+                        if (progress.lengthComputable) {
+                            totalLoadedSize += progress.loaded;
+                            totalSize = Math.max(totalSize, progress.total * this.totalModels);
+                            const overallProgress = (totalLoadedSize / totalSize) * 100;
+                            console.log(`Loading progress for ${symbol}: ${overallProgress.toFixed(2)}%`);
+                            if (this.onProgress) {
+                                this.onProgress(overallProgress, 100);
+                            }
+                        }
                     },
                     (error) => {
                         console.warn(`Failed to load model ${symbol}:`, error);

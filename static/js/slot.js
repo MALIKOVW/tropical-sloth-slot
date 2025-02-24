@@ -8,23 +8,50 @@ class LoadingManager {
         this.gameContent = document.getElementById('gameContent');
         this.totalAssets = 11; // Total number of 3D models
         this.loadedAssets = 0;
+        this.initializeLoading();
+    }
+
+    initializeLoading() {
+        // Make sure loading screen is visible and game content is hidden
+        if (this.loadingScreen) {
+            this.loadingScreen.classList.remove('hidden');
+            this.loadingScreen.style.display = 'flex';
+        }
+        if (this.gameContent) {
+            this.gameContent.style.display = 'none';
+        }
     }
 
     updateProgress(loaded, total) {
         const progress = (loaded / total) * 100;
-        this.loadingBar.style.width = `${progress}%`;
-        this.loadingText.textContent = `${Math.round(progress)}%`;
+        if (this.loadingBar) {
+            this.loadingBar.style.width = `${progress}%`;
+        }
+        if (this.loadingText) {
+            this.loadingText.textContent = `${Math.round(progress)}%`;
+        }
+        console.log(`Loading progress updated: ${progress}%`);
     }
 
     hideLoadingScreen() {
-        this.loadingScreen.classList.add('hidden');
-        this.gameContent.style.display = 'block';
+        console.log('Hiding loading screen');
+        if (this.loadingScreen) {
+            this.loadingScreen.classList.add('hidden');
+            setTimeout(() => {
+                this.loadingScreen.style.display = 'none';
+                if (this.gameContent) {
+                    this.gameContent.style.display = 'block';
+                }
+            }, 500);
+        }
     }
 
     onAssetLoaded() {
         this.loadedAssets++;
         this.updateProgress(this.loadedAssets, this.totalAssets);
+        console.log(`Asset loaded: ${this.loadedAssets}/${this.totalAssets}`);
         if (this.loadedAssets >= this.totalAssets) {
+            console.log('All assets loaded, hiding loading screen');
             setTimeout(() => this.hideLoadingScreen(), 500);
         }
     }
@@ -32,6 +59,7 @@ class LoadingManager {
 
 class SlotMachine {
     constructor() {
+        console.log('Initializing Slot Machine');
         this.loadingManager = new LoadingManager();
         this.canvas = document.getElementById('slotCanvas');
         this.ctx = this.canvas.getContext('2d');
@@ -61,34 +89,36 @@ class SlotMachine {
 
     async init() {
         try {
+            console.log('Starting initialization');
             // Initialize responsive canvas
             this.resizeCanvas();
             window.addEventListener('resize', () => this.resizeCanvas());
 
-            // Load 3D models with progress tracking
-            await this.loadModels();
+            // Configure loading events
+            symbolRenderer.onProgress = (loaded, total) => {
+                console.log(`Model loading progress: ${loaded}/${total}`);
+                this.loadingManager.updateProgress(loaded, total);
+            };
+
+            symbolRenderer.onLoad = () => {
+                console.log('Model loaded completely');
+                this.loadingManager.onAssetLoaded();
+            };
+
+            // Load 3D models
+            console.log('Starting to load models');
+            await symbolRenderer.loadModels();
 
             // Initialize event listeners
             this.initializeEventListeners();
 
             // Initial draw
             this.draw();
+
+            console.log('Initialization complete');
         } catch (error) {
             console.error('Error initializing slot machine:', error);
         }
-    }
-
-    async loadModels() {
-        // Subscribe to model loading events
-        symbolRenderer.onProgress = (loaded, total) => {
-            this.loadingManager.updateProgress(loaded, total);
-        };
-
-        symbolRenderer.onLoad = () => {
-            this.loadingManager.onAssetLoaded();
-        };
-
-        await symbolRenderer.loadModels();
     }
 
     resizeCanvas() {
@@ -319,5 +349,6 @@ class SlotMachine {
 
 // Initialize slot machine when page loads
 window.addEventListener('load', () => {
+    console.log('Page loaded, creating slot machine instance');
     const slot = new SlotMachine();
 });
