@@ -2,57 +2,74 @@ import { symbolRenderer } from './3d-symbols.js';
 
 class LoadingManager {
     constructor() {
+        console.log('Initializing LoadingManager');
         this.loadingScreen = document.getElementById('loadingScreen');
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
-        this.totalAssets = 11; // Total number of 3D models
+        this.totalAssets = 11;
         this.loadedAssets = 0;
+        this.lastProgress = 0;
         this.initializeLoading();
     }
 
     initializeLoading() {
-        // Make sure loading screen is visible and game content is hidden
-        if (this.loadingScreen) {
-            this.loadingScreen.classList.remove('hidden');
-            this.loadingScreen.style.display = 'flex';
+        if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
+            console.error('Loading screen elements not found, retrying...');
+            setTimeout(() => this.initializeLoading(), 100);
+            return;
         }
-        if (this.gameContent) {
-            this.gameContent.style.display = 'none';
-        }
+
+        console.log('Loading screen initialized');
+        this.loadingScreen.classList.remove('hidden');
+        this.loadingScreen.style.display = 'flex';
+        this.gameContent.style.display = 'none';
+
+        this.loadedAssets = 0;
+        this.lastProgress = 0;
+        this.updateProgress(0);
     }
 
-    updateProgress(loaded, total) {
-        const progress = (loaded / total) * 100;
-        if (this.loadingBar) {
+    updateProgress(progress) {
+        if (!this.loadingBar || !this.loadingText) {
+            console.error('Loading elements not found during progress update');
+            return;
+        }
+
+        progress = Math.min(100, Math.max(0, progress));
+
+        if (Math.abs(progress - this.lastProgress) >= 1) {
+            this.lastProgress = progress;
             this.loadingBar.style.width = `${progress}%`;
-        }
-        if (this.loadingText) {
             this.loadingText.textContent = `${Math.round(progress)}%`;
+            console.log(`Loading progress updated: ${progress}%`);
         }
-        console.log(`Loading progress updated: ${progress}%`);
     }
 
     hideLoadingScreen() {
-        console.log('Hiding loading screen');
-        if (this.loadingScreen) {
-            this.loadingScreen.classList.add('hidden');
-            setTimeout(() => {
-                this.loadingScreen.style.display = 'none';
-                if (this.gameContent) {
-                    this.gameContent.style.display = 'block';
-                }
-            }, 500);
+        if (!this.loadingScreen || !this.gameContent) {
+            console.error('Elements not found during hide loading screen');
+            return;
         }
+
+        console.log('Hiding loading screen');
+        this.loadingScreen.classList.add('hidden');
+
+        setTimeout(() => {
+            this.loadingScreen.style.display = 'none';
+            this.gameContent.style.display = 'block';
+            console.log('Loading screen hidden, game content shown');
+        }, 500);
     }
 
-    onAssetLoaded() {
-        this.loadedAssets++;
-        this.updateProgress(this.loadedAssets, this.totalAssets);
-        console.log(`Asset loaded: ${this.loadedAssets}/${this.totalAssets}`);
-        if (this.loadedAssets >= this.totalAssets) {
-            console.log('All assets loaded, hiding loading screen');
-            setTimeout(() => this.hideLoadingScreen(), 500);
+    onAssetLoaded(loaded, total) {
+        console.log(`Asset loaded: ${loaded}/${total}`);
+        const progress = (loaded / total) * 100;
+        this.updateProgress(progress);
+
+        if (loaded >= total) {
+            console.log('All assets loaded, triggering hide loading screen');
+            this.hideLoadingScreen();
         }
     }
 }
@@ -60,16 +77,11 @@ class LoadingManager {
 class SlotMachine {
     constructor() {
         console.log('Initializing Slot Machine');
-        this.loadingManager = new LoadingManager();
-        this.canvas = document.getElementById('slotCanvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.tempCanvas = document.createElement('canvas');
-        this.tempCtx = this.tempCanvas.getContext('2d');
 
+        // Initialize basic properties
         this.lowSymbols = ['10', 'J', 'Q', 'K', 'A'];
         this.highSymbols = ['zmeja', 'gorilla', 'jaguar', 'crocodile', 'lenivec'];
         this.specialSymbols = ['scatter'];
-
         this.symbols = [...this.lowSymbols, ...this.highSymbols, ...this.specialSymbols];
         this.reels = Array(5).fill().map(() => Array(3).fill('A'));
         this.spinning = false;
@@ -83,26 +95,56 @@ class SlotMachine {
             totalWon: 0
         };
 
-        // Initialize
-        this.init();
+        // Initialize loading manager
+        this.loadingManager = new LoadingManager();
+
+        // Initialize after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            this.initializeCanvas();
+            this.init();
+        }, 100);
+    }
+
+    initializeCanvas() {
+        console.log('Initializing canvas');
+        this.canvas = document.getElementById('slotCanvas');
+        if (!this.canvas) {
+            console.error('Canvas element not found');
+            return;
+        }
+
+        try {
+            this.ctx = this.canvas.getContext('2d', {
+                alpha: true,
+                antialias: true,
+                preserveDrawingBuffer: true,
+                powerPreference: 'default'
+            });
+
+            this.tempCanvas = document.createElement('canvas');
+            this.tempCtx = this.tempCanvas.getContext('2d', {
+                alpha: true,
+                antialias: true
+            });
+
+            console.log('Canvas initialized successfully');
+        } catch (error) {
+            console.error('Error initializing canvas:', error);
+        }
     }
 
     async init() {
         try {
-            console.log('Starting initialization');
-            // Initialize responsive canvas
+            console.log('Starting slot machine initialization');
+
+            // Initialize canvas size
             this.resizeCanvas();
             window.addEventListener('resize', () => this.resizeCanvas());
 
             // Configure loading events
             symbolRenderer.onProgress = (loaded, total) => {
                 console.log(`Model loading progress: ${loaded}/${total}`);
-                this.loadingManager.updateProgress(loaded, total);
-            };
-
-            symbolRenderer.onLoad = () => {
-                console.log('Model loaded completely');
-                this.loadingManager.onAssetLoaded();
+                this.loadingManager.onAssetLoaded(loaded, total);
             };
 
             // Load 3D models
@@ -113,36 +155,46 @@ class SlotMachine {
             this.initializeEventListeners();
 
             // Initial draw
-            this.draw();
+            requestAnimationFrame(() => this.draw());
 
-            console.log('Initialization complete');
+            console.log('Slot machine initialization complete');
         } catch (error) {
-            console.error('Error initializing slot machine:', error);
+            console.error('Error during slot machine initialization:', error);
         }
     }
 
     resizeCanvas() {
-        const container = this.canvas.parentElement;
-        const containerWidth = container.clientWidth;
-        const maxWidth = Math.min(1440, window.innerWidth < 768 ? containerWidth * 0.98 : containerWidth);
-        const minWidth = Math.max(800, maxWidth);
-        const width = Math.min(maxWidth, Math.max(minWidth, containerWidth));
-        const aspectRatio = 4 / 3;
-        const height = width / aspectRatio;
+        if (!this.ctx || !this.canvas) {
+            console.error('Canvas context not available for resize');
+            return;
+        }
 
-        this.canvas.style.width = `${width}px`;
-        this.canvas.style.height = `${height}px`;
+        try {
+            const container = this.canvas.parentElement;
+            const containerWidth = container.clientWidth;
+            const maxWidth = Math.min(1440, window.innerWidth < 768 ? containerWidth * 0.98 : containerWidth);
+            const minWidth = Math.max(800, maxWidth);
+            const width = Math.min(maxWidth, Math.max(minWidth, containerWidth));
+            const aspectRatio = 4 / 3;
+            const height = width / aspectRatio;
 
-        const scale = Math.min(window.devicePixelRatio || 1, 2);
-        this.canvas.width = width * scale;
-        this.canvas.height = height * scale;
+            this.canvas.style.width = `${width}px`;
+            this.canvas.style.height = `${height}px`;
 
-        this.logicalWidth = width;
-        this.logicalHeight = height;
+            const scale = Math.min(window.devicePixelRatio || 1, 2);
+            this.canvas.width = width * scale;
+            this.canvas.height = height * scale;
 
-        this.ctx.scale(scale, scale);
+            this.logicalWidth = width;
+            this.logicalHeight = height;
 
-        requestAnimationFrame(() => this.draw());
+            this.ctx.scale(scale, scale);
+            console.log(`Canvas resized to ${width}x${height} with scale ${scale}`);
+
+            requestAnimationFrame(() => this.draw());
+        } catch (error) {
+            console.error('Error resizing canvas:', error);
+        }
     }
 
     drawFallbackSymbol(symbol, x, y, size) {
