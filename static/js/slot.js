@@ -292,17 +292,23 @@ class SlotMachine {
     // Метод для отображения выигрышной линии
     showWinningLine(linePositions) {
         const container = document.getElementById('paylineContainer');
+        if (!container) return;
 
         // Очищаем предыдущие линии
         container.innerHTML = '';
 
+        // Получаем размеры и позицию игрового поля
+        const gameField = this.canvas.getBoundingClientRect();
+
         // Создаем элементы для подсветки символов
         linePositions.forEach(pos => {
-            const symbolRect = this.getSymbolRect(pos.x, pos.y);
+            const x = pos.x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
+            const y = pos.y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
+
             const highlight = document.createElement('div');
             highlight.className = 'symbol-highlight';
-            highlight.style.left = symbolRect.left + 'px';
-            highlight.style.top = symbolRect.top + 'px';
+            highlight.style.left = x + 'px';
+            highlight.style.top = y + 'px';
             highlight.style.width = this.SYMBOL_SIZE + 'px';
             highlight.style.height = this.SYMBOL_SIZE + 'px';
             container.appendChild(highlight);
@@ -313,35 +319,34 @@ class SlotMachine {
         line.className = 'payline';
 
         // Вычисляем позиции для линии
-        const startPos = this.getSymbolRect(linePositions[0].x, linePositions[0].y);
-        const endPos = this.getSymbolRect(linePositions[4].x, linePositions[4].y);
+        const startPos = {
+            x: linePositions[0].x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2,
+            y: linePositions[0].y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2
+        };
 
-        // Устанавливаем размеры и позицию линии
+        const endPos = {
+            x: linePositions[4].x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2,
+            y: linePositions[4].y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2
+        };
+
+        // Вычисляем длину и угол линии
         const length = Math.sqrt(
-            Math.pow(endPos.left - startPos.left, 2) +
-            Math.pow(endPos.top - startPos.top, 2)
+            Math.pow(endPos.x - startPos.x, 2) +
+            Math.pow(endPos.y - startPos.y, 2)
         );
 
         const angle = Math.atan2(
-            endPos.top - startPos.top,
-            endPos.left - startPos.left
+            endPos.y - startPos.y,
+            endPos.x - startPos.x
         );
 
+        // Устанавливаем стили линии
         line.style.width = length + 'px';
-        line.style.left = (startPos.left + this.SYMBOL_SIZE / 2) + 'px';
-        line.style.top = (startPos.top + this.SYMBOL_SIZE / 2) + 'px';
+        line.style.left = startPos.x + 'px';
+        line.style.top = startPos.y + 'px';
         line.style.transform = `rotate(${angle}rad)`;
 
         container.appendChild(line);
-    }
-
-    // Вспомогательный метод для получения координат символа
-    getSymbolRect(x, y) {
-        const rect = this.canvas.getBoundingClientRect();
-        return {
-            left: rect.left + x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING,
-            top: rect.top + y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING
-        };
     }
 
     async spin() {
