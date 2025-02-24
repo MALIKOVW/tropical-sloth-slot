@@ -8,17 +8,24 @@ class SymbolRenderer {
         this.models = {};
         this.renderer = null;
         this.symbolValues = {
-            '10': { path: '/static/models/10.glb', value: 100 },
-            'J': { path: '/static/models/J.glb', value: 200 },
-            'Q': { path: '/static/models/Q.glb', value: 300 },
-            'K': { path: '/static/models/K.glb', value: 400 },
-            'A': { path: '/static/models/A.glb', value: 500 },
-            'zmeja': { path: '/static/models/zmeja.glb', value: 600 },
-            'gorilla': { path: '/static/models/Gorilla.glb', value: 700 },
-            'jaguar': { path: '/static/models/jaguar.glb', value: 800 },
-            'crocodile': { path: '/static/models/crocodile.glb', value: 900 },
-            'lenivec': { path: '/static/models/lenivec.glb', value: 1000 },
-            'scatter': { path: '/static/models/scatter.glb', value: 0 }
+            // Low value symbols (wooden letters)
+            'wooden_a': { path: '/static/models/wooden_a.glb', value: 10 },
+            'wooden_k': { path: '/static/models/wooden_k.glb', value: 15 },
+            'wooden_arch': { path: '/static/models/wooden_arch.glb', value: 20 },
+
+            // Medium value symbols (animals)
+            'snake': { path: '/static/models/snake.glb', value: 30 },
+            'gorilla': { path: '/static/models/gorilla.glb', value: 40 },
+            'jaguar': { path: '/static/models/jaguar.glb', value: 50 },
+            'crocodile': { path: '/static/models/crocodile.glb', value: 60 },
+            'gator': { path: '/static/models/gator.glb', value: 70 },
+            'leopard': { path: '/static/models/leopard.glb', value: 80 },
+
+            // High value symbol
+            'dragon': { path: '/static/models/dragon.glb', value: 100 },
+
+            // Scatter symbol
+            'sloth': { path: '/static/models/sloth.glb', value: 0 }
         };
 
         // Loading state
@@ -32,23 +39,17 @@ class SymbolRenderer {
     }
 
     initializeScene() {
-        try {
-            this.scene = new THREE.Scene();
-            this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
-            this.camera.position.z = 1.5;
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+        this.camera.position.z = 1.5;
 
-            // Setup lighting
-            this.ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            this.directionalLight.position.set(1, 1, 1);
+        // Enhanced lighting setup
+        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        this.directionalLight.position.set(1, 1, 1);
 
-            this.scene.add(this.ambientLight);
-            this.scene.add(this.directionalLight);
-
-            console.log('Scene initialized successfully');
-        } catch (error) {
-            console.error('Error initializing scene:', error);
-        }
+        this.scene.add(this.ambientLight);
+        this.scene.add(this.directionalLight);
     }
 
     async loadModels() {
@@ -88,7 +89,7 @@ class SymbolRenderer {
                     },
                     null,
                     (error) => {
-                        console.error(`Failed to load model ${symbol}:`, error);
+                        console.warn(`Failed to load model ${symbol}:`, error);
                         resolve();
                     }
                 );
@@ -113,22 +114,16 @@ class SymbolRenderer {
         }
 
         try {
-            // Create or reuse renderer
-            if (!this.renderer) {
-                this.renderer = new THREE.WebGLRenderer({
-                    alpha: true,
-                    antialias: true,
-                    powerPreference: 'default'
-                });
-            }
+            // Create new renderer for each canvas
+            const renderer = new THREE.WebGLRenderer({
+                canvas,
+                alpha: true,
+                antialias: true,
+                preserveDrawingBuffer: true
+            });
 
-            // Set renderer properties
-            this.renderer.setSize(size, size, false);
-            this.renderer.setClearColor(0x000000, 0);
-            this.renderer.setPixelRatio(1);
-
-            // Attach to canvas
-            this.renderer.domElement = canvas;
+            renderer.setSize(size, size, false);
+            renderer.setClearColor(0x000000, 0);
 
             // Clear scene
             while (this.scene.children.length > 0) {
@@ -139,13 +134,16 @@ class SymbolRenderer {
             this.scene.add(this.ambientLight);
             this.scene.add(this.directionalLight);
 
-            // Add model
             const model = this.models[symbol].clone();
             model.rotation.y = Math.PI / 4;
             this.scene.add(model);
 
-            // Render
-            this.renderer.render(this.scene, this.camera);
+            // Render scene
+            renderer.render(this.scene, this.camera);
+
+            // Dispose of renderer immediately after use
+            renderer.dispose();
+
             return true;
         } catch (error) {
             console.error(`Error rendering symbol ${symbol}:`, error);
@@ -155,31 +153,21 @@ class SymbolRenderer {
 
     dispose() {
         try {
-            // Dispose renderer
-            if (this.renderer) {
-                this.renderer.dispose();
-                this.renderer = null;
-            }
-
-            // Dispose models
-            Object.entries(this.models).forEach(([symbol, model]) => {
-                try {
-                    if (model && model.traverse) {
-                        model.traverse(child => {
-                            if (child.geometry) {
-                                child.geometry.dispose();
+            // Dispose of all models
+            Object.values(this.models).forEach(model => {
+                if (model && model.traverse) {
+                    model.traverse(child => {
+                        if (child.geometry) {
+                            child.geometry.dispose();
+                        }
+                        if (child.material) {
+                            if (Array.isArray(child.material)) {
+                                child.material.forEach(material => material.dispose());
+                            } else {
+                                child.material.dispose();
                             }
-                            if (child.material) {
-                                if (Array.isArray(child.material)) {
-                                    child.material.forEach(material => material.dispose());
-                                } else {
-                                    child.material.dispose();
-                                }
-                            }
-                        });
-                    }
-                } catch (error) {
-                    console.error(`Error disposing model ${symbol}:`, error);
+                        }
+                    });
                 }
             });
             this.models = {};
@@ -193,7 +181,7 @@ class SymbolRenderer {
     }
 
     isScatter(symbol) {
-        return symbol === 'scatter';
+        return symbol === 'sloth';
     }
 }
 

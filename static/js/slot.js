@@ -1,12 +1,10 @@
-import { symbolRenderer } from './3d-symbols.js';
-
 class LoadingManager {
     constructor() {
         this.loadingScreen = document.getElementById('loadingScreen');
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
-        this.totalAssets = 11;
+        this.totalAssets = 11; // Number of symbol images
         this.loadedAssets = 0;
         this.lastProgress = 0;
         this.initializeLoading();
@@ -48,12 +46,12 @@ class LoadingManager {
         }, 500);
     }
 
-    onAssetLoaded(loaded, total) {
-        const progress = (loaded / total) * 100;
+    onAssetLoaded() {
+        this.loadedAssets++;
+        const progress = (this.loadedAssets / this.totalAssets) * 100;
         this.updateProgress(progress);
 
-        if (loaded >= total) {
-            console.log('All assets loaded');
+        if (this.loadedAssets >= this.totalAssets) {
             this.hideLoadingScreen();
         }
     }
@@ -80,20 +78,44 @@ class SlotMachine {
         try {
             this.ctx = this.canvas.getContext('2d');
 
-            // Create separate canvas for each symbol
-            this.symbolCanvas = document.createElement('canvas');
-            this.symbolCanvas.width = 150;
-            this.symbolCanvas.height = 150;
+            // Define symbols and their properties
+            this.symbolDefinitions = {
+                // Low value symbols
+                'wooden_a': { value: 10, path: '/static/images/symbols/wooden_a.png' },
+                'wooden_k': { value: 15, path: '/static/images/symbols/wooden_k.png' },
+                'wooden_arch': { value: 20, path: '/static/images/symbols/wooden_arch.png' },
 
-            // Initialize game properties
-            this.lowSymbols = ['10', 'J', 'Q', 'K', 'A'];
-            this.highSymbols = ['zmeja', 'gorilla', 'jaguar', 'crocodile', 'lenivec'];
-            this.specialSymbols = ['scatter'];
-            this.symbols = [...this.lowSymbols, ...this.highSymbols, ...this.specialSymbols];
-            this.reels = Array(5).fill().map(() => Array(3).fill('A'));
+                // Medium value symbols
+                'snake': { value: 30, path: '/static/images/symbols/snake.png' },
+                'gorilla': { value: 40, path: '/static/images/symbols/gorilla.png' },
+                'jaguar': { value: 50, path: '/static/images/symbols/jaguar.png' },
+                'crocodile': { value: 60, path: '/static/images/symbols/crocodile.png' },
+                'gator': { value: 70, path: '/static/images/symbols/gator.png' },
+                'leopard': { value: 80, path: '/static/images/symbols/leopard.png' },
+
+                // High value symbol
+                'dragon': { value: 100, path: '/static/images/symbols/dragon.png' },
+
+                // Scatter symbol
+                'sloth': { value: 0, path: '/static/images/symbols/sloth.png' }
+            };
+
+            // Group symbols by type
+            this.lowSymbols = ['wooden_a', 'wooden_k', 'wooden_arch'];
+            this.mediumSymbols = ['snake', 'gorilla', 'jaguar', 'crocodile', 'gator', 'leopard'];
+            this.highSymbols = ['dragon'];
+            this.specialSymbols = ['sloth'];
+            this.symbols = [...this.lowSymbols, ...this.mediumSymbols, ...this.highSymbols, ...this.specialSymbols];
+
+            // Initialize game state
+            this.reels = Array(5).fill().map(() => Array(3).fill(this.lowSymbols[0]));
+            this.symbolImages = new Map();
             this.spinning = false;
             this.currentBet = 1.00;
             this.bonusSpinsRemaining = 0;
+
+            // Start loading images
+            this.loadSymbolImages();
 
             console.log('Canvas initialized successfully');
         } catch (error) {
@@ -101,17 +123,24 @@ class SlotMachine {
         }
     }
 
+    loadSymbolImages() {
+        Object.entries(this.symbolDefinitions).forEach(([symbol, def]) => {
+            const img = new Image();
+            img.onload = () => {
+                this.symbolImages.set(symbol, img);
+                this.loadingManager.onAssetLoaded();
+            };
+            img.onerror = () => {
+                console.error(`Failed to load image for symbol: ${symbol}`);
+                this.loadingManager.onAssetLoaded();
+            };
+            img.src = def.path;
+        });
+    }
+
     async init() {
         try {
             console.log('Starting slot machine initialization');
-
-            // Configure loading events
-            symbolRenderer.onProgress = (loaded, total) => {
-                this.loadingManager.onAssetLoaded(loaded, total);
-            };
-
-            // Load models
-            await symbolRenderer.loadModels();
 
             // Initialize event listeners
             this.initializeEventListeners();
@@ -175,13 +204,12 @@ class SlotMachine {
                 const symbol = this.reels[i][j];
 
                 try {
-                    const rendered = symbolRenderer.renderSymbol(symbol, this.symbolCanvas, this.symbolCanvas.width);
-
-                    if (rendered) {
-                        // Draw rendered 3D symbol
-                        this.ctx.drawImage(this.symbolCanvas, x, y, symbolSize, symbolSize);
+                    const img = this.symbolImages.get(symbol);
+                    if (img) {
+                        // Draw symbol image
+                        this.ctx.drawImage(img, x, y, symbolSize, symbolSize);
                     } else {
-                        // Fallback to 2D symbol
+                        // Fallback to placeholder
                         this.drawFallbackSymbol(symbol, x, y, symbolSize);
                     }
                 } catch (error) {
@@ -204,9 +232,10 @@ class SlotMachine {
 
     getSymbolDisplay(symbol) {
         const symbolMap = {
-            '10': '10', 'J': 'J', 'Q': 'Q', 'K': 'K', 'A': 'A',
-            'zmeja': '🐍', 'gorilla': '🦍', 'jaguar': '🐆',
-            'crocodile': '🐊', 'lenivec': '🦥', 'scatter': '⭐'
+            'wooden_a': 'A', 'wooden_k': 'K', 'wooden_arch': 'Arch',
+            'snake': '🐍', 'gorilla': '🦍', 'jaguar': '🐆',
+            'crocodile': '🐊', 'gator': '🐊', 'leopard': '🐆',
+            'dragon': '🐲', 'sloth': '🦥'
         };
         return symbolMap[symbol] || symbol;
     }
@@ -219,10 +248,6 @@ class SlotMachine {
 
         document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(0.10));
         document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-0.10));
-
-        window.addEventListener('beforeunload', () => {
-            symbolRenderer.dispose();
-        });
     }
 
     adjustBet(amount) {
@@ -280,6 +305,7 @@ class SlotMachine {
 
         for (let step = 0; step < totalSteps; step++) {
             const startTime = performance.now();
+
             for (let reelIndex = 0; reelIndex < 5; reelIndex++) {
                 if (step < reelIndex * reelDelay) continue;
 
