@@ -63,6 +63,10 @@ class SlotMachine {
         console.log('Initializing Slot Machine');
         this.loadingManager = new LoadingManager();
 
+        // Константы для размеров
+        this.SYMBOL_SIZE = 120; // Фиксированный размер символа
+        this.SYMBOL_PADDING = 10; // Отступ между символами
+
         setTimeout(() => {
             this.initializeCanvas();
             this.init();
@@ -82,23 +86,16 @@ class SlotMachine {
 
             // Define symbols and their properties
             this.symbolDefinitions = {
-                // Low value symbols
                 'wooden_a': { value: 10, path: '/static/images/symbols/pic1.png' },
                 'wooden_k': { value: 15, path: '/static/images/symbols/pic2.png' },
                 'wooden_arch': { value: 20, path: '/static/images/symbols/pic3.png' },
-
-                // Medium value symbols
                 'snake': { value: 30, path: '/static/images/symbols/pic4.png' },
                 'gorilla': { value: 40, path: '/static/images/symbols/pic5.png' },
                 'jaguar': { value: 50, path: '/static/images/symbols/pic6.png' },
                 'crocodile': { value: 60, path: '/static/images/symbols/pic7.png' },
                 'gator': { value: 70, path: '/static/images/symbols/pic8.png' },
                 'leopard': { value: 80, path: '/static/images/symbols/pic9.png' },
-
-                // High value symbol
                 'dragon': { value: 100, path: '/static/images/symbols/pic10.png' },
-
-                // Scatter symbol
                 'sloth': { value: 0, path: '/static/images/symbols/pic11.png' }
             };
 
@@ -128,7 +125,7 @@ class SlotMachine {
                 console.log(`Successfully loaded image for symbol: ${symbol}`);
                 this.symbolImages.set(symbol, img);
                 this.loadingManager.onAssetLoaded();
-                this.draw(); // Redraw after each image loads
+                this.draw(); // Перерисовываем после загрузки каждого изображения
             };
 
             img.onerror = (error) => {
@@ -145,23 +142,21 @@ class SlotMachine {
         if (!this.ctx || !this.canvas) return;
 
         try {
-            const container = this.canvas.parentElement;
-            const containerWidth = container.clientWidth;
-            const maxWidth = Math.min(1440, window.innerWidth < 768 ? containerWidth * 0.98 : containerWidth);
-            const minWidth = Math.max(800, maxWidth);
-            const width = Math.min(maxWidth, Math.max(minWidth, containerWidth));
-            const aspectRatio = 4 / 3;
-            const height = width / aspectRatio;
+            const numReels = 5;
+            const numRows = 3;
 
-            // Set canvas size
-            this.canvas.width = width;
-            this.canvas.height = height;
+            // Рассчитываем размеры холста на основе размера символов
+            const totalWidth = (this.SYMBOL_SIZE + this.SYMBOL_PADDING) * numReels + this.SYMBOL_PADDING;
+            const totalHeight = (this.SYMBOL_SIZE + this.SYMBOL_PADDING) * numRows + this.SYMBOL_PADDING;
 
-            // Store logical dimensions
-            this.logicalWidth = width;
-            this.logicalHeight = height;
+            this.canvas.width = totalWidth;
+            this.canvas.height = totalHeight;
 
-            console.log(`Canvas resized to ${width}x${height}`);
+            // Сохраняем логические размеры
+            this.logicalWidth = totalWidth;
+            this.logicalHeight = totalHeight;
+
+            console.log(`Canvas resized to ${totalWidth}x${totalHeight}`);
             this.draw();
         } catch (error) {
             console.error('Error resizing canvas:', error);
@@ -174,30 +169,25 @@ class SlotMachine {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
 
-        const reelWidth = this.logicalWidth / 5;
-        const symbolSize = Math.min(140, Math.max(120, reelWidth * 0.6));
-        const horizontalPadding = (reelWidth - symbolSize) / 2;
-        const totalSymbolsHeight = symbolSize * 3;
-        const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
-
+        // Draw each symbol
         for (let i = 0; i < 5; i++) {
             for (let j = 0; j < 3; j++) {
-                const x = i * reelWidth + horizontalPadding;
-                const y = j * (symbolSize + verticalPadding) + verticalPadding;
+                const x = i * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
+                const y = j * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
                 const symbol = this.reels[i][j];
 
                 try {
                     const img = this.symbolImages.get(symbol);
                     if (img) {
                         console.log(`Drawing symbol ${symbol} at position ${i},${j}`);
-                        this.ctx.drawImage(img, x, y, symbolSize, symbolSize);
+                        this.ctx.drawImage(img, x, y, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
                     } else {
                         console.warn(`No image found for symbol ${symbol}, using fallback`);
-                        this.drawFallbackSymbol(symbol, x, y, symbolSize);
+                        this.drawFallbackSymbol(symbol, x, y, this.SYMBOL_SIZE);
                     }
                 } catch (error) {
                     console.error(`Error rendering symbol ${symbol}:`, error);
-                    this.drawFallbackSymbol(symbol, x, y, symbolSize);
+                    this.drawFallbackSymbol(symbol, x, y, this.SYMBOL_SIZE);
                 }
             }
         }

@@ -101,19 +101,18 @@ body {
 .game-field-wrapper {
     position: relative;
     width: 100%;
-    max-width: 800px;
+    max-width: 650px; /* Увеличили максимальную ширину для 5 символов по 120px + отступы */
     margin: 20px auto;
     padding: 20px;
-    aspect-ratio: 4/3;
     display: flex;
     align-items: center;
     justify-content: center;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
 }
 
 .game-field-wrapper canvas {
     position: relative;
-    width: 100%;
-    height: 100%;
     display: block;
     z-index: 1;
 }
@@ -619,17 +618,18 @@ h1 {
 
 /* Symbol size standardization */
 .symbol {
-    width: 120px; 
+    width: 120px;
     height: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 10px; 
+    margin: 10px;
 }
 
-.symbol svg {
+.symbol img {
     width: 100%;
     height: 100%;
+    object-fit: contain;
 }
 
 .symbol-container {
@@ -641,11 +641,11 @@ h1 {
     justify-content: center;
 }
 
-.symbol.wild svg {
+.symbol.wild img {
     filter: drop-shadow(0 0 5px #ff9f43);
 }
 
-.symbol.scatter svg {
+.symbol.scatter img {
     filter: drop-shadow(0 0 5px #95a5a6);
 }
 
