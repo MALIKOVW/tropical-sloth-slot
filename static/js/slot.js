@@ -71,6 +71,26 @@ class SlotMachine {
             this.initializeCanvas();
             this.init();
         }, 100);
+
+        // Добавляем определение линий выплат
+        this.paylines = [
+            // Горизонтальные линии
+            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // Верхняя
+            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // Средняя
+            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // Нижняя
+
+            // V-образные линии
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // V
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}], // Перевернутая V
+
+            // Зигзагообразные линии
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 0}],
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 2}],
+
+            // Дополнительные линии
+            [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 1}],
+            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}]
+        ];
     }
 
     initializeCanvas() {
@@ -246,6 +266,84 @@ class SlotMachine {
         document.getElementById('currentBet').textContent = this.currentBet.toFixed(2);
     }
 
+    // Метод для проверки выигрышных линий
+    checkWinningLines() {
+        const winningLines = [];
+
+        this.paylines.forEach((line, index) => {
+            const symbols = line.map(pos => this.reels[pos.x][pos.y]);
+            const firstSymbol = symbols[0];
+
+            // Проверяем, все ли символы в линии одинаковые
+            const isWinning = symbols.every(symbol => symbol === firstSymbol);
+
+            if (isWinning) {
+                winningLines.push({
+                    lineIndex: index,
+                    positions: line,
+                    symbol: firstSymbol
+                });
+            }
+        });
+
+        return winningLines;
+    }
+
+    // Метод для отображения выигрышной линии
+    showWinningLine(linePositions) {
+        const container = document.getElementById('paylineContainer');
+
+        // Очищаем предыдущие линии
+        container.innerHTML = '';
+
+        // Создаем элементы для подсветки символов
+        linePositions.forEach(pos => {
+            const symbolRect = this.getSymbolRect(pos.x, pos.y);
+            const highlight = document.createElement('div');
+            highlight.className = 'symbol-highlight';
+            highlight.style.left = symbolRect.left + 'px';
+            highlight.style.top = symbolRect.top + 'px';
+            highlight.style.width = this.SYMBOL_SIZE + 'px';
+            highlight.style.height = this.SYMBOL_SIZE + 'px';
+            container.appendChild(highlight);
+        });
+
+        // Создаем линию между символами
+        const line = document.createElement('div');
+        line.className = 'payline';
+
+        // Вычисляем позиции для линии
+        const startPos = this.getSymbolRect(linePositions[0].x, linePositions[0].y);
+        const endPos = this.getSymbolRect(linePositions[4].x, linePositions[4].y);
+
+        // Устанавливаем размеры и позицию линии
+        const length = Math.sqrt(
+            Math.pow(endPos.left - startPos.left, 2) +
+            Math.pow(endPos.top - startPos.top, 2)
+        );
+
+        const angle = Math.atan2(
+            endPos.top - startPos.top,
+            endPos.left - startPos.left
+        );
+
+        line.style.width = length + 'px';
+        line.style.left = (startPos.left + this.SYMBOL_SIZE / 2) + 'px';
+        line.style.top = (startPos.top + this.SYMBOL_SIZE / 2) + 'px';
+        line.style.transform = `rotate(${angle}rad)`;
+
+        container.appendChild(line);
+    }
+
+    // Вспомогательный метод для получения координат символа
+    getSymbolRect(x, y) {
+        const rect = this.canvas.getBoundingClientRect();
+        return {
+            left: rect.left + x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING,
+            top: rect.top + y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING
+        };
+    }
+
     async spin() {
         if (this.spinning) return;
 
@@ -259,7 +357,6 @@ class SlotMachine {
         document.getElementById('spinButton').disabled = true;
 
         try {
-            // Сначала получаем результат от сервера
             const formData = new FormData();
             formData.append('bet', this.currentBet);
 
@@ -277,12 +374,20 @@ class SlotMachine {
                 throw new Error(result.error);
             }
 
-            // Запускаем анимацию
             await this.animateSpin(result.result);
 
-            // После анимации устанавливаем финальный результат
             this.reels = result.result;
             document.getElementById('creditDisplay').textContent = result.credits.toFixed(2);
+
+            // Проверяем выигрышные линии
+            const winningLines = this.checkWinningLines();
+
+            // Показываем каждую выигрышную линию по очереди
+            for (const line of winningLines) {
+                this.showWinningLine(line.positions);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
             this.draw();
 
         } catch (error) {
