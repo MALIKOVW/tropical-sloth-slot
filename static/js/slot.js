@@ -114,14 +114,17 @@ class SlotMachine {
         }
 
         try {
+            // Create temporary canvas for symbol rendering
+            this.tempCanvas = document.createElement('canvas');
+
+            // Initialize contexts with WebGL-friendly options
             this.ctx = this.canvas.getContext('2d', {
                 alpha: true,
                 antialias: true,
                 preserveDrawingBuffer: true,
-                powerPreference: 'default'
+                powerPreference: 'high-performance'
             });
 
-            this.tempCanvas = document.createElement('canvas');
             this.tempCtx = this.tempCanvas.getContext('2d', {
                 alpha: true,
                 antialias: true
@@ -191,9 +194,53 @@ class SlotMachine {
             this.ctx.scale(scale, scale);
             console.log(`Canvas resized to ${width}x${height} with scale ${scale}`);
 
+            // Update temporary canvas size
+            this.tempCanvas.width = 150; // Fixed size for symbol rendering
+            this.tempCanvas.height = 150;
+
             requestAnimationFrame(() => this.draw());
         } catch (error) {
             console.error('Error resizing canvas:', error);
+        }
+    }
+
+    draw() {
+        if (!this.ctx || !this.canvas) return;
+
+        // Clear the main canvas
+        this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
+
+        const reelWidth = this.logicalWidth / 5;
+        const symbolSize = Math.min(140, Math.max(120, reelWidth * 0.6));
+        const horizontalPadding = (reelWidth - symbolSize) / 2;
+        const totalSymbolsHeight = symbolSize * 3;
+        const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
+
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 3; j++) {
+                const x = i * reelWidth + horizontalPadding;
+                const y = j * (symbolSize + verticalPadding) + verticalPadding;
+                const symbol = this.reels[i][j];
+
+                try {
+                    // Clear temporary canvas
+                    this.tempCtx.clearRect(0, 0, this.tempCanvas.width, this.tempCanvas.height);
+
+                    // Try to render 3D model
+                    const rendered = symbolRenderer.renderSymbol(symbol, this.tempCanvas, this.tempCanvas.width);
+
+                    if (rendered) {
+                        // If 3D render successful, draw it on main canvas
+                        this.ctx.drawImage(this.tempCanvas, x, y, symbolSize, symbolSize);
+                    } else {
+                        // Fallback to 2D symbol
+                        this.drawFallbackSymbol(symbol, x, y, symbolSize);
+                    }
+                } catch (error) {
+                    console.error(`Error rendering symbol ${symbol}:`, error);
+                    this.drawFallbackSymbol(symbol, x, y, symbolSize);
+                }
+            }
         }
     }
 
@@ -218,41 +265,6 @@ class SlotMachine {
             'scatter': '⭐'
         };
         return symbolMap[symbol] || symbol;
-    }
-
-    draw() {
-        if (!this.ctx || !this.canvas) return;
-
-        this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
-
-        const reelWidth = this.logicalWidth / 5;
-        const symbolSize = Math.min(140, Math.max(120, reelWidth * 0.6));
-        const horizontalPadding = (reelWidth - symbolSize) / 2;
-        const totalSymbolsHeight = symbolSize * 3;
-        const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
-
-        // Update temporary canvas size
-        this.tempCanvas.width = symbolSize;
-        this.tempCanvas.height = symbolSize;
-
-        for (let i = 0; i < 5; i++) {
-            for (let j = 0; j < 3; j++) {
-                const x = i * reelWidth + horizontalPadding;
-                const y = j * (symbolSize + verticalPadding) + verticalPadding;
-                const symbol = this.reels[i][j];
-
-                // Try to render 3D model
-                const rendered = symbolRenderer.renderSymbol(symbol, this.tempCanvas, symbolSize);
-
-                if (rendered) {
-                    // If 3D render successful, copy to main canvas
-                    this.ctx.drawImage(this.tempCanvas, x, y);
-                } else {
-                    // Fallback to 2D symbol
-                    this.drawFallbackSymbol(symbol, x, y, symbolSize);
-                }
-            }
-        }
     }
 
     async spin() {
