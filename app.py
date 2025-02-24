@@ -2,7 +2,8 @@ import os
 from flask import Flask, render_template, jsonify, session, request
 import random
 from datetime import datetime
-from models import db, SpinResult, Statistics
+from database import db
+from models import SpinResult, Statistics
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = os.environ.get("SESSION_SECRET", "dev_secret_key")

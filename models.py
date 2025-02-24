@@ -1,16 +1,13 @@
 from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
-
-db = SQLAlchemy(model_class=Base)
+from database import db
 
 class SpinResult(db.Model):
+    __tablename__ = 'spin_results'
+
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    bet_amount = db.Column(db.Integer, nullable=False)
-    win_amount = db.Column(db.Integer, nullable=False)
+    bet_amount = db.Column(db.Float, nullable=False)
+    win_amount = db.Column(db.Float, nullable=False)
     result_matrix = db.Column(db.String(255), nullable=False)
     bonus_spins_awarded = db.Column(db.Integer, default=0)
     is_bonus_spin = db.Column(db.Boolean, default=False)
@@ -20,11 +17,13 @@ class SpinResult(db.Model):
     symbol_counts = db.Column(db.String(255), nullable=True)  # JSON string storing symbol frequencies
 
 class Statistics(db.Model):
+    __tablename__ = 'statistics'
+
     id = db.Column(db.Integer, primary_key=True)
     total_spins = db.Column(db.Integer, default=0)
     total_wins = db.Column(db.Integer, default=0)
     total_bonus_games = db.Column(db.Integer, default=0)
-    biggest_win = db.Column(db.Integer, default=0)
-    total_bet = db.Column(db.Integer, default=0)
-    total_won = db.Column(db.Integer, default=0)
+    biggest_win = db.Column(db.Float, default=0)
+    total_bet = db.Column(db.Float, default=0)
+    total_won = db.Column(db.Float, default=0)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
