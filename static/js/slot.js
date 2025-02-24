@@ -21,10 +21,6 @@ class LoadingManager {
         this.loadingScreen.classList.remove('hidden');
         this.loadingScreen.style.display = 'flex';
         this.gameContent.style.display = 'none';
-
-        this.loadedAssets = 0;
-        this.lastProgress = 0;
-        this.updateProgress(0);
     }
 
     updateProgress(progress) {
@@ -87,23 +83,23 @@ class SlotMachine {
             // Define symbols and their properties
             this.symbolDefinitions = {
                 // Low value symbols
-                'wooden_a': { value: 10, path: '../static/images/symbols/wooden_a.png' },
-                'wooden_k': { value: 15, path: '../static/images/symbols/wooden_k.png' },
-                'wooden_arch': { value: 20, path: '../static/images/symbols/wooden_arch.png' },
+                'wooden_a': { value: 10, path: '/static/images/symbols/pic1.png' },
+                'wooden_k': { value: 15, path: '/static/images/symbols/pic2.png' },
+                'wooden_arch': { value: 20, path: '/static/images/symbols/pic3.png' },
 
                 // Medium value symbols
-                'snake': { value: 30, path: '../static/images/symbols/snake.png' },
-                'gorilla': { value: 40, path: '../static/images/symbols/gorilla.png' },
-                'jaguar': { value: 50, path: '../static/images/symbols/jaguar.png' },
-                'crocodile': { value: 60, path: '../static/images/symbols/crocodile.png' },
-                'gator': { value: 70, path: '../static/images/symbols/gator.png' },
-                'leopard': { value: 80, path: '../static/images/symbols/leopard.png' },
+                'snake': { value: 30, path: '/static/images/symbols/pic4.png' },
+                'gorilla': { value: 40, path: '/static/images/symbols/pic5.png' },
+                'jaguar': { value: 50, path: '/static/images/symbols/pic6.png' },
+                'crocodile': { value: 60, path: '/static/images/symbols/pic7.png' },
+                'gator': { value: 70, path: '/static/images/symbols/pic8.png' },
+                'leopard': { value: 80, path: '/static/images/symbols/pic9.png' },
 
                 // High value symbol
-                'dragon': { value: 100, path: '../static/images/symbols/dragon.png' },
+                'dragon': { value: 100, path: '/static/images/symbols/pic10.png' },
 
                 // Scatter symbol
-                'sloth': { value: 0, path: '../static/images/symbols/sloth.png' }
+                'sloth': { value: 0, path: '/static/images/symbols/pic11.png' }
             };
 
             // Initialize game state
@@ -145,24 +141,6 @@ class SlotMachine {
         });
     }
 
-    async init() {
-        try {
-            console.log('Starting slot machine initialization');
-
-            // Initialize event listeners
-            this.initializeEventListeners();
-
-            // Set up canvas size and start rendering
-            this.resizeCanvas();
-            window.addEventListener('resize', () => this.resizeCanvas());
-            requestAnimationFrame(() => this.draw());
-
-            console.log('Slot machine initialization complete');
-        } catch (error) {
-            console.error('Error during initialization:', error);
-        }
-    }
-
     resizeCanvas() {
         if (!this.ctx || !this.canvas) return;
 
@@ -175,17 +153,15 @@ class SlotMachine {
             const aspectRatio = 4 / 3;
             const height = width / aspectRatio;
 
-            this.canvas.style.width = `${width}px`;
-            this.canvas.style.height = `${height}px`;
+            // Set canvas size
+            this.canvas.width = width;
+            this.canvas.height = height;
 
-            const scale = Math.min(window.devicePixelRatio || 1, 2);
-            this.canvas.width = width * scale;
-            this.canvas.height = height * scale;
-
+            // Store logical dimensions
             this.logicalWidth = width;
             this.logicalHeight = height;
 
-            this.ctx.scale(scale, scale);
+            console.log(`Canvas resized to ${width}x${height}`);
             this.draw();
         } catch (error) {
             console.error('Error resizing canvas:', error);
@@ -245,6 +221,23 @@ class SlotMachine {
             'dragon': '🐲', 'sloth': '🦥'
         };
         return symbolMap[symbol] || symbol;
+    }
+
+    async init() {
+        try {
+            console.log('Starting slot machine initialization');
+
+            // Initialize event listeners
+            this.initializeEventListeners();
+
+            // Set up canvas size and start rendering
+            this.resizeCanvas();
+            window.addEventListener('resize', () => this.resizeCanvas());
+
+            console.log('Slot machine initialization complete');
+        } catch (error) {
+            console.error('Error during initialization:', error);
+        }
     }
 
     initializeEventListeners() {
