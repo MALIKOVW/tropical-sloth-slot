@@ -297,9 +297,6 @@ class SlotMachine {
         // Очищаем предыдущие линии
         container.innerHTML = '';
 
-        // Получаем размеры и позицию игрового поля
-        const gameField = this.canvas.getBoundingClientRect();
-
         // Создаем элементы для подсветки символов
         linePositions.forEach(pos => {
             const x = pos.x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
@@ -390,7 +387,7 @@ class SlotMachine {
             // Показываем каждую выигрышную линию по очереди
             for (const line of winningLines) {
                 this.showWinningLine(line.positions);
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 1500)); // Увеличили время показа каждой линии
             }
 
             this.draw();
