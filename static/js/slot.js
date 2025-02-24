@@ -1,16 +1,18 @@
+import { symbolRenderer } from './3d-symbols.js';
+
 class SlotMachine {
     constructor() {
         this.canvas = document.getElementById('slotCanvas');
         this.ctx = this.canvas.getContext('2d');
 
         this.lowSymbols = ['10', 'J', 'Q', 'K', 'A'];
-        this.highSymbols = ['dog1', 'dog2', 'dog3', 'toy1', 'toy2'];
-        this.specialSymbols = ['wild', 'scatter'];
+        this.highSymbols = ['zmeja', 'gorilla', 'jaguar', 'crocodile', 'lenivec'];
+        this.specialSymbols = ['scatter'];
 
         this.symbols = [...this.lowSymbols, ...this.highSymbols, ...this.specialSymbols];
         this.reels = Array(5).fill().map(() => Array(3).fill('A'));
         this.spinning = false;
-        this.currentBet = 0.20;
+        this.currentBet = 1.00;
         this.bonusSpinsRemaining = 0;
         this.wildPositions = [];
         this.stats = {
@@ -29,59 +31,121 @@ class SlotMachine {
             this.draw();
         });
 
-        // Disable overscroll/bounce effect on mobile
-        document.body.addEventListener('touchmove', (e) => {
-            if (e.target.closest('#slotCanvas')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-        // Handle touch events
-        this.canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (!this.spinning) {
-                this.spin();
-            }
-        });
+        // Load 3D models
+        this.loadModels();
 
         this.initializeEventListeners();
-        this.initializeNewEventListeners();
         this.updateBonusDisplay();
-        this.fetchStatistics();
-        setInterval(() => this.fetchStatistics(), 60000);
+    }
 
-        // Initialize other properties
-        this.winningLines = [];
-        this.animatingWin = false;
-        this.paylineContainer = document.createElement('div');
-        this.paylineContainer.id = 'paylineContainer';
-        document.querySelector('.game-container').appendChild(this.paylineContainer);
+    async loadModels() {
+        try {
+            await symbolRenderer.loadModels();
+            console.log('3D models loaded successfully');
+            this.draw(); // Redraw after models are loaded
+        } catch (error) {
+            console.error('Error loading 3D models:', error);
+        }
+    }
 
-        this.turboMode = false;
-        this.autoSpinning = false;
-        this.autoSpinCount = 0;
-        this.stopBalance = 0;
-        this.spinDelay = 50;
-        this.turboDelay = 25;
+    getSymbolValue(symbol) {
+        const values = {
+            '10': 100,
+            'J': 200,
+            'Q': 300,
+            'K': 400,
+            'A': 500,
+            'zmeja': 600,
+            'gorilla': 700,
+            'jaguar': 800,
+            'crocodile': 900,
+            'lenivec': 1000,
+            'scatter': 0 // Scatter triggers free spins
+        };
+        return values[symbol] || 0;
+    }
 
-        this.autoSpinModal = new bootstrap.Modal(document.getElementById('autoSpinModal'));
-        this.buyFreespinsModal = new bootstrap.Modal(document.getElementById('buyFreespinsModal'));
+    isScatter(symbol) {
+        return symbol === 'scatter';
+    }
 
-        // Handle orientation change
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                this.resizeCanvas();
-                this.draw();
-            }, 100);
-        });
+    resizeCanvas() {
+        const container = this.canvas.parentElement;
+        const containerWidth = container.clientWidth;
+        const maxWidth = Math.min(1440, window.innerWidth < 768 ? containerWidth * 0.98 : containerWidth);
+        const minWidth = Math.max(800, maxWidth);
+        const width = Math.min(maxWidth, Math.max(minWidth, containerWidth));
+        const aspectRatio = 4 / 3;
+        const height = width / aspectRatio;
+
+        this.canvas.style.width = `${width}px`;
+        this.canvas.style.height = `${height}px`;
+
+        const scale = window.devicePixelRatio || 1;
+        this.canvas.width = width * scale;
+        this.canvas.height = height * scale;
+
+        this.logicalWidth = width;
+        this.logicalHeight = height;
+
+        this.ctx.scale(scale, scale);
+    }
+
+    async draw() {
+        if (!this.ctx || !this.canvas) return;
+
+        // Clear canvas
+        this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
+
+        const reelWidth = this.logicalWidth / 5;
+        const maxSymbolSize = 140;
+        const minSymbolSize = 120;
+        const symbolSize = Math.min(maxSymbolSize, Math.max(minSymbolSize, reelWidth * 0.6));
+        const horizontalPadding = (reelWidth - symbolSize) / 2;
+        const totalSymbolsHeight = symbolSize * 3;
+        const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
+
+        // Create temporary canvas for each symbol
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = symbolSize;
+        tempCanvas.height = symbolSize;
+
+        // Draw symbols
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 3; j++) {
+                const x = i * reelWidth + horizontalPadding;
+                const y = j * (symbolSize + verticalPadding) + verticalPadding;
+                const symbol = this.reels[i][j];
+
+                // Create a renderer for this symbol
+                const renderer = symbolRenderer.createRenderer(tempCanvas);
+                const { scene, camera } = symbolRenderer.createScene();
+
+                // Add the model to the scene if it exists
+                if (symbolRenderer.models[symbol]) {
+                    const model = symbolRenderer.models[symbol].clone();
+                    scene.add(model);
+
+                    // Render the symbol
+                    renderer.setSize(symbolSize, symbolSize);
+                    renderer.render(scene, camera);
+
+                    // Draw the rendered symbol onto the main canvas
+                    this.ctx.drawImage(tempCanvas, x, y);
+
+                    // Clean up
+                    renderer.dispose();
+                }
+            }
+        }
     }
 
     getSymbolDisplay(symbol) {
         const symbolMap = {
             '10': '10', 'J': 'J', 'Q': 'Q', 'K': 'K', 'A': 'A',
-            'dog1': '🐕', 'dog2': '🐶', 'dog3': '🐩',
-            'toy1': '🎾', 'toy2': '🦴',
-            'wild': '🏠', 'scatter': '⭐'
+            'zmeja': '🐍', 'gorilla': '🦍', 'jaguar': '🐆',
+            'crocodile': '🐊', 'lenivec': '🦥',
+            'scatter': '⭐'
         };
         return symbolMap[symbol] || symbol;
     }
@@ -145,132 +209,6 @@ class SlotMachine {
         }
     }
 
-    resizeCanvas() {
-        const container = this.canvas.parentElement;
-        const containerWidth = container.clientWidth;
-
-        // Following slot machine standards:
-        // - Minimum width: 800px
-        // - Optimal width: 1024px-1440px
-        // - Aspect ratio: 4:3 for classic slot view
-        const maxWidth = Math.min(1440, window.innerWidth < 768 ? containerWidth * 0.98 : containerWidth);
-        const minWidth = Math.max(800, maxWidth);
-        const width = Math.min(maxWidth, Math.max(minWidth, containerWidth));
-
-        // Set 4:3 aspect ratio for classic slot view
-        const aspectRatio = 4 / 3;
-        const height = width / aspectRatio;
-
-        // Set display sizes
-        this.canvas.style.width = `${width}px`;
-        this.canvas.style.height = `${height}px`;
-
-        // Account for device pixel ratio for sharp rendering
-        const scale = window.devicePixelRatio || 1;
-        this.canvas.width = width * scale;
-        this.canvas.height = height * scale;
-
-        // Save logical dimensions for calculations
-        this.logicalWidth = width;
-        this.logicalHeight = height;
-
-        // Normalize coordinate system
-        this.ctx.scale(scale, scale);
-        this.ctx.imageSmoothingEnabled = true;
-        this.ctx.imageSmoothingQuality = 'high';
-    }
-
-    draw() {
-        if (!this.ctx || !this.canvas) return;
-
-        // Clear canvas
-        this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
-
-        // Calculate reel and symbol dimensions based on standards
-        const reelWidth = this.logicalWidth / 5;
-        // Symbol size: 120-180px as per standards
-        const maxSymbolSize = 140; // Reduced from 180px
-        const minSymbolSize = 120;
-        const symbolSize = Math.min(
-            maxSymbolSize,
-            Math.max(minSymbolSize, reelWidth * 0.6) // Reduced from 0.75
-        );
-
-        // Calculate padding (10% of symbol size as per standards)
-        const symbolPadding = symbolSize * 0.1;
-        const horizontalPadding = (reelWidth - symbolSize) / 2;
-        const totalSymbolsHeight = symbolSize * 3;
-        const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
-
-        // Draw static wilds first
-        if (this.bonusSpinsRemaining > 0 && this.wildPositions.length > 0) {
-            this.wildPositions.forEach(([row, col]) => {
-                const x = col * reelWidth + horizontalPadding;
-                const y = row * (symbolSize + verticalPadding) + verticalPadding;
-                this.drawSymbol('wild', x, y, symbolSize, true);
-            });
-        }
-
-        // Draw symbols
-        for (let i = 0; i < 5; i++) {
-            for (let j = 0; j < 3; j++) {
-                // Skip if this position has a static wild
-                if (this.bonusSpinsRemaining > 0 &&
-                    this.wildPositions.some(([row, col]) => row === j && col === i)) {
-                    continue;
-                }
-
-                const x = i * reelWidth + horizontalPadding;
-                const y = j * (symbolSize + verticalPadding) + verticalPadding;
-                const symbol = this.reels[i] && this.reels[i][j] ? this.reels[i][j] : this.symbols[0];
-                this.drawSymbol(symbol, x, y, symbolSize);
-            }
-        }
-    }
-
-    async loadImages() {
-        const loadImage = (symbol) => {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => resolve([symbol, img]);
-                img.onerror = reject;
-                img.src = `/static/images/symbols/${symbol}.png`;
-            });
-        };
-
-        const imagePromises = this.symbols.map(loadImage);
-        const loadedImages = await Promise.all(imagePromises);
-    }
-    loadSymbols() {
-        fetch('/static/svg/symbols.svg')
-            .then(response => response.text())
-            .then(svgData => {
-                const container = document.createElement('div');
-                container.style.display = 'none';
-                container.innerHTML = svgData;
-                document.body.appendChild(container);
-            });
-    }
-
-    createSymbolElement(symbol) {
-        const container = document.createElement('div');
-        container.className = `symbol-container symbol ${symbol}`;
-
-        const symbolElement = document.createElement('div');
-        symbolElement.className = 'symbol';
-
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('viewBox', '0 0 24 24');
-
-        const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-        use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#${symbol}`);
-
-        svg.appendChild(use);
-        symbolElement.appendChild(svg);
-        container.appendChild(symbolElement);
-
-        return container;
-    }
 
 
     adjustBet(amount) {
@@ -398,7 +336,6 @@ class SlotMachine {
             this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
 
             const reelWidth = this.logicalWidth / 5;
-            // Use the same symbol size calculation as in draw()
             const maxSymbolSize = 140;
             const minSymbolSize = 120;
             const symbolSize = Math.min(
@@ -704,12 +641,9 @@ class SlotMachine {
     initializeEventListeners() {
         const spinButton = document.getElementById('spinButton');
         if (spinButton) {
-            spinButton.textContent = 'SPIN';
             spinButton.addEventListener('click', () => this.spin());
         }
 
-        document.getElementById('increaseBet').textContent = '+';
-        document.getElementById('decreaseBet').textContent = '-';
         document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(0.10));
         document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-0.10));
     }
