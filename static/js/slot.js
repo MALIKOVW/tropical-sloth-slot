@@ -35,7 +35,6 @@ class LoadingManager {
             this.lastProgress = progress;
             this.loadingBar.style.width = `${progress}%`;
             this.loadingText.textContent = `${Math.round(progress)}%`;
-            console.log(`Loading progress: ${progress}%`);
         }
     }
 
@@ -65,7 +64,6 @@ class SlotMachine {
         console.log('Initializing Slot Machine');
         this.loadingManager = new LoadingManager();
 
-        // Initialize after DOM is ready
         setTimeout(() => {
             this.initializeCanvas();
             this.init();
@@ -73,7 +71,6 @@ class SlotMachine {
     }
 
     initializeCanvas() {
-        console.log('Initializing canvas');
         this.canvas = document.getElementById('slotCanvas');
         if (!this.canvas) {
             console.error('Canvas element not found');
@@ -81,19 +78,12 @@ class SlotMachine {
         }
 
         try {
-            // Initialize main canvas context
             this.ctx = this.canvas.getContext('2d');
 
-            // Create separate canvas for each symbol position
-            this.symbolCanvases = Array(5).fill().map((_, i) => 
-                Array(3).fill().map((_, j) => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 150;
-                    canvas.height = 150;
-                    canvas.id = `symbol_${i}_${j}`;
-                    return canvas;
-                })
-            );
+            // Create separate canvas for each symbol
+            this.symbolCanvas = document.createElement('canvas');
+            this.symbolCanvas.width = 150;
+            this.symbolCanvas.height = 150;
 
             // Initialize game properties
             this.lowSymbols = ['10', 'J', 'Q', 'K', 'A'];
@@ -117,7 +107,6 @@ class SlotMachine {
 
             // Configure loading events
             symbolRenderer.onProgress = (loaded, total) => {
-                console.log(`Model loading progress: ${loaded}/${total}`);
                 this.loadingManager.onAssetLoaded(loaded, total);
             };
 
@@ -167,6 +156,42 @@ class SlotMachine {
         }
     }
 
+    draw() {
+        if (!this.ctx || !this.canvas) return;
+
+        // Clear canvas
+        this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
+
+        const reelWidth = this.logicalWidth / 5;
+        const symbolSize = Math.min(140, Math.max(120, reelWidth * 0.6));
+        const horizontalPadding = (reelWidth - symbolSize) / 2;
+        const totalSymbolsHeight = symbolSize * 3;
+        const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
+
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 3; j++) {
+                const x = i * reelWidth + horizontalPadding;
+                const y = j * (symbolSize + verticalPadding) + verticalPadding;
+                const symbol = this.reels[i][j];
+
+                try {
+                    const rendered = symbolRenderer.renderSymbol(symbol, this.symbolCanvas, this.symbolCanvas.width);
+
+                    if (rendered) {
+                        // Draw rendered 3D symbol
+                        this.ctx.drawImage(this.symbolCanvas, x, y, symbolSize, symbolSize);
+                    } else {
+                        // Fallback to 2D symbol
+                        this.drawFallbackSymbol(symbol, x, y, symbolSize);
+                    }
+                } catch (error) {
+                    console.error(`Error rendering symbol ${symbol}:`, error);
+                    this.drawFallbackSymbol(symbol, x, y, symbolSize);
+                }
+            }
+        }
+    }
+
     drawFallbackSymbol(symbol, x, y, size) {
         this.ctx.fillStyle = '#333333';
         this.ctx.fillRect(x, y, size, size);
@@ -184,43 +209,6 @@ class SlotMachine {
             'crocodile': '🐊', 'lenivec': '🦥', 'scatter': '⭐'
         };
         return symbolMap[symbol] || symbol;
-    }
-
-    draw() {
-        if (!this.ctx || !this.canvas) return;
-
-        // Clear main canvas
-        this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
-
-        const reelWidth = this.logicalWidth / 5;
-        const symbolSize = Math.min(140, Math.max(120, reelWidth * 0.6));
-        const horizontalPadding = (reelWidth - symbolSize) / 2;
-        const totalSymbolsHeight = symbolSize * 3;
-        const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
-
-        for (let i = 0; i < 5; i++) {
-            for (let j = 0; j < 3; j++) {
-                const x = i * reelWidth + horizontalPadding;
-                const y = j * (symbolSize + verticalPadding) + verticalPadding;
-                const symbol = this.reels[i][j];
-
-                try {
-                    const symbolCanvas = this.symbolCanvases[i][j];
-                    const rendered = symbolRenderer.renderSymbol(symbol, symbolCanvas, symbolCanvas.width);
-
-                    if (rendered) {
-                        // Draw rendered 3D symbol
-                        this.ctx.drawImage(symbolCanvas, x, y, symbolSize, symbolSize);
-                    } else {
-                        // Fallback to 2D symbol
-                        this.drawFallbackSymbol(symbol, x, y, symbolSize);
-                    }
-                } catch (error) {
-                    console.error(`Error rendering symbol ${symbol}:`, error);
-                    this.drawFallbackSymbol(symbol, x, y, symbolSize);
-                }
-            }
-        }
     }
 
     initializeEventListeners() {
@@ -290,30 +278,14 @@ class SlotMachine {
         const stepDelay = 50;
         const reelDelay = 4;
 
-        const reelStates = Array(5).fill().map(() => ({
-            symbols: Array(6).fill().map(() => this.symbols[Math.floor(Math.random() * this.symbols.length)]),
-            currentStep: 0
-        }));
-
         for (let step = 0; step < totalSteps; step++) {
             const startTime = performance.now();
-
             for (let reelIndex = 0; reelIndex < 5; reelIndex++) {
                 if (step < reelIndex * reelDelay) continue;
 
-                const reel = reelStates[reelIndex];
-                reel.currentStep = (reel.currentStep + 1) % reel.symbols.length;
-
-                if (step % 2 === 0) {
-                    reel.symbols.push(this.symbols[Math.floor(Math.random() * this.symbols.length)]);
-                    if (reel.symbols.length > 6) {
-                        reel.symbols.shift();
-                    }
-                }
-
+                // Generate random symbols for animation
                 for (let j = 0; j < 3; j++) {
-                    const symbolIndex = (reel.currentStep + j) % reel.symbols.length;
-                    this.reels[reelIndex][j] = reel.symbols[symbolIndex];
+                    this.reels[reelIndex][j] = this.symbols[Math.floor(Math.random() * this.symbols.length)];
                 }
             }
 

@@ -6,7 +6,7 @@ class SymbolRenderer {
         console.log('Initializing SymbolRenderer');
         this.loader = new GLTFLoader();
         this.models = {};
-        this.renderers = new Map();
+        this.renderer = null;
         this.symbolValues = {
             '10': { path: '/static/models/10.glb', value: 100 },
             'J': { path: '/static/models/J.glb', value: 200 },
@@ -27,16 +27,13 @@ class SymbolRenderer {
         this.totalModels = Object.keys(this.symbolValues).length;
         this.loadedModels = 0;
 
-        // Initialize THREE.js components
+        // Initialize scene and camera
         this.initializeScene();
     }
 
     initializeScene() {
         try {
-            // Create scene
             this.scene = new THREE.Scene();
-
-            // Configure camera
             this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
             this.camera.position.z = 1.5;
 
@@ -110,58 +107,45 @@ class SymbolRenderer {
         }
     }
 
-    initializeRenderer(canvas, size) {
-        try {
-            const renderer = new THREE.WebGLRenderer({
-                canvas,
-                alpha: true,
-                antialias: true,
-                preserveDrawingBuffer: true,
-                powerPreference: 'high-performance'
-            });
-
-            renderer.setSize(size, size, false);
-            renderer.setClearColor(0x000000, 0);
-            renderer.setPixelRatio(1);
-
-            return renderer;
-        } catch (error) {
-            console.error('Failed to initialize renderer:', error);
-            return null;
-        }
-    }
-
     renderSymbol(symbol, canvas, size) {
         if (!this.models[symbol]) {
             return false;
         }
 
         try {
-            // Create or get renderer
-            let renderer = this.renderers.get(canvas.id);
-            if (!renderer) {
-                renderer = this.initializeRenderer(canvas, size);
-                if (!renderer) {
-                    return false;
-                }
-                this.renderers.set(canvas.id, renderer);
+            // Create or reuse renderer
+            if (!this.renderer) {
+                this.renderer = new THREE.WebGLRenderer({
+                    alpha: true,
+                    antialias: true,
+                    powerPreference: 'default'
+                });
             }
+
+            // Set renderer properties
+            this.renderer.setSize(size, size, false);
+            this.renderer.setClearColor(0x000000, 0);
+            this.renderer.setPixelRatio(1);
+
+            // Attach to canvas
+            this.renderer.domElement = canvas;
 
             // Clear scene
             while (this.scene.children.length > 0) {
                 this.scene.remove(this.scene.children[0]);
             }
 
-            // Add lights and model
+            // Add lights
             this.scene.add(this.ambientLight);
             this.scene.add(this.directionalLight);
 
+            // Add model
             const model = this.models[symbol].clone();
             model.rotation.y = Math.PI / 4;
             this.scene.add(model);
 
             // Render
-            renderer.render(this.scene, this.camera);
+            this.renderer.render(this.scene, this.camera);
             return true;
         } catch (error) {
             console.error(`Error rendering symbol ${symbol}:`, error);
@@ -171,19 +155,11 @@ class SymbolRenderer {
 
     dispose() {
         try {
-            // Dispose renderers
-            this.renderers.forEach((renderer, id) => {
-                try {
-                    if (renderer && renderer.dispose) {
-                        renderer.forceContextLoss();
-                        renderer.dispose();
-                        console.log(`Disposed renderer ${id}`);
-                    }
-                } catch (error) {
-                    console.error(`Error disposing renderer ${id}:`, error);
-                }
-            });
-            this.renderers.clear();
+            // Dispose renderer
+            if (this.renderer) {
+                this.renderer.dispose();
+                this.renderer = null;
+            }
 
             // Dispose models
             Object.entries(this.models).forEach(([symbol, model]) => {
