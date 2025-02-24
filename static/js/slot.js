@@ -1,7 +1,38 @@
 import { symbolRenderer } from './3d-symbols.js';
 
+class LoadingManager {
+    constructor() {
+        this.loadingScreen = document.getElementById('loadingScreen');
+        this.loadingBar = document.getElementById('loadingBar');
+        this.loadingText = document.getElementById('loadingText');
+        this.gameContent = document.getElementById('gameContent');
+        this.totalAssets = 11; // Total number of 3D models
+        this.loadedAssets = 0;
+    }
+
+    updateProgress(loaded, total) {
+        const progress = (loaded / total) * 100;
+        this.loadingBar.style.width = `${progress}%`;
+        this.loadingText.textContent = `${Math.round(progress)}%`;
+    }
+
+    hideLoadingScreen() {
+        this.loadingScreen.classList.add('hidden');
+        this.gameContent.style.display = 'block';
+    }
+
+    onAssetLoaded() {
+        this.loadedAssets++;
+        this.updateProgress(this.loadedAssets, this.totalAssets);
+        if (this.loadedAssets >= this.totalAssets) {
+            setTimeout(() => this.hideLoadingScreen(), 500);
+        }
+    }
+}
+
 class SlotMachine {
     constructor() {
+        this.loadingManager = new LoadingManager();
         this.canvas = document.getElementById('slotCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.tempCanvas = document.createElement('canvas');
@@ -24,23 +55,40 @@ class SlotMachine {
             totalWon: 0
         };
 
-        // Initialize responsive canvas
-        this.resizeCanvas();
-        window.addEventListener('resize', () => this.resizeCanvas());
-
-        // Load 3D models and initialize
+        // Initialize
         this.init();
     }
 
     async init() {
         try {
-            await symbolRenderer.loadModels();
-            console.log('3D models loaded successfully');
-            this.draw();
+            // Initialize responsive canvas
+            this.resizeCanvas();
+            window.addEventListener('resize', () => this.resizeCanvas());
+
+            // Load 3D models with progress tracking
+            await this.loadModels();
+
+            // Initialize event listeners
             this.initializeEventListeners();
+
+            // Initial draw
+            this.draw();
         } catch (error) {
             console.error('Error initializing slot machine:', error);
         }
+    }
+
+    async loadModels() {
+        // Subscribe to model loading events
+        symbolRenderer.onProgress = (loaded, total) => {
+            this.loadingManager.updateProgress(loaded, total);
+        };
+
+        symbolRenderer.onLoad = () => {
+            this.loadingManager.onAssetLoaded();
+        };
+
+        await symbolRenderer.loadModels();
     }
 
     resizeCanvas() {
@@ -272,14 +320,4 @@ class SlotMachine {
 // Initialize slot machine when page loads
 window.addEventListener('load', () => {
     const slot = new SlotMachine();
-
-    // Prevent double-tap zoom on mobile
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', (e) => {
-        const now = (new Date()).getTime();
-        if (now - lastTouchEnd <= 300) {
-            e.preventDefault();
-        }
-        lastTouchEnd = now;
-    }, false);
 });

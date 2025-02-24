@@ -1,5 +1,10 @@
-from app import db
 from datetime import datetime
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import declarative_base
+
+Base = declarative_base()
+
+db = SQLAlchemy(model_class=Base)
 
 class SpinResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)

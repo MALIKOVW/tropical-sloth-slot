@@ -1,17 +1,13 @@
 import os
 from flask import Flask, render_template, jsonify, session, request
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
 import random
 from datetime import datetime
+from models import db, SpinResult, Statistics
 
-class Base(DeclarativeBase):
-    pass
-
-db = SQLAlchemy(model_class=Base)
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = os.environ.get("SESSION_SECRET", "dev_secret_key")
 
+# Configure SQLAlchemy
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
@@ -19,17 +15,21 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+# Initialize extensions
 db.init_app(app)
 
-from models import SpinResult, Statistics  # Import after app creation
-
+# Initialize database
 with app.app_context():
     try:
+        # Create all tables
         db.create_all()
+
+        # Initialize statistics if needed
         if not Statistics.query.first():
             initial_stats = Statistics()
             db.session.add(initial_stats)
             db.session.commit()
+            print("Database initialized successfully")
     except Exception as e:
         print(f"Database initialization error: {e}")
 
@@ -119,10 +119,6 @@ def buy_freespins():
     if 'credits' not in session:
         return jsonify({'error': 'Session expired'}), 400
 
-    # Check if bonus round is active
-    if session.get('bonus_spins', 0) > 0:
-        return jsonify({'error': 'Cannot buy free spins during bonus round'}), 400
-
     try:
         bet = float(request.form.get('bet', 0.20))
         cost = bet * 10
@@ -136,7 +132,6 @@ def buy_freespins():
         # Award 10 free spins
         bonus_spins = 10
         session['bonus_spins'] = session.get('bonus_spins', 0) + bonus_spins
-        session['wild_positions'] = []
 
         # Update statistics
         stats = Statistics.query.first()
@@ -156,4 +151,4 @@ def buy_freespins():
         return jsonify({'error': 'An error occurred while buying free spins'}), 400
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

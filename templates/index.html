@@ -8,87 +8,99 @@
     <link href="/static/css/style.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container-fluid game-wrapper">
-        <div class="row">
-            <!-- Paytable Column -->
-            <div class="col-md-3 paytable-column">
-                <div class="paytable">
-                    <h3>Paytable</h3>
-                    <div class="symbol-pay">
-                        <span class="symbol lenivec">Ленивец</span>
-                        <span class="pays">x1000</span>
-                    </div>
-                    <div class="symbol-pay">
-                        <span class="symbol crocodile">Крокодил</span>
-                        <span class="pays">x900</span>
-                    </div>
-                    <div class="symbol-pay">
-                        <span class="symbol jaguar">Ягуар</span>
-                        <span class="pays">x800</span>
-                    </div>
-                    <div class="symbol-pay">
-                        <span class="symbol gorilla">Горилла</span>
-                        <span class="pays">x700</span>
-                    </div>
-                    <div class="symbol-pay">
-                        <span class="symbol zmeja">Змея</span>
-                        <span class="pays">x600</span>
-                    </div>
-                    <div class="symbol-pay">
-                        <span class="symbol">A</span>
-                        <span class="pays">x500</span>
-                    </div>
-                    <div class="symbol-pay">
-                        <span class="symbol">K</span>
-                        <span class="pays">x400</span>
-                    </div>
-                    <div class="symbol-pay">
-                        <span class="symbol">Q</span>
-                        <span class="pays">x300</span>
-                    </div>
-                    <div class="symbol-pay">
-                        <span class="symbol">J</span>
-                        <span class="pays">x200</span>
-                    </div>
-                    <div class="symbol-pay">
-                        <span class="symbol">10</span>
-                        <span class="pays">x100</span>
-                    </div>
-                    <div class="symbol-pay scatter">
-                        <span class="symbol">SCATTER</span>
-                        <span class="pays">Free Spins</span>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <h2 class="loading-text">Loading Game Assets</h2>
+        <div class="loading-progress">
+            <div id="loadingBar" class="loading-bar"></div>
+        </div>
+        <div id="loadingText" class="loading-text">0%</div>
+    </div>
+
+    <!-- Game Content -->
+    <div id="gameContent" style="display: none;">
+        <div class="container-fluid game-wrapper">
+            <div class="row">
+                <!-- Paytable Column -->
+                <div class="col-md-3 paytable-column">
+                    <div class="paytable">
+                        <h3>Paytable</h3>
+                        <div class="symbol-pay">
+                            <span class="symbol lenivec">Ленивец</span>
+                            <span class="pays">x1000</span>
+                        </div>
+                        <div class="symbol-pay">
+                            <span class="symbol crocodile">Крокодил</span>
+                            <span class="pays">x900</span>
+                        </div>
+                        <div class="symbol-pay">
+                            <span class="symbol jaguar">Ягуар</span>
+                            <span class="pays">x800</span>
+                        </div>
+                        <div class="symbol-pay">
+                            <span class="symbol gorilla">Горилла</span>
+                            <span class="pays">x700</span>
+                        </div>
+                        <div class="symbol-pay">
+                            <span class="symbol zmeja">Змея</span>
+                            <span class="pays">x600</span>
+                        </div>
+                        <div class="symbol-pay">
+                            <span class="symbol">A</span>
+                            <span class="pays">x500</span>
+                        </div>
+                        <div class="symbol-pay">
+                            <span class="symbol">K</span>
+                            <span class="pays">x400</span>
+                        </div>
+                        <div class="symbol-pay">
+                            <span class="symbol">Q</span>
+                            <span class="pays">x300</span>
+                        </div>
+                        <div class="symbol-pay">
+                            <span class="symbol">J</span>
+                            <span class="pays">x200</span>
+                        </div>
+                        <div class="symbol-pay">
+                            <span class="symbol">10</span>
+                            <span class="pays">x100</span>
+                        </div>
+                        <div class="symbol-pay scatter">
+                            <span class="symbol">SCATTER</span>
+                            <span class="pays">Free Spins</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Game Column -->
-            <div class="col-md-9">
-                <div class="game-container">
-                    <div class="top-bar">
-                        <div class="balance-display">
-                            Credits: <span id="creditDisplay">1000</span>
-                        </div>
-                        <div class="bonus-info">
-                            <span class="badge bg-warning text-dark" id="bonusSpinsCount"></span>
-                        </div>
-                    </div>
-
-                    <div class="game-field-wrapper">
-                        <img src="/static/images/rick-morty-frame.png" alt="Rick and Morty Frame" class="rick-morty-frame">
-                        <canvas id="slotCanvas"></canvas>
-                    </div>
-
-                    <div class="controls">
-                        <div class="controls-row">
-                            <div class="bet-controls">
-                                <button class="btn btn-neon" id="decreaseBet">-</button>
-                                <span id="currentBet">1.00</span>
-                                <button class="btn btn-neon" id="increaseBet">+</button>
+                <!-- Game Column -->
+                <div class="col-md-9">
+                    <div class="game-container">
+                        <div class="top-bar">
+                            <div class="balance-display">
+                                Credits: <span id="creditDisplay">1000</span>
                             </div>
-                            <div class="action-buttons">
-                                <button id="turboSpinBtn" class="btn btn-info">Turbo</button>
-                                <button id="autoSpinBtn" class="btn btn-secondary">Auto</button>
-                                <button id="spinButton" class="btn btn-spin">SPIN</button>
+                            <div class="bonus-info">
+                                <span class="badge bg-warning text-dark" id="bonusSpinsCount"></span>
+                            </div>
+                        </div>
+
+                        <div class="game-field-wrapper">
+                            <img src="/static/images/rick-morty-frame.png" alt="Rick and Morty Frame" class="rick-morty-frame">
+                            <canvas id="slotCanvas"></canvas>
+                        </div>
+
+                        <div class="controls">
+                            <div class="controls-row">
+                                <div class="bet-controls">
+                                    <button class="btn btn-neon" id="decreaseBet">-</button>
+                                    <span id="currentBet">1.00</span>
+                                    <button class="btn btn-neon" id="increaseBet">+</button>
+                                </div>
+                                <div class="action-buttons">
+                                    <button id="turboSpinBtn" class="btn btn-info">Turbo</button>
+                                    <button id="autoSpinBtn" class="btn btn-secondary">Auto</button>
+                                    <button id="spinButton" class="btn btn-spin">SPIN</button>
+                                </div>
                             </div>
                         </div>
                     </div>

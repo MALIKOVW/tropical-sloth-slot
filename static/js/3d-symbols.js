@@ -32,6 +32,12 @@ class SymbolRenderer {
         this.scene.add(this.ambientLight);
         this.scene.add(this.directionalLight);
 
+        // Loading events
+        this.onProgress = null;
+        this.onLoad = null;
+        this.totalModels = Object.keys(this.symbolValues).length;
+        this.loadedModels = 0;
+
         // Enable error logging
         THREE.onError = (error) => {
             console.error('THREE.js error:', error);
@@ -62,6 +68,15 @@ class SymbolRenderer {
                         model.position.sub(center.multiplyScalar(scale));
 
                         this.models[symbol] = model;
+                        this.loadedModels++;
+
+                        if (this.onProgress) {
+                            this.onProgress(this.loadedModels, this.totalModels);
+                        }
+                        if (this.onLoad) {
+                            this.onLoad();
+                        }
+
                         resolve();
                     },
                     (progress) => {
@@ -70,6 +85,10 @@ class SymbolRenderer {
                     },
                     (error) => {
                         console.warn(`Failed to load model ${symbol}:`, error);
+                        this.loadedModels++;
+                        if (this.onProgress) {
+                            this.onProgress(this.loadedModels, this.totalModels);
+                        }
                         resolve(); // Continue loading other models
                     }
                 );
