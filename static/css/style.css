@@ -100,15 +100,16 @@ body {
 /* Game field wrapper */
 .game-field-wrapper {
     position: relative;
-    width: 100%;
-    max-width: 650px;
+    width: 660px; /* 5 символов * 120px + отступы */
+    height: 400px; /* 3 символа * 120px + отступы */
     margin: 20px auto;
-    padding: 20px;
+    padding: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: rgba(0, 0, 0, 0.3);
     border-radius: 10px;
+    overflow: hidden;
 }
 
 /* Canvas styles */
