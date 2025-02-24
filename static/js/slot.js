@@ -45,50 +45,24 @@ class SlotMachine {
             this.draw(); // Redraw after models are loaded
         } catch (error) {
             console.error('Error loading 3D models:', error);
+            // Continue with fallback display
+            this.draw();
         }
     }
 
-    getSymbolValue(symbol) {
-        const values = {
-            '10': 100,
-            'J': 200,
-            'Q': 300,
-            'K': 400,
-            'A': 500,
-            'zmeja': 600,
-            'gorilla': 700,
-            'jaguar': 800,
-            'crocodile': 900,
-            'lenivec': 1000,
-            'scatter': 0 // Scatter triggers free spins
-        };
-        return values[symbol] || 0;
-    }
+    drawFallbackSymbol(symbol, x, y, size) {
+        // Draw background
+        this.ctx.fillStyle = '#000000';
+        this.ctx.beginPath();
+        this.ctx.roundRect(x, y, size, size, 10);
+        this.ctx.fill();
 
-    isScatter(symbol) {
-        return symbol === 'scatter';
-    }
-
-    resizeCanvas() {
-        const container = this.canvas.parentElement;
-        const containerWidth = container.clientWidth;
-        const maxWidth = Math.min(1440, window.innerWidth < 768 ? containerWidth * 0.98 : containerWidth);
-        const minWidth = Math.max(800, maxWidth);
-        const width = Math.min(maxWidth, Math.max(minWidth, containerWidth));
-        const aspectRatio = 4 / 3;
-        const height = width / aspectRatio;
-
-        this.canvas.style.width = `${width}px`;
-        this.canvas.style.height = `${height}px`;
-
-        const scale = window.devicePixelRatio || 1;
-        this.canvas.width = width * scale;
-        this.canvas.height = height * scale;
-
-        this.logicalWidth = width;
-        this.logicalHeight = height;
-
-        this.ctx.scale(scale, scale);
+        // Draw symbol text
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = `bold ${size * 0.5}px Arial`;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(this.getSymbolDisplay(symbol), x + size/2, y + size/2);
     }
 
     async draw() {
@@ -117,24 +91,33 @@ class SlotMachine {
                 const y = j * (symbolSize + verticalPadding) + verticalPadding;
                 const symbol = this.reels[i][j];
 
-                // Create a renderer for this symbol
-                const renderer = symbolRenderer.createRenderer(tempCanvas);
-                const { scene, camera } = symbolRenderer.createScene();
+                try {
+                    // Create a renderer for this symbol
+                    const renderer = symbolRenderer.createRenderer(tempCanvas);
+                    const { scene, camera } = symbolRenderer.createScene();
 
-                // Add the model to the scene if it exists
-                if (symbolRenderer.models[symbol]) {
-                    const model = symbolRenderer.models[symbol].clone();
-                    scene.add(model);
+                    // Add the model to the scene if it exists
+                    if (symbolRenderer.models[symbol]) {
+                        const model = symbolRenderer.models[symbol].clone();
+                        scene.add(model);
 
-                    // Render the symbol
-                    renderer.setSize(symbolSize, symbolSize);
-                    renderer.render(scene, camera);
+                        // Render the symbol
+                        renderer.setSize(symbolSize, symbolSize);
+                        renderer.render(scene, camera);
 
-                    // Draw the rendered symbol onto the main canvas
-                    this.ctx.drawImage(tempCanvas, x, y);
+                        // Draw the rendered symbol onto the main canvas
+                        this.ctx.drawImage(tempCanvas, x, y);
 
-                    // Clean up
-                    renderer.dispose();
+                        // Clean up
+                        renderer.dispose();
+                    } else {
+                        // Fallback to 2D rendering if model not available
+                        this.drawFallbackSymbol(symbol, x, y, symbolSize);
+                    }
+                } catch (error) {
+                    console.error('Error rendering symbol:', error);
+                    // Fallback to 2D rendering on error
+                    this.drawFallbackSymbol(symbol, x, y, symbolSize);
                 }
             }
         }
@@ -150,113 +133,63 @@ class SlotMachine {
         return symbolMap[symbol] || symbol;
     }
 
-    drawSymbol(symbol, x, y, size, isStatic = false) {
-        const padding = size * 0.12;
-        const symbolSize = size - (padding * 2);
-        const symbolX = x + padding;
-        const symbolY = y + padding;
+    resizeCanvas() {
+        const container = this.canvas.parentElement;
+        const containerWidth = container.clientWidth;
+        const maxWidth = Math.min(1440, window.innerWidth < 768 ? containerWidth * 0.98 : containerWidth);
+        const minWidth = Math.max(800, maxWidth);
+        const width = Math.min(maxWidth, Math.max(minWidth, containerWidth));
+        const aspectRatio = 4 / 3;
+        const height = width / aspectRatio;
 
-        // Draw background with rounded corners
-        this.ctx.fillStyle = '#000000';
-        this.ctx.beginPath();
-        this.ctx.roundRect(symbolX, symbolY, symbolSize, symbolSize, 10);
-        this.ctx.fill();
+        this.canvas.style.width = `${width}px`;
+        this.canvas.style.height = `${height}px`;
 
-        // Create gradient for symbol
-        const gradient = this.ctx.createLinearGradient(symbolX, symbolY, symbolX + symbolSize, symbolY + symbolSize);
+        const scale = window.devicePixelRatio || 1;
+        this.canvas.width = width * scale;
+        this.canvas.height = height * scale;
 
-        if (isStatic && symbol === 'wild') {
-            gradient.addColorStop(0, '#ffd700');
-            gradient.addColorStop(1, '#ff8c00');
-        } else if (this.lowSymbols.includes(symbol)) {
-            gradient.addColorStop(0, '#5a9ff2');
-            gradient.addColorStop(1, '#3181dd');
-        } else if (this.highSymbols.includes(symbol)) {
-            gradient.addColorStop(0, '#ff9f22');
-            gradient.addColorStop(1, '#e36410');
-        } else if (symbol === 'wild') {
-            gradient.addColorStop(0, '#ffaf53');
-            gradient.addColorStop(1, '#ff8f10');
-        } else if (symbol === 'scatter') {
-            gradient.addColorStop(0, '#a5b5b6');
-            gradient.addColorStop(1, '#8f9c9d');
-        }
+        this.logicalWidth = width;
+        this.logicalHeight = height;
 
-        this.ctx.fillStyle = gradient;
-        this.ctx.font = `bold ${symbolSize * 0.7}px Arial`;
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-
-        // Add glow effect for static wilds
-        this.ctx.shadowColor = isStatic ? '#ffd700' : '#ffffff';
-        this.ctx.shadowBlur = symbolSize * (isStatic ? 0.2 : 0.1);
-        this.ctx.shadowOffsetX = 0;
-        this.ctx.shadowOffsetY = 0;
-
-        // Draw symbol centered
-        const textX = symbolX + symbolSize / 2;
-        const textY = symbolY + symbolSize / 2;
-        this.ctx.fillText(this.getSymbolDisplay(symbol), textX, textY);
-
-        // Reset shadow effects
-        this.ctx.shadowBlur = 0;
-
-        // Add border for special symbols
-        if (symbol === 'wild' || symbol === 'scatter') {
-            this.ctx.strokeStyle = symbol === 'wild' ? (isStatic ? '#ffd700' : '#ff9f43') : '#95a5a6';
-            this.ctx.lineWidth = Math.max(2, symbolSize * (isStatic ? 0.05 : 0.03));
-            this.ctx.strokeRect(symbolX + padding / 2, symbolY + padding / 2, symbolSize - padding, symbolSize - padding);
-        }
+        this.ctx.scale(scale, scale);
     }
-
-
 
     adjustBet(amount) {
         const newBet = Math.max(0.20, Math.min(100, this.currentBet + amount));
         this.currentBet = Number(newBet.toFixed(2));
         document.getElementById('currentBet').textContent = this.currentBet.toFixed(2);
-        audio.playClickSound();
     }
 
     updateBonusDisplay() {
         const bonusDisplay = document.getElementById('bonusSpinsCount');
-        const buyFreespinsBtn = document.getElementById('buyFreespinsBtn');
-
         if (this.bonusSpinsRemaining > 0) {
             bonusDisplay.textContent = `Free Spins: ${this.bonusSpinsRemaining}`;
             bonusDisplay.style.display = 'inline-block';
             bonusDisplay.classList.add('active-bonus');
-            // Disable buy button during bonus round
-            buyFreespinsBtn.disabled = true;
-            buyFreespinsBtn.classList.add('disabled');
         } else {
             bonusDisplay.style.display = 'none';
             bonusDisplay.classList.remove('active-bonus');
-            // Enable buy button when bonus round ends
-            buyFreespinsBtn.disabled = false;
-            buyFreespinsBtn.classList.remove('disabled');
         }
     }
 
-    async spin(isRespin = false) {
+    async spin() {
         if (this.spinning) return;
 
         const credits = parseFloat(document.getElementById('creditDisplay').textContent);
-        if (!this.bonusSpinsRemaining && !isRespin && credits < this.currentBet) {
+        if (!this.bonusSpinsRemaining && credits < this.currentBet) {
             alert('Insufficient credits!');
             return;
         }
 
         this.spinning = true;
         document.getElementById('spinButton').disabled = true;
-        audio.playSpinSound();
 
         try {
             await this.animateSpin();
 
             const formData = new FormData();
             formData.append('bet', this.currentBet);
-            formData.append('is_respin', isRespin);
 
             const response = await fetch('/spin', {
                 method: 'POST',
@@ -273,49 +206,16 @@ class SlotMachine {
             this.reels = result.result;
             document.getElementById('creditDisplay').textContent = result.credits.toFixed(2);
 
-            // Handle bonus spins award
-            if (result.bonus_spins_awarded > 0) {
-                await this.showBonusAnimation(result.bonus_spins_awarded);
-                this.bonusSpinsRemaining = result.bonus_spins_remaining;
-                this.wildPositions = result.wild_positions || [];
-                this.updateBonusDisplay();
-                audio.playBonusSound();
-            }
-
-            // Update bonus spins count
-            if (this.bonusSpinsRemaining !== result.bonus_spins_remaining) {
-                const previousBonusSpins = this.bonusSpinsRemaining;
-                this.bonusSpinsRemaining = result.bonus_spins_remaining;
-                this.updateBonusDisplay();
-
-                // Show bonus results when free spins end
-                if (previousBonusSpins > 0 && this.bonusSpinsRemaining === 0) {
-                    await this.showBonusResults(result.bonus_total_win);
-                }
-
-                // Clear wild positions when bonus round ends
-                if (this.bonusSpinsRemaining === 0) {
-                    this.wildPositions = [];
-                }
-            }
-
             if (result.winnings > 0) {
-                audio.playWinSound();
-                await this.showWinAnimation(result.winnings, result.winning_lines);
+                await this.showWinAnimation(result.winnings);
             }
 
             this.updateStats(result.winnings);
-
-            // Auto-trigger next free spin if available
-            if (this.bonusSpinsRemaining > 0 && this.autoSpinning) {
-                setTimeout(() => this.spin(), 1000);
-            }
 
         } catch (error) {
             console.error('Error during spin:', error);
             alert('An error occurred during spin. Please try again.');
         } finally {
-            audio.stopSpinSound();
             this.spinning = false;
             document.getElementById('spinButton').disabled = false;
             this.draw();
@@ -323,60 +223,14 @@ class SlotMachine {
     }
 
     async animateSpin() {
-        const totalSteps = this.turboMode ? 10 : 20;
-        const stepDelay = this.turboMode ? this.turboDelay : this.spinDelay;
+        const totalSteps = 20;
+        const stepDelay = 50;
         const reelDelay = 4;
 
         const reelStates = Array(5).fill().map(() => ({
             symbols: Array(6).fill().map(() => this.symbols[Math.floor(Math.random() * this.symbols.length)]),
             currentStep: 0
         }));
-
-        const drawFrame = () => {
-            this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
-
-            const reelWidth = this.logicalWidth / 5;
-            const maxSymbolSize = 140;
-            const minSymbolSize = 120;
-            const symbolSize = Math.min(
-                maxSymbolSize,
-                Math.max(minSymbolSize, reelWidth * 0.6)
-            );
-            const horizontalPadding = (reelWidth - symbolSize) / 2;
-            const totalSymbolsHeight = symbolSize * 3;
-            const verticalPadding = (this.logicalHeight - totalSymbolsHeight) / 4;
-
-            // Draw static wilds first
-            if (this.bonusSpinsRemaining > 0 && this.wildPositions.length > 0) {
-                this.wildPositions.forEach(([row, col]) => {
-                    const x = col * reelWidth + horizontalPadding;
-                    const y = row * (symbolSize + verticalPadding) + verticalPadding;
-                    this.drawSymbol('wild', x, y, symbolSize, true);
-                });
-            }
-
-            // Draw animated symbols
-            reelStates.forEach((reel, reelIndex) => {
-                for (let i = 0; i < 3; i++) {
-                    // Skip if this position has a static wild
-                    if (this.bonusSpinsRemaining > 0 &&
-                        this.wildPositions.some(([row, col]) => row === i && col === reelIndex)) {
-                        continue;
-                    }
-
-                    const symbolIndex = (reel.currentStep + i) % reel.symbols.length;
-                    const symbol = reel.symbols[symbolIndex];
-
-                    this.drawSymbol(
-                        symbol,
-                        reelIndex * reelWidth + horizontalPadding,
-                        i * (symbolSize + verticalPadding) + verticalPadding,
-                        symbolSize,
-                        false
-                    );
-                }
-            });
-        };
 
         for (let step = 0; step < totalSteps; step++) {
             for (let reelIndex = 0; reelIndex < 5; reelIndex++) {
@@ -393,20 +247,9 @@ class SlotMachine {
                 }
             }
 
-            drawFrame();
             await new Promise(resolve => setTimeout(resolve, stepDelay));
+            this.draw();
         }
-    }
-
-    showRespinAnimation() {
-        const message = document.createElement('div');
-        message.className = 'win-animation respin-message';
-        message.textContent = 'RESPIN!';
-        document.body.appendChild(message);
-        return new Promise(resolve => setTimeout(() => {
-            message.remove();
-            resolve();
-        }, 2000));
     }
 
     updateStats(winnings) {
@@ -417,227 +260,18 @@ class SlotMachine {
         }
         this.stats.totalBet += this.currentBet;
         this.stats.totalWon += winnings;
-
-        document.getElementById('totalSpins').textContent = this.stats.totalSpins;
-        document.getElementById('winRate').textContent =
-            `${((this.stats.totalWins / this.stats.totalSpins) * 100).toFixed(1)}%`;
-        document.getElementById('biggestWin').textContent = this.stats.biggestWin.toFixed(2);
-        document.getElementById('rtp').textContent =
-            `${((this.stats.totalWon / this.stats.totalBet) * 100).toFixed(1)}%`;
     }
 
-    async showWinAnimation(amount, winningLines = []) {
-        this.animatingWin = true;
-        this.winningLines = winningLines;
-
+    async showWinAnimation(amount) {
         const winDisplay = document.createElement('div');
         winDisplay.className = 'win-animation';
         winDisplay.textContent = `WIN! ${amount.toFixed(2)}`;
         document.body.appendChild(winDisplay);
 
-        this.clearPaylines();
-
-        // Add click or touch event listener to skip animation
-        const skipHandler = async () => {
-            document.removeEventListener('click', skipHandler);
-            document.removeEventListener('touchstart', skipHandler);
-            this.clearPaylines();
-            winDisplay.remove();
-            this.animatingWin = false;
-        };
-
-        document.addEventListener('click', skipHandler);
-        document.addEventListener('touchstart', skipHandler);
-
-        for (const line of winningLines) {
-            if (!this.animatingWin) break; // Stop if animation was skipped
-            await this.animatePayline(line);
-            if (this.animatingWin) { // Only wait if not skipped
-                await new Promise(resolve => setTimeout(resolve, 800));
-            }
-            this.clearPaylines();
-        }
-
-        setTimeout(() => {
-            if (winDisplay.parentNode) {
-                winDisplay.remove();
-            }
-            this.animatingWin = false;
-        }, 2000);
-    }
-
-    async animatePayline(line) {
-        const reelWidth = this.logicalWidth / 5;
-        const symbolSize = reelWidth * 0.9;
-        const horizontalPadding = (reelWidth - symbolSize) / 2;
-        const verticalPadding = (this.logicalHeight - (symbolSize * 3)) / 4;
-
-        const canvasRect = this.canvas.getBoundingClientRect();
-
-        if (line.length >= 2) {
-            const points = line.map(([row, col]) => ({
-                x: col * reelWidth + horizontalPadding + symbolSize / 2 + canvasRect.left,
-                y: row * (symbolSize + verticalPadding) + verticalPadding + symbolSize / 2 + canvasRect.top
-            }));
-
-            for (let i = 0; i < points.length - 1; i++) {
-                const start = points[i];
-                const end = points[i + 1];
-
-                const length = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
-                const angle = Math.atan2(end.y - start.y, end.x - start.x) * 180 / Math.PI;
-
-                const payline = document.createElement('div');
-                payline.className = 'payline';
-                payline.style.width = `${length}px`;
-                payline.style.left = `${start.x}px`;
-                payline.style.top = `${start.y}px`;
-                payline.style.transform = `rotate(${angle}deg)`;
-
-                this.paylineContainer.appendChild(payline);
-            }
-        }
-
-        for (const [row, col] of line) {
-            const x = col * reelWidth + horizontalPadding + canvasRect.left;
-            const y = row * (symbolSize + verticalPadding) + verticalPadding + canvasRect.top;
-
-            const highlight = document.createElement('div');
-            highlight.className = 'symbol-highlight';
-            highlight.style.left = `${x}px`;
-            highlight.style.top = `${y}px`;
-            highlight.style.width = `${symbolSize}px`;
-            highlight.style.height = `${symbolSize}px`;
-            this.paylineContainer.appendChild(highlight);
-        }
-
-        audio.playWinSound();
-        await new Promise(resolve => setTimeout(resolve, 1500));
-    }
-
-    clearPaylines() {
-        if (this.paylineContainer) {
-            this.paylineContainer.innerHTML = '';
-        }
-    }
-
-    async showBonusAnimation(spinsAwarded) {
-        const bonusMessage = document.createElement('div');
-        bonusMessage.className = 'win-animation bonus-award';
-        bonusMessage.innerHTML = `
-            <div class="bonus-title">BONUS GAME!</div>
-            <div class="spins-awarded">${spinsAwarded} FREE SPINS!</div>
-        `;
-        document.body.appendChild(bonusMessage);
-
-        // Add celebration particles or effects here
-
         await new Promise(resolve => setTimeout(resolve, 2000));
-        bonusMessage.remove();
+        winDisplay.remove();
     }
 
-    async fetchStatistics() {
-        try {
-            const response = await fetch('/statistics');
-            const stats = await response.json();
-
-            document.getElementById('totalSpins').textContent = stats.total_spins;
-            document.getElementById('winRate').textContent = `${stats.win_rate}%`;
-            document.getElementById('biggestWin').textContent = stats.biggest_win.toFixed(2);
-            document.getElementById('rtp').textContent = `${stats.rtp}%`;
-            document.getElementById('totalBonusGames').textContent = stats.total_bonus_games;
-            document.getElementById('totalWon').textContent = stats.total_won.toFixed(2);
-        } catch (error) {
-            console.error('Error fetching statistics:', error);
-        }
-    }
-
-    async startAutoSpin() {
-        if (this.spinning) return;
-
-        // Disable auto-spin during free spins
-        if (this.bonusSpinsRemaining > 0) {
-            alert('Auto-spin is not available during free spins');
-            return;
-        }
-
-        this.autoSpinning = true;
-        document.getElementById('autoSpinBtn').classList.add('active');
-
-        while (this.autoSpinning) {
-            const credits = parseFloat(document.getElementById('creditDisplay').textContent);
-
-            if (this.stopBalance > 0 && credits <= this.stopBalance) {
-                this.stopAutoSpin();
-                alert('Auto spin stopped: Balance limit reached');
-                break;
-            }
-
-            if (this.autoSpinCount > 0) {
-                this.autoSpinCount--;
-                if (this.autoSpinCount === 0) {
-                    this.stopAutoSpin();
-                }
-            }
-
-            await this.spin();
-
-            // Stop auto-spin if free spins are triggered
-            if (this.bonusSpinsRemaining > 0) {
-                this.stopAutoSpin();
-                break;
-            }
-
-            if (this.autoSpinning && !this.spinning) {
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-        }
-    }
-
-    stopAutoSpin() {
-        this.autoSpinning = false;
-        this.autoSpinCount = 0;
-        document.getElementById('autoSpinBtn').classList.remove('active');
-    }
-
-    async buyFreespins() {
-        const cost = this.currentBet * 10;
-        const credits = parseFloat(document.getElementById('creditDisplay').textContent);
-
-        if (credits < cost) {
-            alert('Insufficient credits!');
-            return;
-        }
-
-        try {
-            const formData = new FormData();
-            formData.append('bet', this.currentBet);
-            formData.append('buy_freespins', true);
-
-            const response = await fetch('/buy_freespins', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.error) {
-                alert(result.error);
-                return;
-            }
-
-            document.getElementById('creditDisplay').textContent = result.credits.toFixed(2);
-            this.bonusSpinsRemaining = result.bonus_spins_remaining;
-            this.updateBonusDisplay();
-            this.showBonusAnimation(result.bonus_spins_awarded);
-
-        } catch (error) {
-            console.error('Error buying free spins:', error);
-            alert('An error occurred while buying free spins');
-        } finally {
-            this.buyFreespinsModal.hide();
-        }
-    }
     initializeEventListeners() {
         const spinButton = document.getElementById('spinButton');
         if (spinButton) {
@@ -647,73 +281,9 @@ class SlotMachine {
         document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(0.10));
         document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-0.10));
     }
-
-    initializeNewEventListeners() {
-        document.getElementById('turboSpinBtn').addEventListener('click', () => {
-            this.turboMode = !this.turboMode;
-            const btn = document.getElementById('turboSpinBtn');
-            btn.classList.toggle('active');
-            this.spinDelay = this.turboMode ? this.turboDelay : 50;
-        });
-
-        document.getElementById('autoSpinBtn').addEventListener('click', () => {
-            if (this.autoSpinning) {
-                this.stopAutoSpin();
-            } else {
-                this.autoSpinModal.show();
-            }
-        });
-
-        document.getElementById('startAutoSpin').addEventListener('click', () => {
-            const selectedCount = document.querySelector('input[name="autoSpinCount"]:checked');
-            const stopBalance = document.getElementById('stopBalance').value;
-
-            if (!selectedCount) {
-                alert('Please select number of spins');
-                return;
-            }
-
-            this.autoSpinCount = parseInt(selectedCount.value);
-            this.stopBalance = parseFloat(stopBalance) || 0;
-            this.autoSpinModal.hide();
-            this.startAutoSpin();
-        });
-
-        document.getElementById('buyFreespinsBtn').addEventListener('click', () => {
-            const cost = this.currentBet * 10;
-            document.getElementById('freespinsCost').textContent = cost.toFixed(2);
-            this.buyFreespinsModal.show();
-        });
-
-        document.getElementById('confirmBuyFreespins').addEventListener('click', () => {
-            this.buyFreespins();
-        });
-    }
-
-    async showBonusResults(totalWin) {
-        const bonusResults = document.createElement('div');
-        bonusResults.className = 'win-animation bonus-results';
-        bonusResults.innerHTML = `
-            <div class="bonus-results-title">Поздравляем!</div>
-            <div class="bonus-results-text">Вы выиграли</div>
-            <div class="bonus-results-win">${totalWin.toFixed(2)} FUNS</div>
-            <div class="bonus-results-text">в 10 бесплатных спинах!</div>
-        `;
-        document.body.appendChild(bonusResults);
-
-        // Play celebration sound
-        audio.playBonusSound();
-
-        // Wait for animation
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        bonusResults.remove();
-    }
 }
 
 window.addEventListener('load', () => {
-    if (typeof audio !== 'undefined') {
-        audio.init();
-    }
     const slot = new SlotMachine();
 
     // Prevent double-tap zoom on mobile
