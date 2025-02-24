@@ -87,23 +87,23 @@ class SlotMachine {
             // Define symbols and their properties
             this.symbolDefinitions = {
                 // Low value symbols
-                'wooden_a': { value: 10, path: '/static/images/symbols/wooden_a.png' },
-                'wooden_k': { value: 15, path: '/static/images/symbols/wooden_k.png' },
-                'wooden_arch': { value: 20, path: '/static/images/symbols/wooden_arch.png' },
+                'wooden_a': { value: 10, path: '../static/images/symbols/wooden_a.png' },
+                'wooden_k': { value: 15, path: '../static/images/symbols/wooden_k.png' },
+                'wooden_arch': { value: 20, path: '../static/images/symbols/wooden_arch.png' },
 
                 // Medium value symbols
-                'snake': { value: 30, path: '/static/images/symbols/snake.png' },
-                'gorilla': { value: 40, path: '/static/images/symbols/gorilla.png' },
-                'jaguar': { value: 50, path: '/static/images/symbols/jaguar.png' },
-                'crocodile': { value: 60, path: '/static/images/symbols/crocodile.png' },
-                'gator': { value: 70, path: '/static/images/symbols/gator.png' },
-                'leopard': { value: 80, path: '/static/images/symbols/leopard.png' },
+                'snake': { value: 30, path: '../static/images/symbols/snake.png' },
+                'gorilla': { value: 40, path: '../static/images/symbols/gorilla.png' },
+                'jaguar': { value: 50, path: '../static/images/symbols/jaguar.png' },
+                'crocodile': { value: 60, path: '../static/images/symbols/crocodile.png' },
+                'gator': { value: 70, path: '../static/images/symbols/gator.png' },
+                'leopard': { value: 80, path: '../static/images/symbols/leopard.png' },
 
                 // High value symbol
-                'dragon': { value: 100, path: '/static/images/symbols/dragon.png' },
+                'dragon': { value: 100, path: '../static/images/symbols/dragon.png' },
 
                 // Scatter symbol
-                'sloth': { value: 0, path: '/static/images/symbols/sloth.png' }
+                'sloth': { value: 0, path: '../static/images/symbols/sloth.png' }
             };
 
             // Initialize game state
@@ -127,15 +127,20 @@ class SlotMachine {
         Object.entries(this.symbolDefinitions).forEach(([symbol, def]) => {
             console.log(`Loading image for symbol: ${symbol}, path: ${def.path}`);
             const img = new Image();
+
             img.onload = () => {
                 console.log(`Successfully loaded image for symbol: ${symbol}`);
                 this.symbolImages.set(symbol, img);
                 this.loadingManager.onAssetLoaded();
+                this.draw(); // Redraw after each image loads
             };
+
             img.onerror = (error) => {
                 console.error(`Failed to load image for symbol: ${symbol}`, error);
+                console.error('Attempted path:', def.path);
                 this.loadingManager.onAssetLoaded();
             };
+
             img.src = def.path;
         });
     }
@@ -281,10 +286,13 @@ class SlotMachine {
                 body: formData
             });
 
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const result = await response.json();
             if (result.error) {
-                alert(result.error);
-                return;
+                throw new Error(result.error);
             }
 
             this.reels = result.result;
