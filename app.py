@@ -59,9 +59,28 @@ def spin():
         # Deduct bet
         session['credits'] = session['credits'] - bet
 
+        # Define symbols and their weights
+        symbols = {
+            'wooden_a': 20,    # Most common
+            'wooden_k': 18,
+            'wooden_arch': 16,
+            'snake': 14,
+            'gorilla': 12,
+            'jaguar': 10,
+            'crocodile': 8,
+            'gator': 6,
+            'leopard': 4,
+            'dragon': 2,       # Rarest
+            'sloth': 1         # Scatter
+        }
+
+        # Create weighted symbol list
+        weighted_symbols = []
+        for symbol, weight in symbols.items():
+            weighted_symbols.extend([symbol] * weight)
+
         # Generate result
-        symbols = ['10', 'J', 'Q', 'K', 'A', 'zmeja', 'gorilla', 'jaguar', 'crocodile', 'lenivec', 'scatter']
-        result = [[random.choice(symbols) for _ in range(3)] for _ in range(5)]
+        result = [[random.choice(weighted_symbols) for _ in range(3)] for _ in range(5)]
 
         # Calculate winnings (simplified for now)
         winnings = bet * random.uniform(0, 2)  # Random win between 0x and 2x bet
