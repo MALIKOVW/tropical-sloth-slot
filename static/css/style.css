@@ -47,10 +47,6 @@
 body {
     background-color: #1a1a1a;
     font-family: 'Arial', sans-serif;
-    background-image: url('/static/images/background.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
     min-height: 100vh;
     color: #fff;
     margin: 0;
@@ -63,9 +59,9 @@ body {
 }
 
 .paytable {
-    width: 22%; /* Paytable width: 20-25% of total width */
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.5);
     border-radius: 10px;
-    padding: 20px;
 }
 
 .paytable h3 {
@@ -101,29 +97,17 @@ body {
     font-weight: bold;
 }
 
-/* Game field wrapper with Rick and Morty frame */
+/* Game field wrapper */
 .game-field-wrapper {
     position: relative;
     width: 100%;
     max-width: 800px;
     margin: 20px auto;
-    padding: 40px; /* Increased padding to accommodate larger frame */
+    padding: 20px;
     aspect-ratio: 4/3;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.rick-morty-frame {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: calc(100% + 800px);  /* Drastically увеличиваем размер рамки */
-    height: calc(100% + 800px); /* Drastically увеличиваем размер рамки */
-    z-index: 2;
-    pointer-events: none;
-    object-fit: contain; /* Ensure the frame maintains its aspect ratio */
 }
 
 .game-field-wrapper canvas {
@@ -131,8 +115,6 @@ body {
     width: 100%;
     height: 100%;
     display: block;
-    border-radius: 10px;
-    background-color: #000;
     z-index: 1;
 }
 
@@ -209,6 +191,24 @@ body {
     justify-content: center;
 }
 
+/* Button styles */
+.btn-spin {
+    min-width: 100px;
+    height: 40px;
+    font-size: 16px;
+    font-weight: bold;
+    background: linear-gradient(45deg, #00ff9d, #00bcd4);
+    border: none;
+    color: white;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.btn-spin:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(0, 255, 157, 0.3);
+}
+
 /* Responsive styles */
 @media (max-width: 1440px) {
     .game-container {
@@ -237,6 +237,41 @@ body {
     }
     .controls {
         padding: 10px;
+    }
+    .game-wrapper {
+        padding: 10px;
+    }
+    .paytable {
+        margin-bottom: 20px;
+    }
+    .controls-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    .bet-controls, .action-buttons {
+        width: 100%;
+        justify-content: center;
+    }
+    .symbol-pay {
+        padding: 3px 8px;
+    }
+    .symbol-pay .symbol {
+        font-size: 20px;
+        width: 30px;
+        height: 30px;
+    }
+    .symbol-pay .pays {
+        font-size: 16px;
+    }
+    .btn-spin {
+        width: 80px;
+        height: 80px;
+        font-size: 20px !important;
+    }
+    .statistics {
+        height: auto;
+        flex-direction: column;
+        gap: 10px;
     }
 }
 
@@ -297,21 +332,17 @@ body {
     .game-wrapper {
         padding: 10px;
     }
-
     .paytable {
         margin-bottom: 20px;
     }
-
     .symbol-pay {
         padding: 3px 8px;
     }
-
     .symbol-pay .symbol {
         font-size: 20px;
         width: 30px;
         height: 30px;
     }
-
     .symbol-pay .pays {
         font-size: 16px;
     }
@@ -320,7 +351,6 @@ body {
         height: 80px;
         font-size: 20px !important;
     }
-
     .statistics {
         height: auto;
         flex-direction: column;
@@ -523,10 +553,6 @@ body {
 .rick-morty-logo {
     width: 100%;
     height: 150px;
-    background-image: url('/static/images/rick-morty-logo.jpg');
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
     margin-bottom: 20px;
 }
 
@@ -593,12 +619,12 @@ h1 {
 
 /* Symbol size standardization */
 .symbol {
-    width: 120px; /* According to slot standards */
+    width: 120px; 
     height: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 10px; /* Adding padding between symbols */
+    margin: 10px; 
 }
 
 .symbol svg {
