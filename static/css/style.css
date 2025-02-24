@@ -100,13 +100,10 @@ body {
 /* Game field wrapper */
 .game-field-wrapper {
     position: relative;
-    width: 660px; /* 5 символов * 120px + отступы */
-    height: 400px; /* 3 символа * 120px + отступы */
+    width: 100%;
+    max-width: 660px;
     margin: 20px auto;
     padding: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     background-color: rgba(0, 0, 0, 0.3);
     border-radius: 10px;
     overflow: hidden;
@@ -114,8 +111,8 @@ body {
 
 /* Canvas styles */
 #slotCanvas {
-    position: absolute;
     display: block;
+    margin: 0 auto;
     z-index: 2;
     transition: transform 0.3s ease-out;
     will-change: transform;
