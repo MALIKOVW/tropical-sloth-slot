@@ -21,47 +21,32 @@ class SymbolRenderer {
             'scatter': { path: '/static/models/scatter.glb', value: 0 }
         };
 
-        this.initializeRenderer();
-    }
+        // Initialize loading state
+        this.onProgress = null;
+        this.onLoad = null;
+        this.totalModels = Object.keys(this.symbolValues).length;
+        this.loadedModels = 0;
 
-    initializeRenderer() {
-        try {
-            console.log('Initializing THREE.js renderer');
-            this.scene = new THREE.Scene();
+        // Initialize renderer components
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+        this.camera.position.z = 2;
 
-            // Configure camera for better symbol viewing
-            this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
-            this.camera.position.z = 2;
+        // Set up lighting
+        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        this.directionalLight.position.set(1, 1, 1);
 
-            // Enhanced lighting setup
-            this.ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            this.directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-            this.directionalLight.position.set(1, 1, 2);
-
-            // Add a second directional light for better illumination
-            this.backLight = new THREE.DirectionalLight(0xffffff, 0.5);
-            this.backLight.position.set(-1, -1, -2);
-
-            this.scene.add(this.ambientLight);
-            this.scene.add(this.directionalLight);
-            this.scene.add(this.backLight);
-
-            this.onProgress = null;
-            this.onLoad = null;
-            this.totalModels = Object.keys(this.symbolValues).length;
-            this.loadedModels = 0;
-
-            console.log('THREE.js renderer initialized successfully');
-        } catch (error) {
-            console.error('Error initializing THREE.js renderer:', error);
-        }
+        this.scene.add(this.ambientLight);
+        this.scene.add(this.directionalLight);
     }
 
     async loadModels() {
-        console.log('Starting to load models...');
+        console.log('Starting model loading process');
         const loadPromises = [];
 
         for (const [symbol, data] of Object.entries(this.symbolValues)) {
+            console.log(`Loading model for ${symbol}`);
             const promise = new Promise((resolve) => {
                 this.loader.load(
                     data.path,
@@ -70,18 +55,15 @@ class SymbolRenderer {
                             console.log(`Successfully loaded model for ${symbol}`);
                             const model = gltf.scene;
 
-                            // Center and scale the model
+                            // Center and scale model
                             const box = new THREE.Box3().setFromObject(model);
                             const center = box.getCenter(new THREE.Vector3());
                             const size = box.getSize(new THREE.Vector3());
                             const maxDim = Math.max(size.x, size.y, size.z);
-                            const scale = 1.5 / maxDim;
+                            const scale = 1 / maxDim;
 
                             model.scale.setScalar(scale);
                             model.position.sub(center.multiplyScalar(scale));
-
-                            // Add rotation animation
-                            model.rotation.y = Math.PI / 6;
 
                             this.models[symbol] = model;
                             this.loadedModels++;
@@ -91,7 +73,6 @@ class SymbolRenderer {
                             }
 
                             if (this.loadedModels === this.totalModels && this.onLoad) {
-                                console.log('All models loaded successfully');
                                 this.onLoad();
                             }
                         } catch (error) {
@@ -101,12 +82,17 @@ class SymbolRenderer {
                     },
                     (xhr) => {
                         if (xhr.lengthComputable) {
-                            const percentComplete = (xhr.loaded / xhr.total) * 100;
-                            console.log(`${symbol} ${percentComplete.toFixed(2)}% downloaded`);
+                            const progress = (xhr.loaded / xhr.total) * 100;
+                            console.log(`Loading ${symbol}: ${progress.toFixed(1)}%`);
                         }
                     },
                     (error) => {
-                        console.warn(`Error loading model for ${symbol}:`, error);
+                        console.error(`Error loading model ${symbol}:`, error);
+                        // Still increment counter even if model fails to load
+                        this.loadedModels++;
+                        if (this.onProgress) {
+                            this.onProgress(this.loadedModels, this.totalModels);
+                        }
                         resolve();
                     }
                 );
@@ -117,38 +103,14 @@ class SymbolRenderer {
 
         try {
             await Promise.all(loadPromises);
-            console.log('All models processed');
+            console.log('Model loading process complete');
         } catch (error) {
             console.error('Error during model loading:', error);
         }
     }
 
-    createRenderer(canvas, size) {
-        try {
-            console.log('Creating new WebGL renderer');
-            const renderer = new THREE.WebGLRenderer({
-                canvas,
-                alpha: true,
-                antialias: true,
-                preserveDrawingBuffer: true,
-                powerPreference: 'high-performance'
-            });
-
-            renderer.setSize(size, size, false);
-            renderer.setClearColor(0x000000, 0);
-            renderer.outputEncoding = THREE.sRGBEncoding;
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-
-            return renderer;
-        } catch (error) {
-            console.error('Error creating WebGL renderer:', error);
-            return null;
-        }
-    }
-
     renderSymbol(symbol, canvas, size) {
         if (!this.models[symbol]) {
-            console.warn(`No model available for symbol ${symbol}`);
             return false;
         }
 
@@ -156,34 +118,32 @@ class SymbolRenderer {
             let renderer = this.renderers.get(canvas);
 
             if (!renderer) {
-                renderer = this.createRenderer(canvas, size);
-                if (!renderer) {
-                    return false;
-                }
+                renderer = new THREE.WebGLRenderer({
+                    canvas,
+                    alpha: true,
+                    antialias: true,
+                    preserveDrawingBuffer: true
+                });
+                renderer.setSize(size, size);
+                renderer.setClearColor(0x000000, 0);
                 this.renderers.set(canvas, renderer);
             }
-
-            // Clone the model for this specific render
-            const model = this.models[symbol].clone();
 
             // Clear existing scene
             while (this.scene.children.length > 0) {
                 this.scene.remove(this.scene.children[0]);
             }
 
-            // Re-add lights and model
+            // Add lights and model
             this.scene.add(this.ambientLight);
             this.scene.add(this.directionalLight);
-            this.scene.add(this.backLight);
+
+            const model = this.models[symbol].clone();
+            model.rotation.y = Math.PI / 4; // Rotate for better view
             this.scene.add(model);
 
-            // Update camera aspect ratio
-            this.camera.aspect = 1;
-            this.camera.updateProjectionMatrix();
-
-            // Render the scene
+            // Render scene
             renderer.render(this.scene, this.camera);
-
             return true;
         } catch (error) {
             console.error(`Error rendering symbol ${symbol}:`, error);
@@ -193,7 +153,7 @@ class SymbolRenderer {
 
     dispose() {
         try {
-            console.log('Disposing SymbolRenderer resources');
+            console.log('Disposing resources');
             this.renderers.forEach(renderer => {
                 if (renderer && renderer.dispose) {
                     renderer.dispose();
@@ -216,9 +176,8 @@ class SymbolRenderer {
                 }
             });
             this.models = {};
-            console.log('SymbolRenderer resources disposed');
         } catch (error) {
-            console.error('Error disposing SymbolRenderer:', error);
+            console.error('Error during resource disposal:', error);
         }
     }
 
