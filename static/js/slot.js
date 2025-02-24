@@ -1,5 +1,6 @@
 class LoadingManager {
     constructor() {
+        console.log('Initializing LoadingManager');
         this.loadingScreen = document.getElementById('loadingScreen');
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
@@ -12,6 +13,7 @@ class LoadingManager {
 
     initializeLoading() {
         if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
+            console.error('Loading screen elements not found, retrying...');
             setTimeout(() => this.initializeLoading(), 100);
             return;
         }
@@ -33,6 +35,7 @@ class LoadingManager {
             this.lastProgress = progress;
             this.loadingBar.style.width = `${progress}%`;
             this.loadingText.textContent = `${Math.round(progress)}%`;
+            console.log(`Loading progress: ${progress}%`);
         }
     }
 
@@ -48,10 +51,12 @@ class LoadingManager {
 
     onAssetLoaded() {
         this.loadedAssets++;
+        console.log(`Asset loaded: ${this.loadedAssets}/${this.totalAssets}`);
         const progress = (this.loadedAssets / this.totalAssets) * 100;
         this.updateProgress(progress);
 
         if (this.loadedAssets >= this.totalAssets) {
+            console.log('All assets loaded');
             this.hideLoadingScreen();
         }
     }
@@ -69,6 +74,7 @@ class SlotMachine {
     }
 
     initializeCanvas() {
+        console.log('Initializing canvas');
         this.canvas = document.getElementById('slotCanvas');
         if (!this.canvas) {
             console.error('Canvas element not found');
@@ -100,15 +106,8 @@ class SlotMachine {
                 'sloth': { value: 0, path: '/static/images/symbols/sloth.png' }
             };
 
-            // Group symbols by type
-            this.lowSymbols = ['wooden_a', 'wooden_k', 'wooden_arch'];
-            this.mediumSymbols = ['snake', 'gorilla', 'jaguar', 'crocodile', 'gator', 'leopard'];
-            this.highSymbols = ['dragon'];
-            this.specialSymbols = ['sloth'];
-            this.symbols = [...this.lowSymbols, ...this.mediumSymbols, ...this.highSymbols, ...this.specialSymbols];
-
             // Initialize game state
-            this.reels = Array(5).fill().map(() => Array(3).fill(this.lowSymbols[0]));
+            this.reels = Array(5).fill().map(() => Array(3).fill('wooden_a'));
             this.symbolImages = new Map();
             this.spinning = false;
             this.currentBet = 1.00;
@@ -124,14 +123,17 @@ class SlotMachine {
     }
 
     loadSymbolImages() {
+        console.log('Starting to load symbol images');
         Object.entries(this.symbolDefinitions).forEach(([symbol, def]) => {
+            console.log(`Loading image for symbol: ${symbol}, path: ${def.path}`);
             const img = new Image();
             img.onload = () => {
+                console.log(`Successfully loaded image for symbol: ${symbol}`);
                 this.symbolImages.set(symbol, img);
                 this.loadingManager.onAssetLoaded();
             };
-            img.onerror = () => {
-                console.error(`Failed to load image for symbol: ${symbol}`);
+            img.onerror = (error) => {
+                console.error(`Failed to load image for symbol: ${symbol}`, error);
                 this.loadingManager.onAssetLoaded();
             };
             img.src = def.path;
@@ -206,10 +208,10 @@ class SlotMachine {
                 try {
                     const img = this.symbolImages.get(symbol);
                     if (img) {
-                        // Draw symbol image
+                        console.log(`Drawing symbol ${symbol} at position ${i},${j}`);
                         this.ctx.drawImage(img, x, y, symbolSize, symbolSize);
                     } else {
-                        // Fallback to placeholder
+                        console.warn(`No image found for symbol ${symbol}, using fallback`);
                         this.drawFallbackSymbol(symbol, x, y, symbolSize);
                     }
                 } catch (error) {
