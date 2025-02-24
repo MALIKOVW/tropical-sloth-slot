@@ -5,7 +5,7 @@ class LoadingManager {
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
-        this.totalAssets = 11; // Number of symbol images
+        this.totalAssets = 11;
         this.loadedAssets = 0;
         this.lastProgress = 0;
         this.initializeLoading();
@@ -113,7 +113,7 @@ class SlotMachine {
             this.currentBet = 1.00;
             this.bonusSpinsRemaining = 0;
 
-            // Start loading images
+            // Load symbol images
             this.loadSymbolImages();
 
             console.log('Canvas initialized successfully');
@@ -289,6 +289,7 @@ class SlotMachine {
 
             this.reels = result.result;
             document.getElementById('creditDisplay').textContent = result.credits.toFixed(2);
+            this.draw();
 
         } catch (error) {
             console.error('Error during spin:', error);
@@ -296,7 +297,6 @@ class SlotMachine {
         } finally {
             this.spinning = false;
             document.getElementById('spinButton').disabled = false;
-            this.draw();
         }
     }
 
@@ -304,6 +304,8 @@ class SlotMachine {
         const totalSteps = 20;
         const stepDelay = 50;
         const reelDelay = 4;
+
+        const symbols = Object.keys(this.symbolDefinitions);
 
         for (let step = 0; step < totalSteps; step++) {
             const startTime = performance.now();
@@ -313,7 +315,7 @@ class SlotMachine {
 
                 // Generate random symbols for animation
                 for (let j = 0; j < 3; j++) {
-                    this.reels[reelIndex][j] = this.symbols[Math.floor(Math.random() * this.symbols.length)];
+                    this.reels[reelIndex][j] = symbols[Math.floor(Math.random() * symbols.length)];
                 }
             }
 
