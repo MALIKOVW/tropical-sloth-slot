@@ -3,8 +3,8 @@ from flask import Flask, render_template, jsonify, session, request
 import random
 from datetime import datetime
 from database import db
-from models import SpinResult, Statistics
 
+# create the app
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = os.environ.get("SESSION_SECRET", "dev_secret_key")
 
@@ -19,8 +19,10 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Initialize extensions
 db.init_app(app)
 
-# Initialize database
 with app.app_context():
+    # Make sure to import the models here or their tables won't be created
+    from models import SpinResult, Statistics  # noqa: F401
+
     try:
         # Create all tables
         db.create_all()
