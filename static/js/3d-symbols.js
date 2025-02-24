@@ -21,46 +21,57 @@ class SymbolRenderer {
             'scatter': { path: '/static/models/scatter.glb', value: 0 }
         };
 
-        // Initialize loading state
+        // Loading state
         this.onProgress = null;
         this.onLoad = null;
         this.totalModels = Object.keys(this.symbolValues).length;
         this.loadedModels = 0;
 
-        // Initialize renderer components
-        this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-        this.camera.position.z = 2;
+        // Initialize THREE.js components
+        this.initializeScene();
+    }
 
-        // Set up lighting
-        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-        this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        this.directionalLight.position.set(1, 1, 1);
+    initializeScene() {
+        try {
+            // Create scene
+            this.scene = new THREE.Scene();
 
-        this.scene.add(this.ambientLight);
-        this.scene.add(this.directionalLight);
+            // Configure camera
+            this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+            this.camera.position.z = 1.5;
+
+            // Setup lighting
+            this.ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            this.directionalLight.position.set(1, 1, 1);
+
+            this.scene.add(this.ambientLight);
+            this.scene.add(this.directionalLight);
+
+            console.log('Scene initialized successfully');
+        } catch (error) {
+            console.error('Error initializing scene:', error);
+        }
     }
 
     async loadModels() {
-        console.log('Starting model loading process');
         const loadPromises = [];
 
         for (const [symbol, data] of Object.entries(this.symbolValues)) {
-            console.log(`Loading model for ${symbol}`);
             const promise = new Promise((resolve) => {
                 this.loader.load(
                     data.path,
                     (gltf) => {
                         try {
-                            console.log(`Successfully loaded model for ${symbol}`);
+                            console.log(`Loading model for ${symbol}`);
                             const model = gltf.scene;
 
-                            // Center and scale model
+                            // Center and scale the model
                             const box = new THREE.Box3().setFromObject(model);
                             const center = box.getCenter(new THREE.Vector3());
                             const size = box.getSize(new THREE.Vector3());
                             const maxDim = Math.max(size.x, size.y, size.z);
-                            const scale = 1 / maxDim;
+                            const scale = 1.2 / maxDim;
 
                             model.scale.setScalar(scale);
                             model.position.sub(center.multiplyScalar(scale));
@@ -72,27 +83,15 @@ class SymbolRenderer {
                                 this.onProgress(this.loadedModels, this.totalModels);
                             }
 
-                            if (this.loadedModels === this.totalModels && this.onLoad) {
-                                this.onLoad();
-                            }
+                            resolve();
                         } catch (error) {
                             console.error(`Error processing model for ${symbol}:`, error);
-                        }
-                        resolve();
-                    },
-                    (xhr) => {
-                        if (xhr.lengthComputable) {
-                            const progress = (xhr.loaded / xhr.total) * 100;
-                            console.log(`Loading ${symbol}: ${progress.toFixed(1)}%`);
+                            resolve();
                         }
                     },
+                    null,
                     (error) => {
-                        console.error(`Error loading model ${symbol}:`, error);
-                        // Still increment counter even if model fails to load
-                        this.loadedModels++;
-                        if (this.onProgress) {
-                            this.onProgress(this.loadedModels, this.totalModels);
-                        }
+                        console.error(`Failed to load model ${symbol}:`, error);
                         resolve();
                     }
                 );
@@ -103,9 +102,32 @@ class SymbolRenderer {
 
         try {
             await Promise.all(loadPromises);
-            console.log('Model loading process complete');
+            if (this.onLoad) {
+                this.onLoad();
+            }
         } catch (error) {
             console.error('Error during model loading:', error);
+        }
+    }
+
+    initializeRenderer(canvas, size) {
+        try {
+            const renderer = new THREE.WebGLRenderer({
+                canvas,
+                alpha: true,
+                antialias: true,
+                preserveDrawingBuffer: true,
+                powerPreference: 'high-performance'
+            });
+
+            renderer.setSize(size, size, false);
+            renderer.setClearColor(0x000000, 0);
+            renderer.setPixelRatio(1);
+
+            return renderer;
+        } catch (error) {
+            console.error('Failed to initialize renderer:', error);
+            return null;
         }
     }
 
@@ -115,21 +137,17 @@ class SymbolRenderer {
         }
 
         try {
-            let renderer = this.renderers.get(canvas);
-
+            // Create or get renderer
+            let renderer = this.renderers.get(canvas.id);
             if (!renderer) {
-                renderer = new THREE.WebGLRenderer({
-                    canvas,
-                    alpha: true,
-                    antialias: true,
-                    preserveDrawingBuffer: true
-                });
-                renderer.setSize(size, size);
-                renderer.setClearColor(0x000000, 0);
-                this.renderers.set(canvas, renderer);
+                renderer = this.initializeRenderer(canvas, size);
+                if (!renderer) {
+                    return false;
+                }
+                this.renderers.set(canvas.id, renderer);
             }
 
-            // Clear existing scene
+            // Clear scene
             while (this.scene.children.length > 0) {
                 this.scene.remove(this.scene.children[0]);
             }
@@ -139,10 +157,10 @@ class SymbolRenderer {
             this.scene.add(this.directionalLight);
 
             const model = this.models[symbol].clone();
-            model.rotation.y = Math.PI / 4; // Rotate for better view
+            model.rotation.y = Math.PI / 4;
             this.scene.add(model);
 
-            // Render scene
+            // Render
             renderer.render(this.scene, this.camera);
             return true;
         } catch (error) {
@@ -153,26 +171,39 @@ class SymbolRenderer {
 
     dispose() {
         try {
-            console.log('Disposing resources');
-            this.renderers.forEach(renderer => {
-                if (renderer && renderer.dispose) {
-                    renderer.dispose();
+            // Dispose renderers
+            this.renderers.forEach((renderer, id) => {
+                try {
+                    if (renderer && renderer.dispose) {
+                        renderer.forceContextLoss();
+                        renderer.dispose();
+                        console.log(`Disposed renderer ${id}`);
+                    }
+                } catch (error) {
+                    console.error(`Error disposing renderer ${id}:`, error);
                 }
             });
             this.renderers.clear();
 
-            Object.values(this.models).forEach(model => {
-                if (model && model.traverse) {
-                    model.traverse(child => {
-                        if (child.geometry) child.geometry.dispose();
-                        if (child.material) {
-                            if (Array.isArray(child.material)) {
-                                child.material.forEach(material => material.dispose());
-                            } else {
-                                child.material.dispose();
+            // Dispose models
+            Object.entries(this.models).forEach(([symbol, model]) => {
+                try {
+                    if (model && model.traverse) {
+                        model.traverse(child => {
+                            if (child.geometry) {
+                                child.geometry.dispose();
                             }
-                        }
-                    });
+                            if (child.material) {
+                                if (Array.isArray(child.material)) {
+                                    child.material.forEach(material => material.dispose());
+                                } else {
+                                    child.material.dispose();
+                                }
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Error disposing model ${symbol}:`, error);
                 }
             });
             this.models = {};

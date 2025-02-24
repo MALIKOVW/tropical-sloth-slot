@@ -2,7 +2,6 @@ import { symbolRenderer } from './3d-symbols.js';
 
 class LoadingManager {
     constructor() {
-        console.log('Initializing LoadingManager');
         this.loadingScreen = document.getElementById('loadingScreen');
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
@@ -15,7 +14,6 @@ class LoadingManager {
 
     initializeLoading() {
         if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
-            console.error('Loading screen elements not found, retrying...');
             setTimeout(() => this.initializeLoading(), 100);
             return;
         }
@@ -33,7 +31,6 @@ class LoadingManager {
         if (!this.loadingBar || !this.loadingText) return;
 
         progress = Math.min(100, Math.max(0, progress));
-
         if (Math.abs(progress - this.lastProgress) >= 1) {
             this.lastProgress = progress;
             this.loadingBar.style.width = `${progress}%`;
@@ -55,7 +52,6 @@ class LoadingManager {
     onAssetLoaded(loaded, total) {
         const progress = (loaded / total) * 100;
         this.updateProgress(progress);
-        console.log(`Asset loaded: ${loaded}/${total}`);
 
         if (loaded >= total) {
             console.log('All assets loaded');
@@ -67,7 +63,6 @@ class LoadingManager {
 class SlotMachine {
     constructor() {
         console.log('Initializing Slot Machine');
-
         this.loadingManager = new LoadingManager();
 
         // Initialize after DOM is ready
@@ -86,18 +81,19 @@ class SlotMachine {
         }
 
         try {
-            // Initialize main canvas
-            this.ctx = this.canvas.getContext('2d', {
-                alpha: true,
-                antialias: true,
-                preserveDrawingBuffer: true
-            });
+            // Initialize main canvas context
+            this.ctx = this.canvas.getContext('2d');
 
-            // Initialize temporary canvas for symbol rendering
-            this.tempCanvas = document.createElement('canvas');
-            this.tempCanvas.width = 150;
-            this.tempCanvas.height = 150;
-            this.tempCtx = this.tempCanvas.getContext('2d');
+            // Create separate canvas for each symbol position
+            this.symbolCanvases = Array(5).fill().map((_, i) => 
+                Array(3).fill().map((_, j) => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 150;
+                    canvas.height = 150;
+                    canvas.id = `symbol_${i}_${j}`;
+                    return canvas;
+                })
+            );
 
             // Initialize game properties
             this.lowSymbols = ['10', 'J', 'Q', 'K', 'A'];
@@ -108,13 +104,6 @@ class SlotMachine {
             this.spinning = false;
             this.currentBet = 1.00;
             this.bonusSpinsRemaining = 0;
-            this.stats = {
-                totalSpins: 0,
-                totalWins: 0,
-                biggestWin: 0,
-                totalBet: 0,
-                totalWon: 0
-            };
 
             console.log('Canvas initialized successfully');
         } catch (error) {
@@ -126,10 +115,6 @@ class SlotMachine {
         try {
             console.log('Starting slot machine initialization');
 
-            // Set up canvas size
-            this.resizeCanvas();
-            window.addEventListener('resize', () => this.resizeCanvas());
-
             // Configure loading events
             symbolRenderer.onProgress = (loaded, total) => {
                 console.log(`Model loading progress: ${loaded}/${total}`);
@@ -137,13 +122,14 @@ class SlotMachine {
             };
 
             // Load models
-            console.log('Starting to load models');
             await symbolRenderer.loadModels();
 
             // Initialize event listeners
             this.initializeEventListeners();
 
-            // Initial draw
+            // Set up canvas size and start rendering
+            this.resizeCanvas();
+            window.addEventListener('resize', () => this.resizeCanvas());
             requestAnimationFrame(() => this.draw());
 
             console.log('Slot machine initialization complete');
@@ -175,17 +161,35 @@ class SlotMachine {
             this.logicalHeight = height;
 
             this.ctx.scale(scale, scale);
-
-            requestAnimationFrame(() => this.draw());
+            this.draw();
         } catch (error) {
             console.error('Error resizing canvas:', error);
         }
     }
 
+    drawFallbackSymbol(symbol, x, y, size) {
+        this.ctx.fillStyle = '#333333';
+        this.ctx.fillRect(x, y, size, size);
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = `${size * 0.5}px Arial`;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(this.getSymbolDisplay(symbol), x + size/2, y + size/2);
+    }
+
+    getSymbolDisplay(symbol) {
+        const symbolMap = {
+            '10': '10', 'J': 'J', 'Q': 'Q', 'K': 'K', 'A': 'A',
+            'zmeja': '🐍', 'gorilla': '🦍', 'jaguar': '🐆',
+            'crocodile': '🐊', 'lenivec': '🦥', 'scatter': '⭐'
+        };
+        return symbolMap[symbol] || symbol;
+    }
+
     draw() {
         if (!this.ctx || !this.canvas) return;
 
-        // Clear canvas
+        // Clear main canvas
         this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
 
         const reelWidth = this.logicalWidth / 5;
@@ -201,15 +205,12 @@ class SlotMachine {
                 const symbol = this.reels[i][j];
 
                 try {
-                    // Clear temporary canvas
-                    this.tempCtx.clearRect(0, 0, this.tempCanvas.width, this.tempCanvas.height);
-
-                    // Try to render 3D model
-                    const rendered = symbolRenderer.renderSymbol(symbol, this.tempCanvas, this.tempCanvas.width);
+                    const symbolCanvas = this.symbolCanvases[i][j];
+                    const rendered = symbolRenderer.renderSymbol(symbol, symbolCanvas, symbolCanvas.width);
 
                     if (rendered) {
                         // Draw rendered 3D symbol
-                        this.ctx.drawImage(this.tempCanvas, x, y, symbolSize, symbolSize);
+                        this.ctx.drawImage(symbolCanvas, x, y, symbolSize, symbolSize);
                     } else {
                         // Fallback to 2D symbol
                         this.drawFallbackSymbol(symbol, x, y, symbolSize);
@@ -220,28 +221,6 @@ class SlotMachine {
                 }
             }
         }
-    }
-
-    drawFallbackSymbol(symbol, x, y, size) {
-        this.ctx.fillStyle = '#000000';
-        this.ctx.beginPath();
-        this.ctx.roundRect(x, y, size, size, 10);
-        this.ctx.fill();
-
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = `bold ${size * 0.5}px Arial`;
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(this.getSymbolDisplay(symbol), x + size/2, y + size/2);
-    }
-
-    getSymbolDisplay(symbol) {
-        const symbolMap = {
-            '10': '10', 'J': 'J', 'Q': 'Q', 'K': 'K', 'A': 'A',
-            'zmeja': '🐍', 'gorilla': '🦍', 'jaguar': '🐆',
-            'crocodile': '🐊', 'lenivec': '🦥', 'scatter': '⭐'
-        };
-        return symbolMap[symbol] || symbol;
     }
 
     initializeEventListeners() {
@@ -296,12 +275,6 @@ class SlotMachine {
             this.reels = result.result;
             document.getElementById('creditDisplay').textContent = result.credits.toFixed(2);
 
-            if (result.winnings > 0) {
-                await this.showWinAnimation(result.winnings);
-            }
-
-            this.updateStats(result.winnings);
-
         } catch (error) {
             console.error('Error during spin:', error);
             alert('An error occurred during spin. Please try again.');
@@ -350,26 +323,6 @@ class SlotMachine {
             const remainingDelay = Math.max(0, stepDelay - elapsedTime);
             await new Promise(resolve => setTimeout(resolve, remainingDelay));
         }
-    }
-
-    updateStats(winnings) {
-        this.stats.totalSpins++;
-        if (winnings > 0) {
-            this.stats.totalWins++;
-            this.stats.biggestWin = Math.max(this.stats.biggestWin, winnings);
-        }
-        this.stats.totalBet += this.currentBet;
-        this.stats.totalWon += winnings;
-    }
-
-    async showWinAnimation(amount) {
-        const winDisplay = document.createElement('div');
-        winDisplay.className = 'win-animation';
-        winDisplay.textContent = `WIN! ${amount.toFixed(2)}`;
-        document.body.appendChild(winDisplay);
-
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        winDisplay.remove();
     }
 }
 
