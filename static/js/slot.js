@@ -64,8 +64,8 @@ class SlotMachine {
         this.loadingManager = new LoadingManager();
 
         // Константы для размеров
-        this.SYMBOL_SIZE = 80; // Уменьшили с 120px до 80px
-        this.SYMBOL_PADDING = 5; // Уменьшили с 10px до 5px
+        this.SYMBOL_SIZE = 60; // Уменьшили с 80px до 60px
+        this.SYMBOL_PADDING = 3; // Уменьшили с 5px до 3px
 
         setTimeout(() => {
             this.initializeCanvas();
