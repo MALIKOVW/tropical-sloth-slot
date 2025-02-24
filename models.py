@@ -3,7 +3,7 @@ from database import db
 
 class SpinResult(db.Model):
     __tablename__ = 'spin_results'
-
+    
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     bet_amount = db.Column(db.Float, nullable=False)
@@ -18,7 +18,7 @@ class SpinResult(db.Model):
 
 class Statistics(db.Model):
     __tablename__ = 'statistics'
-
+    
     id = db.Column(db.Integer, primary_key=True)
     total_spins = db.Column(db.Integer, default=0)
     total_wins = db.Column(db.Integer, default=0)
