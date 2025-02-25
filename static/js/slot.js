@@ -1,32 +1,3 @@
-// Copy wild symbol images to the correct location
-const fs = require('fs');
-const path = require('path');
-
-try {
-    // Create symbols directory if it doesn't exist
-    const symbolsDir = path.join(__dirname, '../images/symbols');
-    if (!fs.existsSync(symbolsDir)) {
-        fs.mkdirSync(symbolsDir, { recursive: true });
-    }
-
-    // Copy wild symbol images
-    const wildSymbols = [
-        { src: 'Picsart_25-02-25_16-08-13-806.png', dest: 'wild_2x.png' },
-        { src: 'Picsart_25-02-25_16-10-15-695.png', dest: 'wild_3x.png' },
-        { src: 'Picsart_25-02-25_16-11-55-596.png', dest: 'wild_5x.png' }
-    ];
-
-    wildSymbols.forEach(symbol => {
-        const srcPath = path.join(__dirname, '../../../attached_assets', symbol.src);
-        const destPath = path.join(symbolsDir, symbol.dest);
-        fs.copyFileSync(srcPath, destPath);
-    });
-
-    console.log('Wild symbol images copied successfully');
-} catch (error) {
-    console.error('Error copying wild symbol images:', error);
-}
-
 class LoadingManager {
     constructor() {
         console.log('Initializing LoadingManager');
@@ -34,7 +5,7 @@ class LoadingManager {
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
-        this.totalAssets = 11;
+        this.totalAssets = 15; // Обновили количество ассетов с учетом wild символов
         this.loadedAssets = 0;
         this.lastProgress = 0;
         this.initializeLoading();
@@ -92,7 +63,7 @@ class SlotMachine {
         console.log('Initializing Slot Machine');
         this.loadingManager = new LoadingManager();
 
-        // Уменьшаем размеры символов до оптимальных
+        // Размеры символов
         this.SYMBOL_SIZE = 60;
         this.SYMBOL_PADDING = 3;
 
@@ -101,17 +72,15 @@ class SlotMachine {
             this.init();
         }, 100);
 
-        // Добавляем определение линий выплат
+        // Определяем линии выплат
         this.paylines = [
             // Горизонтальные линии
             [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // Верхняя
             [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // Средняя
             [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // Нижняя
-
             // V-образные линии
             [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // V
             [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}], // Перевернутая V
-
             // Зигзагообразные линии
             [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 0}],
             [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 2}]
@@ -145,21 +114,21 @@ class SlotMachine {
                 'leopard': { value: 80, path: '/static/images/symbols/leopard.png' },
                 'dragon': { value: 100, path: '/static/images/symbols/dragon.png' },
                 'sloth': { value: 0, path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png' },
-                'wild_2x': {
-                    value: 0,
-                    path: '/static/images/symbols/wild_2x.png',
+                'wild_2x': { 
+                    value: 0, 
+                    path: '/static/images/symbols/Picsart_25-02-25_16-08-13-806.png',
                     multiplier: 2,
                     isWild: true
                 },
-                'wild_3x': {
-                    value: 0,
-                    path: '/static/images/symbols/wild_3x.png',
+                'wild_3x': { 
+                    value: 0, 
+                    path: '/static/images/symbols/Picsart_25-02-25_16-10-15-695.png',
                     multiplier: 3,
                     isWild: true
                 },
-                'wild_5x': {
-                    value: 0,
-                    path: '/static/images/symbols/wild_5x.png',
+                'wild_5x': { 
+                    value: 0, 
+                    path: '/static/images/symbols/Picsart_25-02-25_16-11-55-596.png',
                     multiplier: 5,
                     isWild: true
                 }
