@@ -401,12 +401,12 @@ class SlotMachine {
         let currentClass = 'big-win';
         let currentText = 'BIG WIN';
         let animationSpeed = 1;
-        let updateInterval = 50;
+        let updateInterval = 100; // Увеличили базовый интервал с 50 до 100
 
         // Функция обновления значений
         const updateValues = () => {
-            // Увеличиваем значения
-            const step = Math.max(1, Math.floor((multiplier - currentMultiplier) / 10));
+            // Увеличиваем значения более плавно
+            const step = Math.max(1, Math.floor((multiplier - currentMultiplier) / 20)); // Уменьшили делитель с 10 до 20
             currentMultiplier = Math.min(currentMultiplier + step, multiplier);
             currentAmount = this.currentBet * currentMultiplier;
 
@@ -434,9 +434,9 @@ class SlotMachine {
 
             // Продолжаем анимацию если не достигли целевых значений
             if (currentMultiplier < multiplier) {
-                // Увеличиваем скорость
-                animationSpeed *= 1.1;
-                updateInterval = Math.max(10, Math.floor(50 / animationSpeed));
+                // Увеличиваем скорость более плавно
+                animationSpeed *= 1.05; // Уменьшили коэффициент с 1.1 до 1.05
+                updateInterval = Math.max(20, Math.floor(100 / animationSpeed)); // Увеличили минимальный интервал с 10 до 20
                 setTimeout(updateValues, updateInterval);
             }
         };
@@ -452,8 +452,8 @@ class SlotMachine {
         };
         closeButton.addEventListener('click', closePopup);
 
-        // Автоматически закрываем через 5 секунд после окончания анимации
-        setTimeout(closePopup, 8000);
+        // Автоматически закрываем через 8 секунд после окончания анимации
+        setTimeout(closePopup, 10000); // Увеличили время показа с 8000 до 10000
     }
 
     async animateSpin(finalResult) {
@@ -776,6 +776,8 @@ class SlotMachine {
 
         return winningLines;
     }
+
+
 
 
 
