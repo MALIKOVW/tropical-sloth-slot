@@ -456,7 +456,7 @@ body {
     position: absolute;
     height: 6px;
     background: linear-gradient(
-        90deg, 
+        90deg,
         rgba(255,215,0,0) 0%,
         rgba(255,215,0,1) 20%,
         rgba(255,215,0,1) 80%,
@@ -506,7 +506,7 @@ body {
 }
 
 @keyframes winPulse {
-    0% { 
+    0% {
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.5);
     }
@@ -835,4 +835,31 @@ h1 {
 
 .stopping {
     animation: bounceStop 0.5s ease-out;
+}
+
+/* Sound control styles */
+.sound-control {
+    margin-left: 15px;
+}
+
+.sound-control button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #00ff9d;
+    transition: all 0.3s ease;
+}
+
+.sound-control button:hover {
+    background: rgba(0, 255, 157, 0.2);
+    transform: scale(1.1);
+}
+
+.sound-control button i {
+    font-size: 18px;
+    color: #00ff9d;
 }

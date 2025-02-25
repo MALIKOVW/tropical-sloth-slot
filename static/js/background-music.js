@@ -1,14 +1,43 @@
 class BackgroundMusic {
     constructor() {
+        console.log('Initializing background music');
         this.audio = new Audio('/static/audio/background-music.mp3');
-        this.audio.loop = true; // Включаем бесконечное воспроизведение
+        this.audio.loop = true;
         this.initialized = false;
+        this.isMuted = false;
+        this.setupSoundControl();
+    }
+
+    setupSoundControl() {
+        const soundButton = document.getElementById('toggleSound');
+        if (soundButton) {
+            soundButton.addEventListener('click', () => {
+                this.toggleSound();
+            });
+        }
+    }
+
+    toggleSound() {
+        const soundButton = document.getElementById('toggleSound');
+        if (this.isMuted) {
+            this.audio.volume = 0.5;
+            if (soundButton) {
+                soundButton.innerHTML = '<i class="fas fa-volume-up"></i>';
+            }
+        } else {
+            this.audio.volume = 0;
+            if (soundButton) {
+                soundButton.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            }
+        }
+        this.isMuted = !this.isMuted;
     }
 
     init() {
-        // Инициализация при первом взаимодействии пользователя
+        // Initialize on first user interaction
         if (!this.initialized) {
             document.addEventListener('click', () => {
+                console.log('First user interaction, starting music');
                 this.play();
             }, { once: true });
             this.initialized = true;
@@ -16,6 +45,7 @@ class BackgroundMusic {
     }
 
     play() {
+        console.log('Attempting to play background music');
         this.audio.play().catch(error => {
             console.error('Error playing background music:', error);
         });
@@ -30,6 +60,11 @@ class BackgroundMusic {
     }
 }
 
-// Создаем и экспортируем один экземпляр
-const backgroundMusic = new BackgroundMusic();
-backgroundMusic.init();
+// Create and initialize instance
+window.addEventListener('load', () => {
+    console.log('Page loaded, initializing background music');
+    const backgroundMusic = new BackgroundMusic();
+    backgroundMusic.init();
+    // Set initial volume to 50%
+    backgroundMusic.setVolume(0.5);
+});
