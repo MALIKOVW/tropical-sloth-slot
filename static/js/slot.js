@@ -205,10 +205,10 @@ class SlotMachine {
                 }
             }
 
-            // Активируем анимации с небольшой задержкой
+            // Активируем анимации
             await new Promise(resolve => setTimeout(resolve, 50));
 
-            // Показываем линию
+            // Показываем линию с анимацией
             line.classList.add('active');
             line.style.animation = 'paylineGlow 1.5s infinite';
 
@@ -216,7 +216,6 @@ class SlotMachine {
             for (const symbol of symbolElements) {
                 await new Promise(resolve => setTimeout(resolve, 100));
                 symbol.classList.add('active');
-                symbol.style.animation = 'symbolPulse 0.6s ease-in-out infinite';
             }
 
             // Добавляем возможность пропустить анимацию по клику

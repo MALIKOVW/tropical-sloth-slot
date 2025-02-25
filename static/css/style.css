@@ -131,7 +131,7 @@ body {
 /* Winning symbol animation */
 .winning-symbol {
     position: absolute;
-    animation: symbolPulse 0.6s ease-in-out infinite;
+    animation: none;
     z-index: 4;
     pointer-events: none;
     filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
@@ -144,6 +144,7 @@ body {
 
 .winning-symbol.active {
     opacity: 1;
+    animation: symbolPulse 0.6s ease-in-out infinite;
 }
 
 @keyframes symbolPulse {
@@ -441,11 +442,72 @@ body {
 }
 
 /* Styles for new buttons and modals from original file */
-.spin-controls {
+.controls-group {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: 10px;
+}
+
+#settingsButton {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #00ff9d;
+    transition: all 0.3s ease;
+}
+
+#settingsButton:hover {
+    background: rgba(0, 255, 157, 0.2);
+    transform: scale(1.1);
+}
+
+#settingsButton i {
+    font-size: 18px;
+    color: #00ff9d;
+}
+
+.modal-content {
+    background-color: #1a1a1a;
+    color: #fff;
+    border: 1px solid #00ff9d;
+}
+
+.modal-header {
+    border-bottom: 1px solid #00ff9d;
+}
+
+.form-range {
+    height: 8px;
+    border-radius: 4px;
+    background: #333;
+}
+
+.form-range::-webkit-slider-thumb {
+    background: #00ff9d;
+    border: 2px solid #fff;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.form-range::-moz-range-thumb {
+    background: #00ff9d;
+    border: 2px solid #fff;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.form-label {
+    color: #fff;
+    font-size: 16px;
+    margin-bottom: 10px;
 }
 
 #turboSpinBtn, #autoSpinBtn, #buyFreespinsBtn {
@@ -483,9 +545,8 @@ body {
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
 }
 
-/* Modal styles from original file */
 .modal-content {
-    background-color: #2a2a2a;
+    background-color: #000000;
     color: white;
     border: 1px solid #444;
 }
@@ -642,151 +703,39 @@ body {
     color: #00ff9d;
 }
 
-/* Add to existing CSS file */
-.controls-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-#settingsButton {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+/* Symbol size standardization */
+.symbol {
+    width: 60px;
+    height: 60px;    
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid #00ff9d;
-    transition: all 0.3s ease;
+    margin: 3px;
 }
 
-#settingsButton:hover {
-    background: rgba(0, 255, 157, 0.2);
-    transform: scale(1.1);
-}
-
-#settingsButton i {
-    font-size: 18px;
-    color: #00ff9d;
-}
-
-/* Modal styles */
-.modal-content {
-    background-color: #1a1a1a;
-    color: #fff;
-    border: 1px solid #00ff9d;
-}
-
-.modal-header {
-    border-bottom: 1px solid #00ff9d;
-}
-
-.form-range {
-    height: 8px;
-    border-radius: 4px;
-    background: #333;
-}
-
-.form-range::-webkit-slider-thumb {
-    background: #00ff9d;
-    border: 2px solid #fff;
-    height: 20px;
-    width: 20px;
-    border-radius: 50%;
-    cursor: pointer;
-}
-
-.form-range::-moz-range-thumb {
-    background: #00ff9d;
-    border: 2px solid #fff;
-    height: 20px;
-    width: 20px;
-    border-radius: 50%;
-    cursor: pointer;
-}
-
-.form-label {
-    color: #fff;
-    font-size: 16px;
-    margin-bottom: 10px;
-}
-
-
-.winning-symbol {
-    animation: symbolScale 0.6s ease-in-out infinite;
-    z-index: 10;
-    pointer-events: none;
-    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
-    will-change: transform, filter;
-    backface-visibility: hidden;
-    transform: translateZ(0);
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-}
-
-.winning-symbol.active {
-    opacity: 1;
-}
-
-@keyframes symbolScale {
-    0% { 
-        transform: scale(1);
-        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
+@media (max-width: 992px) {
+    .paytable-column {
+        order: 2;
     }
-    50% {
-        transform: scale(1.15);
-        filter: drop-shadow(0 0 25px rgba(255, 215, 0, 1));
+
+    .controls-row {
+        flex-direction: column;
+        gap: 15px;
     }
-    100% { 
-        transform: scale(1);
-        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
+
+    .bet-controls, .action-buttons {
+        width: 100%;
+        justify-content: center;
     }
-}
 
-@keyframes symbolPulse {
-    0% {
-        transform: scale(1) translateZ(0);
-        filter: 
-            drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))
-            brightness(1.2);
+    .action-buttons {
+        flex-wrap: wrap;
     }
-    50% {
-        transform: scale(1.15) translateZ(0);
-        filter: 
-            drop-shadow(0 0 20px rgba(255, 215, 0, 1))
-            brightness(1.4);
+
+    .btn-spin {
+        width: 100%;
+        order: -1;
     }
-    100% {
-        transform: scale(1) translateZ(0);
-        filter: 
-            drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))
-            brightness(1.2);
-    }
-}
-
-@keyframes glow {
-    0% { box-shadow: 0 0 5px rgba(0, 255, 157, 0.5); }
-    50% { box-shadow: 0 0 20px rgba(0, 255, 157, 0.8); }
-    100% { box-shadow: 0 0 5px rgba(0, 255, 157, 0.5); }
-}
-
-.btn-spin {
-    animation: glow 2s infinite;
-}
-
-.modal-content {
-    background-color: #000000;
-    color: white;
-    border: 1px solid #444;
-}
-
-.modal-header {
-    border-bottom: 1px solid #444;
-}
-
-.modal-footer {
-    border-top: 1px solid #444;
 }
 
 .win-animation {
@@ -957,39 +906,4 @@ body {
 h1 {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     color: #fff;
-}
-
-/* Symbol size standardization */
-.symbol {
-    width: 60px;
-    height: 60px;    
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 3px;
-}
-
-@media (max-width: 992px) {
-    .paytable-column {
-        order: 2;
-    }
-
-    .controls-row {
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .bet-controls, .action-buttons {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .action-buttons {
-        flex-wrap: wrap;
-    }
-
-    .btn-spin {
-        width: 100%;
-        order: -1;
-    }
 }
