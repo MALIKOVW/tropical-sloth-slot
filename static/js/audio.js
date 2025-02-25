@@ -18,26 +18,26 @@ class SlotAudio {
             }).connect(this.reverb),
 
             spinReel: new Tone.NoiseSynth({
-                noise: { type: "white" },
+                noise: { type: "brown" },
                 envelope: {
-                    attack: 0.005,
-                    decay: 0.1,
-                    sustain: 1,
-                    release: 0.3
+                    attack: 0.1,
+                    decay: 0.3,
+                    sustain: 0.8,
+                    release: 0.4
                 }
             }).connect(this.reverb),
 
             reelStop: new Tone.MetalSynth({
-                frequency: 200,
+                frequency: 150,
                 envelope: {
                     attack: 0.001,
-                    decay: 0.1,
-                    release: 0.1
+                    decay: 0.2,
+                    release: 0.2
                 },
-                harmonicity: 5.1,
-                modulationIndex: 32,
-                resonance: 4000,
-                octaves: 1.5
+                harmonicity: 3.1,
+                modulationIndex: 16,
+                resonance: 2000,
+                octaves: 1.2
             }).connect(this.reverb),
 
             win: new Tone.PolySynth({
@@ -104,9 +104,10 @@ class SlotAudio {
     playSpinSound() {
         if (!this.ready) return;
         try {
-            // Play a richer spin sound
+            // Keep original spin button sound
             this.sounds.spin.triggerAttackRelease("C5", "16n", undefined, this.effectsVolume);
-            this.sounds.spinReel.triggerAttackRelease("16n", undefined, this.effectsVolume * 0.3);
+            // Add continuous spinning sound
+            this.sounds.spinReel.triggerAttack(undefined, this.effectsVolume * 0.4);
         } catch (error) {
             console.warn("Could not play spin sound:", error);
         }
@@ -115,6 +116,7 @@ class SlotAudio {
     stopSpinSound() {
         if (!this.ready) return;
         try {
+            // Gradually release the spinning sound
             this.sounds.spinReel.triggerRelease();
         } catch (error) {
             console.warn("Could not stop spin sound:", error);
@@ -124,7 +126,7 @@ class SlotAudio {
     playWinSound() {
         if (!this.ready) return;
         try {
-            // Create a more celebratory win sound
+            // Create a more celebratory win sound with ascending notes
             const notes = ["C4", "E4", "G4", "C5", "E5", "G5"];
             const times = [0, 0.1, 0.2, 0.3, 0.4, 0.5];
 
@@ -142,7 +144,7 @@ class SlotAudio {
     playClickSound() {
         if (!this.ready) return;
         try {
-            // Create a more tactile click sound
+            // Keep the original click sound
             this.sounds.click.triggerAttackRelease("G2", "32n", undefined, this.effectsVolume * 0.7);
         } catch (error) {
             console.warn("Could not play click sound:", error);
@@ -152,8 +154,8 @@ class SlotAudio {
     playReelStopSound() {
         if (!this.ready) return;
         try {
-            // Play a distinctive reel stop sound
-            this.sounds.reelStop.triggerAttackRelease("16n", undefined, this.effectsVolume * 0.6);
+            // Play a more mechanical reel stop sound
+            this.sounds.reelStop.triggerAttackRelease("16n", undefined, this.effectsVolume * 0.5);
         } catch (error) {
             console.warn("Could not play reel stop sound:", error);
         }
