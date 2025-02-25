@@ -446,17 +446,22 @@ class SlotMachine {
 
         // Создаем элементы для подсветки символов
         linePositions.forEach(pos => {
-            const x = pos.x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
-            const y = pos.y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
+            const x = pos.x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING);
+            const y = pos.y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING);
 
             const highlight = document.createElement('div');
             highlight.className = 'symbol-highlight';
             highlight.style.left = `${x}px`;
             highlight.style.top = `${y}px`;
-            highlight.style.width = `${this.SYMBOL_SIZE}px`;
-            highlight.style.height = `${this.SYMBOL_SIZE}px`;
+            highlight.style.width = `${this.SYMBOL_SIZE + this.SYMBOL_PADDING * 2}px`;
+            highlight.style.height = `${this.SYMBOL_SIZE + this.SYMBOL_PADDING * 2}px`;
             container.appendChild(highlight);
         });
+
+        // Автоматически убираем подсветку через 1.5 секунды
+        setTimeout(() => {
+            container.innerHTML = '';
+        }, 1500);
     }
 
     async spin() {
