@@ -22,8 +22,22 @@ class BackgroundMusic {
         const settingsButton = document.getElementById('settingsButton');
         if (settingsButton) {
             settingsButton.addEventListener('click', () => {
-                const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
-                modal.show();
+                try {
+                    const settingsModal = document.getElementById('settingsModal');
+                    const modal = new bootstrap.Modal(settingsModal);
+                    modal.show();
+
+                    // Add hidden event listener to clean up modal
+                    settingsModal.addEventListener('hidden.bs.modal', () => {
+                        document.body.classList.remove('modal-open');
+                        const backdrop = document.querySelector('.modal-backdrop');
+                        if (backdrop) {
+                            backdrop.remove();
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error showing settings modal:', error);
+                }
             });
         }
 
