@@ -405,7 +405,7 @@ class SlotMachine {
                 },
                 'gorilla': {
                     value: 20,
-                    path: '/static/images/symbols/Picsart_25-02-24_13-21-46-889.png',
+                    path: '/static/images/symbols/pic1.png',
                     multipliers: {3: 20, 4: 40, 5: 100}
                 },
                 'jaguar': {
@@ -415,17 +415,17 @@ class SlotMachine {
                 },
                 'crocodile': {
                     value: 30,
-                    path: '/static/images/symbols/Picsart_25-02-25_16-49-31-091.png',
+                    path: '/static/images/symbols/pic2.png',
                     multipliers: {3: 30, 4: 60, 5: 150}
                 },
                 'gator': {
                     value: 40,
-                    path: '/static/images/symbols/Picsart_25-02-24_13-25-10-324.png',
+                    path: '/static/images/symbols/pic3.png',
                     multipliers: {3: 40, 4: 80, 5: 200}
                 },
                 'leopard': {
                     value: 50,
-                    path: '/static/images/symbols/Picsart_25-02-24_13-26-25-593.png',
+                    path: '/static/images/symbols/pic4.png',
                     multipliers: {3: 50, 4: 100, 5: 250}
                 },
                 'dragon': {
@@ -435,24 +435,24 @@ class SlotMachine {
                 },
                 'sloth': {
                     value: 0,
-                    path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png',
+                    path: '/static/images/symbols/sloth.png',
                     multipliers: {3: 2, 4: 10, 5: 50}
                 },
                 'wild_2x': {
                     value: 0,
-                    path: '/static/images/symbols/Picsart_25-02-25_18-10-53-970.png',
+                    path: '/static/images/symbols/wild_2x.png',
                     multiplier: 2,
                     isWild: true
                 },
                 'wild_3x': {
                     value: 0,
-                    path: '/static/images/symbols/Picsart_25-02-25_18-12-23-513.png',
+                    path: '/static/images/symbols/wild_3x.png',
                     multiplier: 3,
                     isWild: true
                 },
                 'wild_5x': {
                     value: 0,
-                    path: '/static/images/symbols/Picsart_25-02-25_18-13-55-519.png',
+                    path: '/static/images/symbols/wild_5x.png',
                     multiplier: 5,
                     isWild: true
                 }
@@ -475,11 +475,11 @@ class SlotMachine {
 
     loadSymbolImages() {
         const loadImage = (symbol, def) => {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const img = new Image();
 
                 img.onload = () => {
-                    console.log(`Successfully loaded image for symbol: ${symbol}`);
+                    console.log(`Successfully loaded image for symbol: ${symbol} from path: ${def.path}`);
                     this.symbolImages.set(symbol, img);
                     this.loadingManager.onAssetLoaded();
                     resolve();
@@ -488,13 +488,28 @@ class SlotMachine {
                 img.onerror = (error) => {
                     console.error(`Failed to load image for symbol: ${symbol}`, error);
                     console.error('Attempted path:', def.path);
-                    // Создаем fallback изображение при ошибке загрузки
+                    // Создаем fallback изображение с текстовой меткой
+                    const canvas = document.createElement('canvas');
+                    canvas.width = this.SYMBOL_SIZE;
+                    canvas.height = this.SYMBOL_SIZE;
+                    const ctx = canvas.getContext('2d');
+
+                    // Рисуем фон
+                    ctx.fillStyle = '#333333';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // Добавляем текст
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(symbol, canvas.width / 2, canvas.height / 2);
+
                     const fallbackImg = new Image();
-                    fallbackImg.width = this.SYMBOL_SIZE;
-                    fallbackImg.height = this.SYMBOL_SIZE;
+                    fallbackImg.src = canvas.toDataURL();
                     this.symbolImages.set(symbol, fallbackImg);
                     this.loadingManager.onAssetLoaded();
-                    resolve(); // Продолжаем выполнение даже при ошибке
+                    resolve();
                 };
 
                 img.src = def.path;
