@@ -127,8 +127,6 @@ class SlotMachine {
     }
 
     async showWinningLine(linePositions) {
-        if (this.skipWinAnimation) return;
-
         const container = document.getElementById('paylineContainer');
         if (!container) return;
 
@@ -144,21 +142,33 @@ class SlotMachine {
             // Добавляем подсветку
             const highlight = document.createElement('div');
             highlight.className = 'symbol-highlight';
-            highlight.style.left = `${x + this.SYMBOL_PADDING}px`;
-            highlight.style.top = `${y + this.SYMBOL_PADDING}px`;
-            highlight.style.width = `${this.SYMBOL_SIZE}px`;
-            highlight.style.height = `${this.SYMBOL_SIZE}px`;
+            highlight.style.left = `${x}px`;
+            highlight.style.top = `${y}px`;
+            highlight.style.width = `${cellSize}px`;
+            highlight.style.height = `${cellSize}px`;
             container.appendChild(highlight);
 
-            // Используем предзагруженный элемент для анимации
-            const symbol = this.reels[pos.x][pos.y];
-            const preloadedElement = this.preloadedElements.get(symbol);
-            if (preloadedElement) {
-                const clonedElement = preloadedElement.cloneNode(true);
-                clonedElement.style.left = `${x + this.SYMBOL_PADDING}px`;
-                clonedElement.style.top = `${y + this.SYMBOL_PADDING}px`;
-                container.appendChild(clonedElement);
+            // Находим и анимируем сам символ
+            const symbol = document.createElement('div');
+            symbol.className = 'winning-symbol';
+            symbol.style.position = 'absolute';
+            symbol.style.left = `${x + this.SYMBOL_PADDING}px`;
+            symbol.style.top = `${y + this.SYMBOL_PADDING}px`;
+            symbol.style.width = `${this.SYMBOL_SIZE}px`;
+            symbol.style.height = `${this.SYMBOL_SIZE}px`;
+            symbol.style.filter = 'brightness(1.2)'; // Делаем символы немного ярче
+
+            // Копируем содержимое символа
+            const img = this.symbolImages.get(this.reels[pos.x][pos.y]);
+            if (img) {
+                const symbolImg = document.createElement('img');
+                symbolImg.src = img.src;
+                symbolImg.style.width = '100%';
+                symbolImg.style.height = '100%';
+                symbol.appendChild(symbolImg);
             }
+
+            container.appendChild(symbol);
         });
     }
 
@@ -179,7 +189,6 @@ class SlotMachine {
             }
 
             this.spinning = true;
-            this.skipWinAnimation = true; // Пропускаем текущую анимацию
             document.getElementById('spinButton').disabled = true;
 
             // Play spin button sound
@@ -225,7 +234,6 @@ class SlotMachine {
             setTimeout(() => {
                 document.getElementById('spinButton').disabled = false;
                 this.spinning = false;
-                this.skipWinAnimation = false;
             }, 1000);
 
             // Проверяем выигрышные линии
@@ -236,9 +244,11 @@ class SlotMachine {
                 audio.playWinSound();
 
                 for (const line of winningLines) {
-                    if (!this.skipWinAnimation) {
+                    if (!this.spinning) {
                         await this.showWinningLine(line.positions);
                         await new Promise(resolve => setTimeout(resolve, 1500));
+                    } else {
+                        break;
                     }
                 }
             }
@@ -473,6 +483,7 @@ class SlotMachine {
 
         return winningLines;
     }
+
 
 
     resizeCanvas() {
