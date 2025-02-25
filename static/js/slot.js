@@ -444,7 +444,7 @@ class SlotMachine {
                 },
                 'dragon': {
                     value: 100,
-                    path: '/static/images/symbols/dragon.png',
+                    path: '/static/images/symbols/pic5.png',
                     multipliers: {3: 100, 4: 200, 5: 500}
                 },
                 'sloth': {
