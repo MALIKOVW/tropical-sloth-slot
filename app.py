@@ -60,7 +60,7 @@ def spin():
         session['credits'] = session['credits'] - bet
 
         # Define symbols and their weights
-        symbols = {
+        regular_symbols = {
             'wooden_a': 20,    # Most common
             'wooden_k': 18,
             'wooden_arch': 16,
@@ -74,16 +74,80 @@ def spin():
             'sloth': 1         # Scatter
         }
 
-        # Create weighted symbol list
-        weighted_symbols = []
-        for symbol, weight in symbols.items():
-            weighted_symbols.extend([symbol] * weight)
+        # Define wild symbols (только для барабанов 2, 3, 4)
+        wild_symbols = {
+            'wild_2x': 2,
+            'wild_3x': 2,
+            'wild_5x': 1
+        }
+
+        # Create weighted symbol lists
+        regular_weighted_symbols = []
+        for symbol, weight in regular_symbols.items():
+            regular_weighted_symbols.extend([symbol] * weight)
+
+        wild_weighted_symbols = []
+        for symbol, weight in wild_symbols.items():
+            wild_weighted_symbols.extend([symbol] * weight)
 
         # Generate result
-        result = [[random.choice(weighted_symbols) for _ in range(3)] for _ in range(5)]
+        result = []
+        for reel_index in range(5):
+            reel = []
+            for _ in range(3):
+                # Для барабанов 2, 3, 4 (индексы 1, 2, 3) добавляем возможность выпадения wild
+                if reel_index in [1, 2, 3]:
+                    # 15% шанс на wild символ
+                    if random.random() < 0.15:
+                        symbol = random.choice(wild_weighted_symbols)
+                    else:
+                        symbol = random.choice(regular_weighted_symbols)
+                else:
+                    symbol = random.choice(regular_weighted_symbols)
+                reel.append(symbol)
+            result.append(reel)
 
-        # Calculate winnings (simplified for now)
-        winnings = bet * random.uniform(0, 2)  # Random win between 0x and 2x bet
+        # Calculate winnings
+        paylines = [
+            # Horizontal lines
+            [(0,0), (1,0), (2,0), (3,0), (4,0)],  # Top
+            [(0,1), (1,1), (2,1), (3,1), (4,1)],  # Middle
+            [(0,2), (1,2), (2,2), (3,2), (4,2)],  # Bottom
+            # V-shaped lines
+            [(0,0), (1,1), (2,2), (3,1), (4,0)],  # V
+            [(0,2), (1,1), (2,0), (3,1), (4,2)],  # Inverted V
+            # Zigzag lines
+            [(0,0), (1,1), (2,0), (3,1), (4,0)],
+            [(0,2), (1,1), (2,2), (3,1), (4,2)]
+        ]
+
+        winnings = 0
+        for line in paylines:
+            symbols = [result[x][y] for x, y in line]
+            # Get base symbol (first non-wild symbol)
+            base_symbol = next((s for s in symbols if not s.startswith('wild_') and s != 'sloth'), None)
+
+            if base_symbol:
+                # Calculate multiplier from wilds
+                multiplier = 1
+                wild_count = 0
+                for symbol in symbols:
+                    if symbol.startswith('wild_'):
+                        wild_count += 1
+                        if symbol == 'wild_2x':
+                            multiplier *= 2
+                        elif symbol == 'wild_3x':
+                            multiplier *= 3
+                        elif symbol == 'wild_5x':
+                            multiplier *= 5
+
+                # Check if we have a winning combination
+                if all(s == base_symbol or s.startswith('wild_') for s in symbols):
+                    symbol_value = regular_symbols.get(base_symbol, 0)
+                    line_win = bet * (symbol_value / 10) * multiplier
+                    winnings += line_win
+
+        # Add winnings
         session['credits'] = session['credits'] + winnings
 
         # Update statistics

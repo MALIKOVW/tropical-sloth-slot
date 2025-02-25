@@ -91,6 +91,9 @@ class SlotMachine {
             [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 1}],
             [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}]
         ];
+
+        // Определяем на каких барабанах могут появляться wild символы
+        this.wildReels = [1, 2, 3]; // индексы 1,2,3 соответствуют 2,3,4 барабанам
     }
 
     initializeCanvas() {
@@ -112,11 +115,30 @@ class SlotMachine {
                 'snake': { value: 30, path: '/static/images/symbols/snake.png' },
                 'gorilla': { value: 40, path: '/static/images/symbols/gorilla.png' },
                 'jaguar': { value: 50, path: '/static/images/symbols/jaguar.png' },
-                'crocodile': { value: 60, path: '/static/images/symbols/Picsart_25-02-25_16-49-31-091.png' }, // Обновили путь к новому изображению
+                'crocodile': { value: 60, path: '/static/images/symbols/Picsart_25-02-25_16-49-31-091.png' },
                 'gator': { value: 70, path: '/static/images/symbols/gator.png' },
                 'leopard': { value: 80, path: '/static/images/symbols/leopard.png' },
                 'dragon': { value: 100, path: '/static/images/symbols/dragon.png' },
-                'sloth': { value: 0, path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png' } // Обновили путь к новому изображению
+                'sloth': { value: 0, path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png' },
+                // Добавляем wild символы
+                'wild_2x': { 
+                    value: 0, 
+                    path: '/static/images/symbols/Picsart_25-02-25_16-08-13-806.png',
+                    multiplier: 2,
+                    isWild: true
+                },
+                'wild_3x': { 
+                    value: 0, 
+                    path: '/static/images/symbols/Picsart_25-02-25_16-10-15-695.png',
+                    multiplier: 3,
+                    isWild: true
+                },
+                'wild_5x': { 
+                    value: 0, 
+                    path: '/static/images/symbols/Picsart_25-02-25_16-11-55-596.png',
+                    multiplier: 5,
+                    isWild: true
+                }
             };
 
             // Initialize game state
@@ -134,6 +156,72 @@ class SlotMachine {
             console.error('Error initializing canvas:', error);
         }
     }
+
+    // Метод для проверки, является ли символ wild
+    isWildSymbol(symbol) {
+        return this.symbolDefinitions[symbol]?.isWild || false;
+    }
+
+    // Метод для получения множителя wild символа
+    getWildMultiplier(symbol) {
+        return this.symbolDefinitions[symbol]?.multiplier || 1;
+    }
+
+    // Метод для проверки выигрышных линий с учетом wild символов
+    checkWinningLines() {
+        const winningLines = [];
+
+        this.paylines.forEach((line, index) => {
+            const symbols = line.map(pos => this.reels[pos.x][pos.y]);
+
+            // Собираем все wild символы в линии
+            const wilds = symbols.filter(symbol => this.isWildSymbol(symbol));
+            const wildMultiplier = wilds.reduce((total, wild) => total * this.getWildMultiplier(wild), 1);
+
+            // Если в линии есть wild, проверяем возможные комбинации
+            if (wilds.length > 0) {
+                // Получаем символы, исключая wild и scatter
+                const nonWildSymbols = symbols.filter(symbol => 
+                    !this.isWildSymbol(symbol) && symbol !== 'sloth'
+                );
+
+                // Если есть хотя бы один обычный символ, проверяем комбинацию
+                if (nonWildSymbols.length > 0) {
+                    const mainSymbol = nonWildSymbols[0];
+                    const isWinning = nonWildSymbols.every(symbol => symbol === mainSymbol);
+
+                    if (isWinning) {
+                        winningLines.push({
+                            lineIndex: index,
+                            positions: line,
+                            symbol: mainSymbol,
+                            multiplier: wildMultiplier
+                        });
+                    }
+                }
+            } else {
+                // Стандартная проверка без wild символов
+                const firstSymbol = symbols[0];
+                if (firstSymbol !== 'sloth') {
+                    const isWinning = symbols.every(symbol => 
+                        symbol === firstSymbol || this.isWildSymbol(symbol)
+                    );
+
+                    if (isWinning) {
+                        winningLines.push({
+                            lineIndex: index,
+                            positions: line,
+                            symbol: firstSymbol,
+                            multiplier: 1
+                        });
+                    }
+                }
+            }
+        });
+
+        return winningLines;
+    }
+
 
     loadSymbolImages() {
         console.log('Starting to load symbol images');
@@ -228,7 +316,8 @@ class SlotMachine {
             'wooden_a': 'A', 'wooden_k': 'K', 'wooden_arch': 'Arch',
             'snake': '🐍', 'gorilla': '🦍', 'jaguar': '🐆',
             'crocodile': '🐊', 'gator': '🐊', 'leopard': '🐆',
-            'dragon': '🐲', 'sloth': '🦥'
+            'dragon': '🐲', 'sloth': '🦥',
+            'wild_2x': 'Wild 2x', 'wild_3x': 'Wild 3x', 'wild_5x': 'Wild 5x'
         };
         return symbolMap[symbol] || symbol;
     }
@@ -264,29 +353,6 @@ class SlotMachine {
         const newBet = Math.max(0.20, Math.min(100, this.currentBet + amount));
         this.currentBet = Number(newBet.toFixed(2));
         document.getElementById('currentBet').textContent = this.currentBet.toFixed(2);
-    }
-
-    // Метод для проверки выигрышных линий
-    checkWinningLines() {
-        const winningLines = [];
-
-        this.paylines.forEach((line, index) => {
-            const symbols = line.map(pos => this.reels[pos.x][pos.y]);
-            const firstSymbol = symbols[0];
-
-            // Проверяем, все ли символы в линии одинаковые
-            const isWinning = symbols.every(symbol => symbol === firstSymbol);
-
-            if (isWinning) {
-                winningLines.push({
-                    lineIndex: index,
-                    positions: line,
-                    symbol: firstSymbol
-                });
-            }
-        });
-
-        return winningLines;
     }
 
     // Метод для отображения выигрышной линии
@@ -445,8 +511,13 @@ class SlotMachine {
                 // Генерируем случайные символы для анимации, кроме последнего шага
                 if (step < totalSteps - 1) {
                     for (let j = 0; j < 3; j++) {
-                        const randomIndex = Math.floor(Math.random() * symbols.length);
-                        this.reels[reelIndex][j] = symbols[randomIndex];
+                        let randomSymbol;
+                        do {
+                            const randomIndex = Math.floor(Math.random() * symbols.length);
+                            randomSymbol = symbols[randomIndex];
+                        } while (this.wildReels.includes(reelIndex) && this.isWildSymbol(randomSymbol));
+
+                        this.reels[reelIndex][j] = randomSymbol;
                     }
                 } else {
                     // На последнем шаге устанавливаем финальные символы для этого барабана
