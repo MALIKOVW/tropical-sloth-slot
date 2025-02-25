@@ -436,7 +436,7 @@ class SlotMachine {
         // Очищаем предыдущие подсветки
         container.innerHTML = '';
 
-        // Создаем элементы для подсветки символов и анимируем символы
+        // Создаем элементы для подсветки символов
         linePositions.forEach(pos => {
             // Точное вычисление позиций с учетом всех отступов
             const cellSize = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
@@ -452,30 +452,52 @@ class SlotMachine {
             highlight.style.height = `${cellSize}px`;
             container.appendChild(highlight);
 
-            // Находим и анимируем сам символ
-            const symbol = document.createElement('div');
-            symbol.className = 'winning-symbol';
-            symbol.style.position = 'absolute';
-            symbol.style.left = `${x + this.SYMBOL_PADDING}px`;
-            symbol.style.top = `${y + this.SYMBOL_PADDING}px`;
-            symbol.style.width = `${this.SYMBOL_SIZE}px`;
-            symbol.style.height = `${this.SYMBOL_SIZE}px`;
+            // Анимируем существующий символ на барабане
+            const symbolX = x + this.SYMBOL_PADDING;
+            const symbolY = y + this.SYMBOL_PADDING;
+            const existingSymbol = this.ctx.getImageData(symbolX, symbolY, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
 
-            // Копируем содержимое символа
-            const img = this.symbolImages.get(this.reels[pos.x][pos.y]);
-            if (img) {
-                const symbolImg = document.createElement('img');
-                symbolImg.src = img.src;
-                symbolImg.style.width = '100%';
-                symbolImg.style.height = '100%';
-                symbol.appendChild(symbolImg);
-            }
+            // Временно сохраняем текущее состояние контекста
+            this.ctx.save();
 
-            container.appendChild(symbol);
+            // Настраиваем анимацию для символа
+            const animate = () => {
+                // Очищаем область символа
+                this.ctx.clearRect(symbolX, symbolY, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
+
+                // Вычисляем текущий масштаб
+                const scale = 1.1;
+
+                // Центрируем точку трансформации
+                this.ctx.translate(
+                    symbolX + this.SYMBOL_SIZE / 2,
+                    symbolY + this.SYMBOL_SIZE / 2
+                );
+
+                // Применяем масштабирование
+                this.ctx.scale(scale, scale);
+
+                // Возвращаем точку трансформации
+                this.ctx.translate(
+                    -(symbolX + this.SYMBOL_SIZE / 2),
+                    -(symbolY + this.SYMBOL_SIZE / 2)
+                );
+
+                // Отрисовываем увеличенный символ
+                const img = this.symbolImages.get(this.reels[pos.x][pos.y]);
+                if (img) {
+                    this.ctx.drawImage(img, symbolX, symbolY, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
+                }
+            };
+
+            // Запускаем анимацию
+            animate();
         });
 
-        // Автоматически убираем подсветку и анимацию через 1.5 секунды
+        // Восстанавливаем состояние контекста через 1.5 секунды
         setTimeout(() => {
+            this.ctx.restore();
+            this.draw();
             container.innerHTML = '';
         }, 1500);
     }
