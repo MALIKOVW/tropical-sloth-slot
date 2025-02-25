@@ -106,17 +106,17 @@ class SlotMachine {
 
             // Define symbols and their properties
             this.symbolDefinitions = {
-                'wooden_a': { value: 10, path: '/static/images/symbols/pic1.png' },
-                'wooden_k': { value: 15, path: '/static/images/symbols/pic2.png' },
-                'wooden_arch': { value: 20, path: '/static/images/symbols/pic3.png' },
-                'snake': { value: 30, path: '/static/images/symbols/pic4.png' },
-                'gorilla': { value: 40, path: '/static/images/symbols/pic5.png' },
-                'jaguar': { value: 50, path: '/static/images/symbols/pic6.png' },
-                'crocodile': { value: 60, path: '/static/images/symbols/pic7.png' },
-                'gator': { value: 70, path: '/static/images/symbols/pic8.png' },
-                'leopard': { value: 80, path: '/static/images/symbols/pic9.png' },
-                'dragon': { value: 100, path: '/static/images/symbols/pic10.png' },
-                'sloth': { value: 0, path: '/static/images/symbols/pic11.png' }
+                'wooden_a': { value: 10, path: '/static/images/symbols/wooden_a.png' },
+                'wooden_k': { value: 15, path: '/static/images/symbols/wooden_k.png' },
+                'wooden_arch': { value: 20, path: '/static/images/symbols/wooden_arch.png' },
+                'snake': { value: 30, path: '/static/images/symbols/snake.png' },
+                'gorilla': { value: 40, path: '/static/images/symbols/gorilla.png' },
+                'jaguar': { value: 50, path: '/static/images/symbols/jaguar.png' },
+                'crocodile': { value: 60, path: '/static/images/symbols/crocodile.png' },
+                'gator': { value: 70, path: '/static/images/symbols/gator.png' },
+                'leopard': { value: 80, path: '/static/images/symbols/leopard.png' },
+                'dragon': { value: 100, path: '/static/images/symbols/dragon.png' },
+                'sloth': { value: 0, path: '/static/images/symbols/sloth.png' }
             };
 
             // Initialize game state
