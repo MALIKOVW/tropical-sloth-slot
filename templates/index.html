@@ -10,7 +10,13 @@
 <body>
     <!-- Loading Screen -->
     <div id="loadingScreen" class="loading-screen">
-        <img src="/static/images/loading-screen-logo.png" alt="The Tropical Sloth" class="loading-logo">
+        <img 
+            src="/static/images/symbols/pic1.png" 
+            alt="The Tropical Sloth" 
+            class="loading-logo"
+            onerror="console.error('Failed to load logo:', this.src);"
+            onload="console.log('Logo loaded successfully:', this.src);"
+        >
         <div class="loading-progress">
             <div id="loadingBar" class="loading-bar"></div>
         </div>
