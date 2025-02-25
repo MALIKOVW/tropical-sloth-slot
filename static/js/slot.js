@@ -5,7 +5,7 @@ class LoadingManager {
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
-        this.totalAssets = 15; // Обновили количество ассетов с учетом wild символов
+        this.totalAssets = 13; // Total number of symbols including wilds
         this.loadedAssets = 0;
         this.lastProgress = 0;
         this.initializeLoading();
@@ -103,16 +103,16 @@ class SlotMachine {
 
             // Define symbols and their properties
             this.symbolDefinitions = {
-                'wooden_a': { value: 10, path: '/static/images/symbols/wooden_a.png' },
-                'wooden_k': { value: 15, path: '/static/images/symbols/wooden_k.png' },
-                'wooden_arch': { value: 20, path: '/static/images/symbols/wooden_arch.png' },
-                'snake': { value: 30, path: '/static/images/symbols/snake.png' },
-                'gorilla': { value: 40, path: '/static/images/symbols/gorilla.png' },
-                'jaguar': { value: 50, path: '/static/images/symbols/jaguar.png' },
-                'crocodile': { value: 60, path: '/static/images/symbols/Picsart_25-02-25_16-49-31-091.png' },
-                'gator': { value: 70, path: '/static/images/symbols/gator.png' },
-                'leopard': { value: 80, path: '/static/images/symbols/leopard.png' },
-                'dragon': { value: 100, path: '/static/images/symbols/dragon.png' },
+                'wooden_a': { value: 2, path: '/static/images/symbols/wooden_a.png' },
+                'wooden_k': { value: 3, path: '/static/images/symbols/wooden_k.png' },
+                'wooden_arch': { value: 4, path: '/static/images/symbols/wooden_arch.png' },
+                'snake': { value: 5, path: '/static/images/symbols/snake.png' },
+                'gorilla': { value: 6, path: '/static/images/symbols/gorilla.png' },
+                'jaguar': { value: 8, path: '/static/images/symbols/jaguar.png' },
+                'crocodile': { value: 10, path: '/static/images/symbols/Picsart_25-02-25_16-49-31-091.png' },
+                'gator': { value: 15, path: '/static/images/symbols/gator.png' },
+                'leopard': { value: 20, path: '/static/images/symbols/leopard.png' },
+                'dragon': { value: 50, path: '/static/images/symbols/dragon.png' },
                 'sloth': { value: 0, path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png' },
                 'wild_2x': {
                     value: 0,
@@ -141,7 +141,6 @@ class SlotMachine {
             this.currentBet = 1.00;
             this.bonusSpinsRemaining = 0;
 
-            // Load symbol images
             this.loadSymbolImages();
 
             console.log('Canvas initialized successfully');
@@ -150,17 +149,52 @@ class SlotMachine {
         }
     }
 
-    // Метод для проверки, является ли символ wild
+    loadSymbolImages() {
+        const loadImage = (symbol, def) => {
+            return new Promise((resolve, reject) => {
+                console.log(`Loading image for symbol: ${symbol}, path: ${def.path}`);
+                const img = new Image();
+
+                img.onload = () => {
+                    console.log(`Successfully loaded image for symbol: ${symbol}`);
+                    this.symbolImages.set(symbol, img);
+                    this.loadingManager.onAssetLoaded();
+                    resolve();
+                };
+
+                img.onerror = (error) => {
+                    console.error(`Failed to load image for symbol: ${symbol}`, error);
+                    console.error('Attempted path:', def.path);
+                    this.loadingManager.onAssetLoaded();
+                    reject(error);
+                };
+
+                img.src = def.path;
+            });
+        };
+
+        const loadPromises = Object.entries(this.symbolDefinitions).map(([symbol, def]) => {
+            return loadImage(symbol, def);
+        });
+
+        Promise.all(loadPromises)
+            .then(() => {
+                console.log('All images loaded successfully');
+                this.draw();
+            })
+            .catch(error => {
+                console.error('Error loading some images:', error);
+            });
+    }
+
     isWildSymbol(symbol) {
         return this.symbolDefinitions[symbol]?.isWild || false;
     }
 
-    // Метод для получения множителя wild символа
     getWildMultiplier(symbol) {
         return this.symbolDefinitions[symbol]?.multiplier || 1;
     }
 
-    // Метод для проверки выигрышных линий с учетом wild символов
     checkWinningLines() {
         const winningLines = [];
 
@@ -215,29 +249,6 @@ class SlotMachine {
         return winningLines;
     }
 
-
-    loadSymbolImages() {
-        console.log('Starting to load symbol images');
-        Object.entries(this.symbolDefinitions).forEach(([symbol, def]) => {
-            console.log(`Loading image for symbol: ${symbol}, path: ${def.path}`);
-            const img = new Image();
-
-            img.onload = () => {
-                console.log(`Successfully loaded image for symbol: ${symbol}`);
-                this.symbolImages.set(symbol, img);
-                this.loadingManager.onAssetLoaded();
-                this.draw(); // Перерисовываем после загрузки каждого изображения
-            };
-
-            img.onerror = (error) => {
-                console.error(`Failed to load image for symbol: ${symbol}`, error);
-                console.error('Attempted path:', def.path);
-                this.loadingManager.onAssetLoaded();
-            };
-
-            img.src = def.path;
-        });
-    }
 
     resizeCanvas() {
         if (!this.ctx || !this.canvas) return;
