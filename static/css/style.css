@@ -995,13 +995,14 @@ h1 {
     left: 50%;
     transform: translate(-50%, -50%) scale(0);
     background: rgba(0, 0, 0, 0.9);
-    padding: 40px;
+    padding40px;
     border-radius: 20px;
     text-align: center;
     z-index: 1000;
     animation: popupAppear 0.5s ease forwards;
     border: 3px solid #ffd700;
     box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    transition: all 0.5s ease;
 }
 
 .win-popup.big-win {
@@ -1029,6 +1030,7 @@ h1 {
     margin-bottom: 20px;
     font-weight: bold;
     text-transform: uppercase;
+    transition: all 0.3s ease;
 }
 
 .big-win .win-title {
@@ -1055,6 +1057,7 @@ h1 {
     font-size: 36px;
     color: #fff;
     margin: 10px 0;
+    transition: all 0.2s ease;
 }
 
 .win-amount {
@@ -1062,6 +1065,102 @@ h1 {
     color: #ffd700;
     margin: 20px 0;
     text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+    transition: all 0.2s ease;
+}
+
+@keyframes popupAppear {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+.win-popup .close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+
+.win-popup .close-button:hover {
+    opacity: 1;
+}
+
+.win-popup.big-win {
+    border-color: #00ff9d;
+    box-shadow: 0 0 30px rgba(0, 255, 157, 0.3);
+}
+
+.win-popup.mega-win {
+    border-color: #ff00ff;
+    box-shadow: 0 0 40px rgba(255, 0, 255, 0.4);
+}
+
+.win-popup.epic-win {
+    border-color: #ff0000;
+    box-shadow: 0 0 50px rgba(255, 0, 0, 0.5);
+}
+
+.win-popup.max-win {
+    border-color: #ffff00;
+    box-shadow: 0 0 60px rgba(255, 255, 0, 0.6);
+}
+
+.win-title {
+    font-size: 48px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+
+.big-win .win-title {
+    color: #00ff9d;
+    text-shadow: 0 0 20px rgba(0, 255, 157, 0.5);
+}
+
+.mega-win .win-title {
+    color: #ff00ff;
+    text-shadow: 0 0 25px rgba(255, 0, 255, 0.5);
+}
+
+.epic-win .win-title {
+    color: #ff0000;
+    text-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+}
+
+.max-win .win-title {
+    color: #ffff00;
+    text-shadow: 0 0 35px rgba(255, 255, 0, 0.5);
+}
+
+.win-multiplier {
+    font-size: 36px;
+    color: #fff;
+    margin: 10px 0;
+    transition: all 0.2s ease;
+}
+
+.win-amount {
+    font-size: 42px;
+    color: #ffd700;
+    margin: 20px 0;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+    transition: all 0.2s ease;
 }
 
 @keyframes popupAppear {
