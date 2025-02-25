@@ -20,8 +20,8 @@
 }
 
 .loading-logo {
-    width: 500px;
-    height: 500px;
+    width: 400px;
+    height: 350px;
     object-fit: contain;
     margin-bottom: 20px;
     display: block;
