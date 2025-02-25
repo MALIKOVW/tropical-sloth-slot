@@ -6,6 +6,15 @@ class BackgroundMusic {
         this.initialized = false;
         this.isMuted = false;
         this.setupSoundControl();
+
+        // Add event listeners for audio loading
+        this.audio.addEventListener('loadeddata', () => {
+            console.log('Audio file loaded successfully');
+        });
+
+        this.audio.addEventListener('error', (e) => {
+            console.error('Error loading audio file:', e);
+        });
     }
 
     setupSoundControl() {
@@ -14,6 +23,8 @@ class BackgroundMusic {
             soundButton.addEventListener('click', () => {
                 this.toggleSound();
             });
+        } else {
+            console.warn('Sound control button not found');
         }
     }
 
