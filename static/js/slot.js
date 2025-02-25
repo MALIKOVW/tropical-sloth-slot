@@ -494,7 +494,12 @@ class SlotMachine {
     async animateSpin(finalResult) {
         const totalSteps = 30;
         const stepDelay = 50;
-        const symbols = Object.keys(this.symbolDefinitions);
+        const symbols = Object.keys(this.symbolDefinitions).filter(symbol =>
+            !this.symbolDefinitions[symbol].isWild
+        );
+        const wildSymbols = Object.keys(this.symbolDefinitions).filter(symbol =>
+            this.symbolDefinitions[symbol].isWild
+        );
 
         // Параметры для эластичного отскока
         const bounceAmplitude = 20;
@@ -516,11 +521,15 @@ class SlotMachine {
                 if (step < totalSteps - 1) {
                     for (let j = 0; j < 3; j++) {
                         let randomSymbol;
-                        do {
+                        // Для барабанов 2, 3, 4 (индексы 1, 2, 3) можем использовать wild символы
+                        if (reelIndex >= 1 && reelIndex <= 3 && Math.random() < 0.2) {
+                            const randomWildIndex = Math.floor(Math.random() * wildSymbols.length);
+                            randomSymbol = wildSymbols[randomWildIndex];
+                        } else {
+                            // Для остальных барабанов используем только обычные символы
                             const randomIndex = Math.floor(Math.random() * symbols.length);
                             randomSymbol = symbols[randomIndex];
-                        } while (this.wildReels.includes(reelIndex) && this.isWildSymbol(randomSymbol));
-
+                        }
                         this.reels[reelIndex][j] = randomSymbol;
                     }
                 } else {
