@@ -385,7 +385,7 @@ class SlotMachine {
         const line = document.createElement('div');
         line.className = 'payline';
 
-        // Вычисляем позиции для линии
+        // Вычисляем позиции для линии с учетом центра символов
         const startPos = {
             x: linePositions[0].x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2,
             y: linePositions[0].y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2
@@ -396,7 +396,7 @@ class SlotMachine {
             y: linePositions[4].y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2
         };
 
-        // Вычисляем длину и угол линии
+        // Вычисляем длину и угол линии с учетом padding
         const length = Math.sqrt(
             Math.pow(endPos.x - startPos.x, 2) +
             Math.pow(endPos.y - startPos.y, 2)
