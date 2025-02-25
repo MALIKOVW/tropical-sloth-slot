@@ -453,8 +453,8 @@ class SlotMachine {
                     for (let j = 0; j < 3; j++) {
                         this.reels[reelIndex][j] = finalResult[reelIndex][j];
                     }
-                    // Play click sound for each reel stopping
-                    audio.playClickSound();
+                    // Play new reel stop sound for each reel stopping
+                    audio.playReelStopSound();
                 }
             }
 

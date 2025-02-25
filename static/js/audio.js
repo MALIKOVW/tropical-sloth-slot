@@ -1,44 +1,71 @@
 class SlotAudio {
     constructor() {
-        this.synth = new Tone.Synth().toDestination();
-        this.ready = false;
+        // Create effects
+        this.reverb = new Tone.Reverb(1.5).toDestination();
+        this.delay = new Tone.FeedbackDelay("8n", 0.5).toDestination();
         this.effectsVolume = 0.5;
 
-        // Initialize sounds using Tone.js synthesizers
+        // Initialize sounds using more sophisticated Tone.js synthesizers
         this.sounds = {
             spin: new Tone.Synth({
-                oscillator: { type: "sawtooth" },
+                oscillator: { type: "sine8" },
                 envelope: {
                     attack: 0.01,
-                    decay: 0.1,
-                    sustain: 0.3,
-                    release: 0.1
+                    decay: 0.3,
+                    sustain: 0.4,
+                    release: 0.8
                 }
-            }).toDestination(),
+            }).connect(this.reverb),
+
+            spinReel: new Tone.NoiseSynth({
+                noise: { type: "white" },
+                envelope: {
+                    attack: 0.005,
+                    decay: 0.1,
+                    sustain: 1,
+                    release: 0.3
+                }
+            }).connect(this.reverb),
+
+            reelStop: new Tone.MetalSynth({
+                frequency: 200,
+                envelope: {
+                    attack: 0.001,
+                    decay: 0.1,
+                    release: 0.1
+                },
+                harmonicity: 5.1,
+                modulationIndex: 32,
+                resonance: 4000,
+                octaves: 1.5
+            }).connect(this.reverb),
 
             win: new Tone.PolySynth({
-                maxPolyphony: 4,
+                maxPolyphony: 6,
                 voice: Tone.Synth,
                 options: {
-                    oscillator: { type: "triangle" },
+                    oscillator: { type: "triangle8" },
                     envelope: {
-                        attack: 0.01,
-                        decay: 0.1,
-                        sustain: 0.3,
-                        release: 0.5
+                        attack: 0.02,
+                        decay: 0.3,
+                        sustain: 0.4,
+                        release: 1
                     }
                 }
-            }).toDestination(),
+            }).connect(this.delay),
 
-            click: new Tone.Synth({
-                oscillator: { type: "square" },
+            click: new Tone.MembraneSynth({
+                pitchDecay: 0.05,
+                octaves: 2,
+                oscillator: { type: "sine" },
                 envelope: {
-                    attack: 0.01,
-                    decay: 0.1,
+                    attack: 0.001,
+                    decay: 0.2,
                     sustain: 0,
-                    release: 0.1
+                    release: 0.2,
+                    attackCurve: "exponential"
                 }
-            }).toDestination()
+            }).connect(this.reverb)
         };
 
         this.setupVolumeControl();
@@ -55,6 +82,8 @@ class SlotAudio {
 
     setEffectsVolume(volume) {
         this.effectsVolume = volume;
+        this.reverb.wet.value = volume;
+        this.delay.wet.value = volume * 0.5;
         Object.values(this.sounds).forEach(sound => {
             sound.volume.value = Tone.gainToDb(volume);
         });
@@ -75,10 +104,9 @@ class SlotAudio {
     playSpinSound() {
         if (!this.ready) return;
         try {
-            this.sounds.spin.triggerAttackRelease("C4", "32n", undefined, this.effectsVolume);
-            setTimeout(() => {
-                this.sounds.spin.triggerAttackRelease("G3", "32n", undefined, this.effectsVolume);
-            }, 100);
+            // Play a richer spin sound
+            this.sounds.spin.triggerAttackRelease("C5", "16n", undefined, this.effectsVolume);
+            this.sounds.spinReel.triggerAttackRelease("16n", undefined, this.effectsVolume * 0.3);
         } catch (error) {
             console.warn("Could not play spin sound:", error);
         }
@@ -87,7 +115,7 @@ class SlotAudio {
     stopSpinSound() {
         if (!this.ready) return;
         try {
-            this.sounds.spin.triggerRelease();
+            this.sounds.spinReel.triggerRelease();
         } catch (error) {
             console.warn("Could not stop spin sound:", error);
         }
@@ -96,11 +124,15 @@ class SlotAudio {
     playWinSound() {
         if (!this.ready) return;
         try {
-            const notes = ["C4", "E4", "G4", "C5"];
+            // Create a more celebratory win sound
+            const notes = ["C4", "E4", "G4", "C5", "E5", "G5"];
+            const times = [0, 0.1, 0.2, 0.3, 0.4, 0.5];
+
             notes.forEach((note, i) => {
                 setTimeout(() => {
-                    this.sounds.win.triggerAttackRelease(note, "8n", undefined, this.effectsVolume);
-                }, i * 100);
+                    this.sounds.win.triggerAttackRelease(note, "8n", undefined, 
+                        this.effectsVolume * (0.5 + i * 0.1));
+                }, times[i] * 1000);
             });
         } catch (error) {
             console.warn("Could not play win sound:", error);
@@ -110,9 +142,20 @@ class SlotAudio {
     playClickSound() {
         if (!this.ready) return;
         try {
-            this.sounds.click.triggerAttackRelease("C4", "32n", undefined, this.effectsVolume);
+            // Create a more tactile click sound
+            this.sounds.click.triggerAttackRelease("G2", "32n", undefined, this.effectsVolume * 0.7);
         } catch (error) {
             console.warn("Could not play click sound:", error);
+        }
+    }
+
+    playReelStopSound() {
+        if (!this.ready) return;
+        try {
+            // Play a distinctive reel stop sound
+            this.sounds.reelStop.triggerAttackRelease("16n", undefined, this.effectsVolume * 0.6);
+        } catch (error) {
+            console.warn("Could not play reel stop sound:", error);
         }
     }
 }
