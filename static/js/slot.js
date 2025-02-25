@@ -133,7 +133,6 @@ class SlotMachine {
         // Очищаем предыдущие подсветки
         container.innerHTML = '';
 
-        // Создаем элементы для подсветки символов
         linePositions.forEach(pos => {
             const cellSize = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
             const x = pos.x * cellSize;
@@ -156,7 +155,7 @@ class SlotMachine {
             symbol.style.top = `${y + this.SYMBOL_PADDING}px`;
             symbol.style.width = `${this.SYMBOL_SIZE}px`;
             symbol.style.height = `${this.SYMBOL_SIZE}px`;
-            symbol.style.filter = 'brightness(1.2)'; // Делаем символы немного ярче
+            symbol.style.filter = 'brightness(1.2)';
 
             // Копируем содержимое символа
             const img = this.symbolImages.get(this.reels[pos.x][pos.y]);
