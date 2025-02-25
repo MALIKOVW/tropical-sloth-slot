@@ -460,6 +460,7 @@ class SlotMachine {
             symbol.style.top = `${y + this.SYMBOL_PADDING}px`;
             symbol.style.width = `${this.SYMBOL_SIZE}px`;
             symbol.style.height = `${this.SYMBOL_SIZE}px`;
+            symbol.style.filter = 'brightness(1.2)'; // Делаем символы немного ярче
 
             // Копируем содержимое символа
             const img = this.symbolImages.get(this.reels[pos.x][pos.y]);
@@ -474,10 +475,17 @@ class SlotMachine {
             container.appendChild(symbol);
         });
 
-        // Автоматически убираем подсветку и анимацию через 1.5 секунды
-        setTimeout(() => {
+        // Добавляем возможность пропустить анимацию по клику
+        container.addEventListener('click', () => {
             container.innerHTML = '';
-        }, 1500);
+        });
+
+        // Автоматически убираем подсветку и анимацию через 2 секунды
+        setTimeout(() => {
+            if (container.innerHTML !== '') {
+                container.innerHTML = '';
+            }
+        }, 2000);
     }
 
     async spin() {
