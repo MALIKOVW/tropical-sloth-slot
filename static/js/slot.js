@@ -451,10 +451,10 @@ class SlotMachine {
 
             const highlight = document.createElement('div');
             highlight.className = 'symbol-highlight';
-            highlight.style.left = x + 'px';
-            highlight.style.top = y + 'px';
-            highlight.style.width = this.SYMBOL_SIZE + 'px';
-            highlight.style.height = this.SYMBOL_SIZE + 'px';
+            highlight.style.left = `${x}px`;
+            highlight.style.top = `${y}px`;
+            highlight.style.width = `${this.SYMBOL_SIZE}px`;
+            highlight.style.height = `${this.SYMBOL_SIZE}px`;
             container.appendChild(highlight);
         });
 
@@ -462,18 +462,18 @@ class SlotMachine {
         const line = document.createElement('div');
         line.className = 'payline';
 
-        // Вычисляем позиции для линии с учетом центра символов
+        // Точное позиционирование с учетом центров символов
         const startPos = {
-            x: linePositions[0].x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2,
-            y: linePositions[0].y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2
+            x: linePositions[0].x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + (this.SYMBOL_SIZE / 2),
+            y: linePositions[0].y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + (this.SYMBOL_SIZE / 2)
         };
 
         const endPos = {
-            x: linePositions[linePositions.length -1].x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2,
-            y: linePositions[linePositions.length -1].y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2
+            x: linePositions[linePositions.length - 1].x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + (this.SYMBOL_SIZE / 2),
+            y: linePositions[linePositions.length - 1].y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + (this.SYMBOL_SIZE / 2)
         };
 
-        // Вычисляем длину и угол линии с учетом padding
+        // Вычисляем длину и угол линии
         const length = Math.sqrt(
             Math.pow(endPos.x - startPos.x, 2) +
             Math.pow(endPos.y - startPos.y, 2)
@@ -484,11 +484,11 @@ class SlotMachine {
             endPos.x - startPos.x
         );
 
-        // Устанавливаем стили линии
-        line.style.width = length + 'px';
-        line.style.left = startPos.x + 'px';
-        line.style.top = startPos.y + 'px';
-        line.style.transform = `rotate(${angle}rad)`;
+        // Устанавливаем стили линии с точным позиционированием
+        line.style.width = `${length}px`;
+        line.style.left = `${startPos.x}px`;
+        line.style.top = `${startPos.y}px`;
+        line.style.transform = `rotate(${angle}rad) translateY(-50%)`;
 
         container.appendChild(line);
     }
