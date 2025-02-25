@@ -423,8 +423,25 @@ body {
     object-fit: contain;
 }
 
+/* Wild symbol styles */
 .symbol.wild img {
     filter: drop-shadow(0 0 5px #ff9f43);
+    animation: wildPulse 1.5s infinite;
+}
+
+@keyframes wildPulse {
+    0% {
+        filter: drop-shadow(0 0 5px rgba(255, 159, 67, 0.8)) brightness(1.2);
+        transform: scale(1);
+    }
+    50% {
+        filter: drop-shadow(0 0 15px rgba(255, 159, 67, 1)) brightness(1.4);
+        transform: scale(1.1);
+    }
+    100% {
+        filter: drop-shadow(0 0 5px rgba(255, 159, 67, 0.8)) brightness(1.2);
+        transform: scale(1);
+    }
 }
 
 .symbol.scatter img {
@@ -906,4 +923,25 @@ body {
 h1 {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     color: #fff;
+}
+
+/* Winning wild combination */
+.winning-symbol.wild img {
+    filter: drop-shadow(0 0 10px #ff9f43) brightness(1.4);
+    animation: winningWildPulse 0.6s infinite;
+}
+
+@keyframes winningWildPulse {
+    0% {
+        filter: drop-shadow(0 0 15px rgba(255, 159, 67, 0.8)) brightness(1.4);
+        transform: scale(1) translateZ(0);
+    }
+    50% {
+        filter: drop-shadow(0 0 25px rgba(255, 159, 67, 1)) brightness(1.6);
+        transform: scale(1.15) translateZ(0);
+    }
+    100% {
+        filter: drop-shadow(0 0 15px rgba(255, 159, 67, 0.8)) brightness(1.4);
+        transform: scale(1) translateZ(0);
+    }
 }

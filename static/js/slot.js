@@ -603,6 +603,7 @@ class SlotMachine {
 
                     // Проверяем выигрышные комбинации для 3+ символов
                     if (consecutiveCount >= 3) {
+                        console.log(`Winning line found with ${consecutiveCount} symbols (including wilds). Wild multiplier: ${wildMultiplier}`);
                         winningLines.push({
                             lineIndex: index,
                             positions: line.slice(0, consecutiveCount),
@@ -629,6 +630,7 @@ class SlotMachine {
 
                     // Проверяем выигрышные комбинации для 3+ символов
                     if (consecutiveCount >= 3) {
+                        console.log(`Regular winning line found with ${consecutiveCount} symbols`);
                         winningLines.push({
                             lineIndex: index,
                             positions: line.slice(0, consecutiveCount),
