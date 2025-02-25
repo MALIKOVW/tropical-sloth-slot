@@ -64,6 +64,9 @@ class SlotMachine {
         this.SYMBOL_SIZE = 60;
         this.SYMBOL_PADDING = 3;
 
+        // Создаем контейнер для анимированных символов заранее
+        this.animatedSymbols = new Map();
+
         setTimeout(() => {
             this.initializeCanvas();
             this.init();
@@ -530,6 +533,12 @@ class SlotMachine {
             // Play spin sound when animation starts
             audio.playSpinSound();
 
+            // Очищаем предыдущие анимации при новом спине
+            const container = document.getElementById('paylineContainer');
+            if (container) {
+                container.innerHTML = '';
+            }
+
             await this.animateSpin(result.result);
 
             // Stop spin sound when animation ends
@@ -537,6 +546,10 @@ class SlotMachine {
 
             this.reels = result.result;
             document.getElementById('creditDisplay').textContent = result.credits.toFixed(2);
+
+            // Разблокируем кнопку спина после анимации вращения
+            document.getElementById('spinButton').disabled = false;
+            this.spinning = false;
 
             // Check winning lines
             const winningLines = this.checkWinningLines();
@@ -548,8 +561,13 @@ class SlotMachine {
 
             // Show each winning line
             for (const line of winningLines) {
-                this.showWinningLine(line.positions);
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                // Проверяем, не был ли начат новый спин
+                if (!this.spinning) {
+                    this.showWinningLine(line.positions);
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                } else {
+                    break;
+                }
             }
 
             this.draw();
@@ -557,7 +575,6 @@ class SlotMachine {
         } catch (error) {
             console.error('Error during spin:', error);
             alert('An error occurred during spin. Please try again.');
-        } finally {
             this.spinning = false;
             document.getElementById('spinButton').disabled = false;
         }
