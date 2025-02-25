@@ -106,7 +106,6 @@ class SlotMachine {
         this.wildReels = [1, 2, 3]; // индексы 1,2,3 соответствуют 2,3,4 барабанам
     }
 
-    // Метод для предварительной загрузки элементов
     preloadElements() {
         Object.entries(this.symbolDefinitions).forEach(([symbol, def]) => {
             // Создаем шаблон для анимированного символа
@@ -130,73 +129,79 @@ class SlotMachine {
         const container = document.getElementById('paylineContainer');
         if (!container) return;
 
-        // Очищаем предыдущие подсветки
-        container.innerHTML = '';
+        try {
+            // Очищаем предыдущие подсветки
+            container.innerHTML = '';
 
-        // Создаем линию выплаты
-        const startPos = linePositions[0];
-        const endPos = linePositions[linePositions.length - 1];
+            // Создаем линию выплаты
+            const startPos = linePositions[0];
+            const endPos = linePositions[linePositions.length - 1];
 
-        const cellSize = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
-        const startX = startPos.x * cellSize + cellSize / 2;
-        const startY = startPos.y * cellSize + cellSize / 2;
-        const endX = endPos.x * cellSize + cellSize / 2;
-        const endY = endPos.y * cellSize + cellSize / 2;
+            const cellSize = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
+            const startX = startPos.x * cellSize + cellSize / 2;
+            const startY = startPos.y * cellSize + cellSize / 2;
+            const endX = endPos.x * cellSize + cellSize / 2;
+            const endY = endPos.y * cellSize + cellSize / 2;
 
-        // Создаем элемент линии
-        const line = document.createElement('div');
-        line.className = 'payline';
+            // Создаем элемент линии
+            const line = document.createElement('div');
+            line.className = 'payline';
 
-        // Вычисляем длину и угол линии
-        const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
-        const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+            // Вычисляем длину и угол линии
+            const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+            const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
 
-        // Устанавливаем стили линии
-        line.style.width = `${length}px`;
-        line.style.left = `${startX}px`;
-        line.style.top = `${startY}px`;
-        line.style.transform = `rotate(${angle}deg)`;
+            // Устанавливаем стили линии
+            line.style.width = `${length}px`;
+            line.style.left = `${startX}px`;
+            line.style.top = `${startY}px`;
+            line.style.transform = `rotate(${angle}deg)`;
 
-        container.appendChild(line);
+            container.appendChild(line);
 
-        // Анимируем символы вдоль линии
-        linePositions.forEach(pos => {
-            const x = pos.x * cellSize;
-            const y = pos.y * cellSize;
+            // Анимируем символы вдоль линии
+            for (const pos of linePositions) {
+                const x = pos.x * cellSize;
+                const y = pos.y * cellSize;
 
-            // Находим и анимируем символ
-            const symbol = document.createElement('div');
-            symbol.className = 'winning-symbol';
-            symbol.style.position = 'absolute';
-            symbol.style.left = `${x + this.SYMBOL_PADDING}px`;
-            symbol.style.top = `${y + this.SYMBOL_PADDING}px`;
-            symbol.style.width = `${this.SYMBOL_SIZE}px`;
-            symbol.style.height = `${this.SYMBOL_SIZE}px`;
+                const symbolKey = this.reels[pos.x][pos.y];
+                const img = this.symbolImages.get(symbolKey);
 
-            // Копируем содержимое символа
-            const img = this.symbolImages.get(this.reels[pos.x][pos.y]);
-            if (img) {
-                const symbolImg = document.createElement('img');
-                symbolImg.src = img.src;
-                symbolImg.style.width = '100%';
-                symbolImg.style.height = '100%';
-                symbol.appendChild(symbolImg);
+                if (img) {
+                    // Создаем и добавляем символ
+                    const symbol = document.createElement('div');
+                    symbol.className = 'winning-symbol';
+                    symbol.style.position = 'absolute';
+                    symbol.style.left = `${x + this.SYMBOL_PADDING}px`;
+                    symbol.style.top = `${y + this.SYMBOL_PADDING}px`;
+                    symbol.style.width = `${this.SYMBOL_SIZE}px`;
+                    symbol.style.height = `${this.SYMBOL_SIZE}px`;
+
+                    const symbolImg = document.createElement('img');
+                    symbolImg.src = img.src;
+                    symbolImg.style.width = '100%';
+                    symbolImg.style.height = '100%';
+                    symbol.appendChild(symbolImg);
+
+                    container.appendChild(symbol);
+                }
             }
 
-            container.appendChild(symbol);
-        });
+            // Добавляем возможность пропустить анимацию по клику
+            container.addEventListener('click', () => {
+                container.innerHTML = '';
+            }, { once: true });
 
-        // Добавляем возможность пропустить анимацию по клику
-        container.addEventListener('click', () => {
-            container.innerHTML = '';
-        });
-
-        // Автоматически убираем подсветку через 2 секунды
-        setTimeout(() => {
+            // Автоматически убираем подсветку через 2 секунды
+            await new Promise(resolve => setTimeout(resolve, 2000));
             if (container.innerHTML !== '') {
                 container.innerHTML = '';
             }
-        }, 2000);
+
+        } catch (error) {
+            console.error('Error showing winning line:', error);
+            container.innerHTML = '';
+        }
     }
 
     async spin() {
@@ -273,7 +278,6 @@ class SlotMachine {
                 for (const line of winningLines) {
                     if (!this.spinning) {
                         await this.showWinningLine(line.positions);
-                        await new Promise(resolve => setTimeout(resolve, 1500));
                     } else {
                         break;
                     }
@@ -288,6 +292,82 @@ class SlotMachine {
             this.spinning = false;
             document.getElementById('spinButton').disabled = false;
         }
+    }
+
+    async animateSpin(finalResult) {
+        const totalSteps = 30;
+        const stepDelay = 50;
+        const symbols = Object.keys(this.symbolDefinitions).filter(symbol =>
+            !this.symbolDefinitions[symbol].isWild
+        );
+        const wildSymbols = Object.keys(this.symbolDefinitions).filter(symbol =>
+            this.symbolDefinitions[symbol].isWild
+        );
+
+        // Параметры для эластичного отскока
+        const bounceAmplitude = 20;
+        const bounceDuration = 300;
+
+        // Анимация вращения
+        for (let step = 0; step < totalSteps; step++) {
+            const startTime = performance.now();
+
+            for (let reelIndex = 0; reelIndex < 5; reelIndex++) {
+                // Задержка старта для каждого барабана
+                if (step < reelIndex * 2) continue;
+
+                // Рассчитываем скорость вращения (замедление к концу)
+                const progress = step / totalSteps;
+                const speedFactor = Math.pow(1 - progress, 2);
+
+                // Генерируем случайные символы для анимации, кроме последнего шага
+                if (step < totalSteps - 1) {
+                    for (let j = 0; j < 3; j++) {
+                        let randomSymbol;
+                        // Для барабанов 2, 3, 4 (индексы 1, 2, 3) можем использовать wild символы
+                        if (reelIndex >= 1 && reelIndex <= 3 && Math.random() < 0.2) {
+                            const randomWildIndex = Math.floor(Math.random() * wildSymbols.length);
+                            randomSymbol = wildSymbols[randomWildIndex];
+                        } else {
+                            // Для остальных барабанов используем только обычные символы
+                            const randomIndex = Math.floor(Math.random() * symbols.length);
+                            randomSymbol = symbols[randomIndex];
+                        }
+                        this.reels[reelIndex][j] = randomSymbol;
+                    }
+                } else {
+                    // На последнем шаге устанавливаем финальные символы для этого барабана
+                    for (let j = 0; j < 3; j++) {
+                        this.reels[reelIndex][j] = finalResult[reelIndex][j];
+                    }
+                    // Play new reel stop sound for each reel stopping
+                    audio.playReelStopSound();
+                }
+            }
+
+            this.draw();
+
+            const elapsedTime = performance.now() - startTime;
+            const remainingDelay = Math.max(0, stepDelay - elapsedTime);
+            await new Promise(resolve => setTimeout(resolve, remainingDelay));
+        }
+
+        // Эффект отскока в конце
+        const bounceStart = performance.now();
+        while (performance.now() - bounceStart < bounceDuration) {
+            const bounceProgress = (performance.now() - bounceStart) / bounceDuration;
+            const offset = Math.sin(bounceProgress * Math.PI) * bounceAmplitude * (1 - bounceProgress);
+
+            this.ctx.save();
+            this.ctx.translate(0, offset);
+            this.draw();
+            this.ctx.restore();
+
+            await new Promise(resolve => requestAnimationFrame(resolve));
+        }
+
+        // Финальная отрисовка
+        this.draw();
     }
 
     initializeCanvas() {
@@ -630,82 +710,6 @@ class SlotMachine {
         const newBet = Math.max(0.20, Math.min(100, this.currentBet + amount));
         this.currentBet = Number(newBet.toFixed(2));
         document.getElementById('currentBet').textContent = this.currentBet.toFixed(2);
-    }
-
-    async animateSpin(finalResult) {
-        const totalSteps = 30;
-        const stepDelay = 50;
-        const symbols = Object.keys(this.symbolDefinitions).filter(symbol =>
-            !this.symbolDefinitions[symbol].isWild
-        );
-        const wildSymbols = Object.keys(this.symbolDefinitions).filter(symbol =>
-            this.symbolDefinitions[symbol].isWild
-        );
-
-        // Параметры для эластичного отскока
-        const bounceAmplitude = 20;
-        const bounceDuration = 300;
-
-        // Анимация вращения
-        for (let step = 0; step < totalSteps; step++) {
-            const startTime = performance.now();
-
-            for (let reelIndex = 0; reelIndex < 5; reelIndex++) {
-                // Задержка старта для каждого барабана
-                if (step < reelIndex * 2) continue;
-
-                // Рассчитываем скорость вращения (замедление к концу)
-                const progress = step / totalSteps;
-                const speedFactor = Math.pow(1 - progress, 2);
-
-                // Генерируем случайные символы для анимации, кроме последнего шага
-                if (step < totalSteps - 1) {
-                    for (let j = 0; j < 3; j++) {
-                        let randomSymbol;
-                        // Для барабанов 2, 3, 4 (индексы 1, 2, 3) можем использовать wild символы
-                        if (reelIndex >= 1 && reelIndex <= 3 && Math.random() < 0.2) {
-                            const randomWildIndex = Math.floor(Math.random() * wildSymbols.length);
-                            randomSymbol = wildSymbols[randomWildIndex];
-                        } else {
-                            // Для остальных барабанов используем только обычные символы
-                            const randomIndex = Math.floor(Math.random() * symbols.length);
-                            randomSymbol = symbols[randomIndex];
-                        }
-                        this.reels[reelIndex][j] = randomSymbol;
-                    }
-                } else {
-                    // На последнем шаге устанавливаем финальные символы для этого барабана
-                    for (let j = 0; j < 3; j++) {
-                        this.reels[reelIndex][j] = finalResult[reelIndex][j];
-                    }
-                    // Play new reel stop sound for each reel stopping
-                    audio.playReelStopSound();
-                }
-            }
-
-            this.draw();
-
-            const elapsedTime = performance.now() - startTime;
-            const remainingDelay = Math.max(0, stepDelay - elapsedTime);
-            await new Promise(resolve => setTimeout(resolve, remainingDelay));
-        }
-
-        // Эффект отскока в конце
-        const bounceStart = performance.now();
-        while (performance.now() - bounceStart < bounceDuration) {
-            const bounceProgress = (performance.now() - bounceStart) / bounceDuration;
-            const offset = Math.sin(bounceProgress * Math.PI) * bounceAmplitude * (1 - bounceProgress);
-
-            this.ctx.save();
-            this.ctx.translate(0, offset);
-            this.draw();
-            this.ctx.restore();
-
-            await new Promise(resolve => requestAnimationFrame(resolve));
-        }
-
-        // Финальная отрисовка
-        this.draw();
     }
 }
 
