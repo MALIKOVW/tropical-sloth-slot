@@ -449,24 +449,24 @@ class SlotMachine {
                 },
                 'sloth': {
                     value: 0,
-                    path: '/static/images/symbols/sloth.png',
+                    path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png',
                     multipliers: {3: 2, 4: 10, 5: 50}
                 },
                 'wild_2x': {
                     value: 0,
-                    path: '/static/images/symbols/wild_2x.png',
+                    path: '/static/images/symbols/Picsart_25-02-25_18-10-53-970.png',
                     multiplier: 2,
                     isWild: true
                 },
                 'wild_3x': {
                     value: 0,
-                    path: '/static/images/symbols/wild_3x.png',
+                    path: '/static/images/symbols/Picsart_25-02-25_18-12-23-513.png',
                     multiplier: 3,
                     isWild: true
                 },
                 'wild_5x': {
                     value: 0,
-                    path: '/static/images/symbols/wild_5x.png',
+                    path: '/static/images/symbols/Picsart_25-02-25_18-13-55-519.png',
                     multiplier: 5,
                     isWild: true
                 }
