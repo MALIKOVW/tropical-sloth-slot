@@ -263,22 +263,11 @@ class SlotMachine {
             // Play spin button sound
             audio.playClickSound();
 
-            const formData = new FormData();
-            formData.append('bet', this.currentBet);
-
-            const response = await fetch('/spin', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
-            if (result.error) {
-                throw new Error(result.error);
-            }
+            // Создаем тестовый результат (временно, пока сервер не готов)
+            const testResult = {
+                result: Array(5).fill().map(() => Array(3).fill('wooden_a')),
+                win: 0
+            };
 
             // Play spin sound
             audio.playSpinSound();
@@ -290,18 +279,18 @@ class SlotMachine {
             }
 
             // Анимация вращения
-            await this.animateSpin(result.result);
+            await this.animateSpin(testResult.result);
 
             // Stop spin sound
             audio.stopSpinSound();
 
             // Обновляем состояние
-            this.reels = result.result;
+            this.reels = testResult.result;
 
             // Добавляем выигрыш к балансу
-            if (result.win > 0) {
+            if (testResult.win > 0) {
                 const currentCredits = parseFloat(document.getElementById('creditDisplay').textContent);
-                const newCredits = currentCredits + result.win;
+                const newCredits = currentCredits + testResult.win;
                 document.getElementById('creditDisplay').textContent = newCredits.toFixed(2);
             }
 
@@ -771,7 +760,7 @@ class SlotMachine {
             spinButton.addEventListener('click', () => this.spin());
         }
 
-                document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(1));
+        document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(1));
         document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-1));
     }
 
