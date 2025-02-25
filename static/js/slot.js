@@ -114,21 +114,21 @@ class SlotMachine {
                 'leopard': { value: 80, path: '/static/images/symbols/leopard.png' },
                 'dragon': { value: 100, path: '/static/images/symbols/dragon.png' },
                 'sloth': { value: 0, path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png' },
-                'wild_2x': { 
-                    value: 0, 
-                    path: '/static/images/symbols/Picsart_25-02-25_16-08-13-806.png',
+                'wild_2x': {
+                    value: 0,
+                    path: '/static/images/symbols/wild_2x.png',
                     multiplier: 2,
                     isWild: true
                 },
-                'wild_3x': { 
-                    value: 0, 
-                    path: '/static/images/symbols/Picsart_25-02-25_16-10-15-695.png',
+                'wild_3x': {
+                    value: 0,
+                    path: '/static/images/symbols/wild_3x.png',
                     multiplier: 3,
                     isWild: true
                 },
-                'wild_5x': { 
-                    value: 0, 
-                    path: '/static/images/symbols/Picsart_25-02-25_16-11-55-596.png',
+                'wild_5x': {
+                    value: 0,
+                    path: '/static/images/symbols/wild_5x.png',
                     multiplier: 5,
                     isWild: true
                 }
