@@ -24,6 +24,7 @@
     height: 500px;
     object-fit: contain;
     margin-bottom: 20px;
+    display: block;
 }
 
 .loading-progress {
