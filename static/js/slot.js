@@ -419,7 +419,7 @@ class SlotMachine {
                 },
                 'gorilla': {
                     value: 20,
-                    path: '/static/images/symbols/pic1.png',
+                    path: '/static/images/symbols/Picsart_25-02-24_13-21-46-889.png',
                     multipliers: {3: 20, 4: 40, 5: 100}
                 },
                 'jaguar': {
