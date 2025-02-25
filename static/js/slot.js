@@ -1,3 +1,32 @@
+// Copy wild symbol images to the correct location
+const fs = require('fs');
+const path = require('path');
+
+try {
+    // Create symbols directory if it doesn't exist
+    const symbolsDir = path.join(__dirname, '../images/symbols');
+    if (!fs.existsSync(symbolsDir)) {
+        fs.mkdirSync(symbolsDir, { recursive: true });
+    }
+
+    // Copy wild symbol images
+    const wildSymbols = [
+        { src: 'Picsart_25-02-25_16-08-13-806.png', dest: 'wild_2x.png' },
+        { src: 'Picsart_25-02-25_16-10-15-695.png', dest: 'wild_3x.png' },
+        { src: 'Picsart_25-02-25_16-11-55-596.png', dest: 'wild_5x.png' }
+    ];
+
+    wildSymbols.forEach(symbol => {
+        const srcPath = path.join(__dirname, '../../../attached_assets', symbol.src);
+        const destPath = path.join(symbolsDir, symbol.dest);
+        fs.copyFileSync(srcPath, destPath);
+    });
+
+    console.log('Wild symbol images copied successfully');
+} catch (error) {
+    console.error('Error copying wild symbol images:', error);
+}
+
 class LoadingManager {
     constructor() {
         console.log('Initializing LoadingManager');
@@ -63,12 +92,9 @@ class SlotMachine {
         console.log('Initializing Slot Machine');
         this.loadingManager = new LoadingManager();
 
-        // Уменьшаем размеры обычных символов
+        // Уменьшаем размеры символов до оптимальных
         this.SYMBOL_SIZE = 60;
         this.SYMBOL_PADDING = 3;
-
-        // Отдельный размер для wild символов
-        this.WILD_SYMBOL_SIZE = 120;
 
         setTimeout(() => {
             this.initializeCanvas();
@@ -88,11 +114,7 @@ class SlotMachine {
 
             // Зигзагообразные линии
             [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 0}],
-            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 2}],
-
-            // Дополнительные линии
-            [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 1}],
-            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}]
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 2}]
         ];
 
         // Определяем на каких барабанах могут появляться wild символы
@@ -123,22 +145,21 @@ class SlotMachine {
                 'leopard': { value: 80, path: '/static/images/symbols/leopard.png' },
                 'dragon': { value: 100, path: '/static/images/symbols/dragon.png' },
                 'sloth': { value: 0, path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png' },
-                // Добавляем wild символы
-                'wild_2x': { 
-                    value: 0, 
-                    path: '/static/images/symbols/Picsart_25-02-25_16-08-13-806.png',
+                'wild_2x': {
+                    value: 0,
+                    path: '/static/images/symbols/wild_2x.png',
                     multiplier: 2,
                     isWild: true
                 },
-                'wild_3x': { 
-                    value: 0, 
-                    path: '/static/images/symbols/Picsart_25-02-25_16-10-15-695.png',
+                'wild_3x': {
+                    value: 0,
+                    path: '/static/images/symbols/wild_3x.png',
                     multiplier: 3,
                     isWild: true
                 },
-                'wild_5x': { 
-                    value: 0, 
-                    path: '/static/images/symbols/Picsart_25-02-25_16-11-55-596.png',
+                'wild_5x': {
+                    value: 0,
+                    path: '/static/images/symbols/wild_5x.png',
                     multiplier: 5,
                     isWild: true
                 }
@@ -184,7 +205,7 @@ class SlotMachine {
             // Если в линии есть wild, проверяем возможные комбинации
             if (wilds.length > 0) {
                 // Получаем символы, исключая wild и scatter
-                const nonWildSymbols = symbols.filter(symbol => 
+                const nonWildSymbols = symbols.filter(symbol =>
                     !this.isWildSymbol(symbol) && symbol !== 'sloth'
                 );
 
@@ -206,7 +227,7 @@ class SlotMachine {
                 // Стандартная проверка без wild символов
                 const firstSymbol = symbols[0];
                 if (firstSymbol !== 'sloth') {
-                    const isWinning = symbols.every(symbol => 
+                    const isWinning = symbols.every(symbol =>
                         symbol === firstSymbol || this.isWildSymbol(symbol)
                     );
 
@@ -278,37 +299,27 @@ class SlotMachine {
         if (!this.ctx || !this.canvas) return;
 
         // Clear canvas
-        this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Draw each symbol
         for (let i = 0; i < 5; i++) {
             for (let j = 0; j < 3; j++) {
                 const symbol = this.reels[i][j];
-                const isWild = this.isWildSymbol(symbol);
-
-                // Определяем размер символа в зависимости от типа
-                const symbolSize = isWild ? this.WILD_SYMBOL_SIZE : this.SYMBOL_SIZE;
-
-                // Вычисляем позицию с учетом центрирования для wild символов
                 const x = i * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
                 const y = j * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
-
-                // Если это wild символ, центрируем его
-                const xOffset = isWild ? (this.SYMBOL_SIZE - this.WILD_SYMBOL_SIZE) / 2 : 0;
-                const yOffset = isWild ? (this.SYMBOL_SIZE - this.WILD_SYMBOL_SIZE) / 2 : 0;
 
                 try {
                     const img = this.symbolImages.get(symbol);
                     if (img) {
                         console.log(`Drawing symbol ${symbol} at position ${i},${j}`);
-                        this.ctx.drawImage(img, x + xOffset, y + yOffset, symbolSize, symbolSize);
+                        this.ctx.drawImage(img, x, y, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
                     } else {
                         console.warn(`No image found for symbol ${symbol}, using fallback`);
-                        this.drawFallbackSymbol(symbol, x, y, symbolSize);
+                        this.drawFallbackSymbol(symbol, x, y, this.SYMBOL_SIZE);
                     }
                 } catch (error) {
                     console.error(`Error rendering symbol ${symbol}:`, error);
-                    this.drawFallbackSymbol(symbol, x, y, symbolSize);
+                    this.drawFallbackSymbol(symbol, x, y, this.SYMBOL_SIZE);
                 }
             }
         }
