@@ -5,7 +5,7 @@ class LoadingManager {
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
-        this.totalAssets = 14; // Увеличили количество ассетов
+        this.totalAssets = 14;
         this.loadedAssets = 0;
         this.lastProgress = 0;
         this.initializeLoading();
@@ -18,29 +18,39 @@ class LoadingManager {
             return;
         }
 
+        console.log('Loading screen initialized');
         this.loadingScreen.classList.remove('hidden');
         this.loadingScreen.style.display = 'flex';
         this.gameContent.style.display = 'none';
     }
 
     updateProgress(progress) {
-        if (!this.loadingBar || !this.loadingText) return;
+        if (!this.loadingBar || !this.loadingText) {
+            console.error('Loading elements not found during progress update');
+            return;
+        }
 
         progress = Math.min(100, Math.max(0, progress));
         if (Math.abs(progress - this.lastProgress) >= 1) {
             this.lastProgress = progress;
             this.loadingBar.style.width = `${progress}%`;
             this.loadingText.textContent = `${Math.round(progress)}%`;
+            console.log(`Loading progress: ${progress}%`);
         }
     }
 
     hideLoadingScreen() {
-        if (!this.loadingScreen || !this.gameContent) return;
+        if (!this.loadingScreen || !this.gameContent) {
+            console.error('Elements not found while hiding loading screen');
+            return;
+        }
 
+        console.log('Hiding loading screen');
         this.loadingScreen.classList.add('hidden');
         setTimeout(() => {
             this.loadingScreen.style.display = 'none';
             this.gameContent.style.display = 'block';
+            console.log('Game content shown');
         }, 500);
     }
 
@@ -48,8 +58,10 @@ class LoadingManager {
         this.loadedAssets++;
         const progress = (this.loadedAssets / this.totalAssets) * 100;
         this.updateProgress(progress);
+        console.log(`Asset loaded (${this.loadedAssets}/${this.totalAssets})`);
 
         if (this.loadedAssets >= this.totalAssets) {
+            console.log('All assets loaded');
             this.hideLoadingScreen();
         }
     }
@@ -58,52 +70,54 @@ class LoadingManager {
 class SlotMachine {
     constructor() {
         console.log('Initializing Slot Machine');
-        this.loadingManager = new LoadingManager();
+        try {
+            this.loadingManager = new LoadingManager();
 
-        // Размеры символов
-        this.SYMBOL_SIZE = 60;
-        this.SYMBOL_PADDING = 3;
+            this.SYMBOL_SIZE = 60;
+            this.SYMBOL_PADDING = 3;
 
-        // Флаги состояния
-        this.spinning = false;
-        this.isAnimatingWin = false;
-        this.skipWinAnimation = false;
+            this.spinning = false;
+            this.isAnimatingWin = false;
+            this.skipWinAnimation = false;
 
-        // Предзагруженные элементы для анимации
-        this.animatedSymbols = new Map();
-        this.preloadedElements = new Map();
+            this.animatedSymbols = new Map();
+            this.preloadedElements = new Map();
 
-        setTimeout(() => {
-            this.initializeCanvas();
-            this.init();
-        }, 100);
+            setTimeout(() => {
+                console.log('Starting canvas initialization');
+                this.initializeCanvas();
+                this.init();
+            }, 100);
 
-        // Определяем линии выплат (20 линий как в The Dog House)
-        this.paylines = [
-            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // 1
-            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // 2
-            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // 3
-            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // 4
-            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}], // 5
-            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 2}], // 6
-            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 0}], // 7
-            [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 1}], // 8
-            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 1}], // 9
-            [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 1}], // 10
-            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}], // 11
-            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 0}], // 12
-            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 2}], // 13
-            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 0}], // 14
-            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 2}], // 15
-            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 1}], // 16
-            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 1}], // 17
-            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 2}, {x: 3, y: 0}, {x: 4, y: 0}], // 18
-            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 0}, {x: 3, y: 2}, {x: 4, y: 2}], // 19
-            [{x: 0, y: 0}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 0}]  // 20
-        ];
+            // Определяем линии выплат (20 линий)
+            this.paylines = [
+                [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // 1
+                [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // 2
+                [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // 3
+                [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // 4
+                [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}], // 5
+                [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 2}], // 6
+                [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 0}], // 7
+                [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 1}], // 8
+                [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 1}], // 9
+                [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 1}], // 10
+                [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}], // 11
+                [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 0}], // 12
+                [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 2}], // 13
+                [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 0}], // 14
+                [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 2}], // 15
+                [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 1}], // 16
+                [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 1}], // 17
+                [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 2}, {x: 3, y: 0}, {x: 4, y: 0}], // 18
+                [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 0}, {x: 3, y: 2}, {x: 4, y: 2}], // 19
+                [{x: 0, y: 0}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 0}]  // 20
+            ];
 
-        // Определяем на каких барабанах могут появляться wild символы
-        this.wildReels = [1, 2, 3]; // индексы 1,2,3 соответствуют 2,3,4 барабанам
+            this.wildReels = [1, 2, 3]; // индексы 1,2,3 соответствуют 2,3,4 барабанам
+            console.log('Slot Machine initialized successfully');
+        } catch (error) {
+            console.error('Error during Slot Machine initialization:', error);
+        }
     }
 
     preloadElements() {
@@ -740,5 +754,10 @@ class SlotMachine {
 // Initialize slot machine when page loads
 window.addEventListener('load', () => {
     console.log('Page loaded, creating slot machine instance');
-    const slot = new SlotMachine();
+    try {
+        const slot = new SlotMachine();
+        window.slotMachine = slot; // Сохраняем экземпляр для отладки
+    } catch (error) {
+        console.error('Failed to create SlotMachine instance:', error);
+    }
 });
