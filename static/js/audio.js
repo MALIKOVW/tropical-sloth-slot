@@ -107,6 +107,7 @@ document.addEventListener('click', async () => {
     if (Tone.context.state !== 'running') {
         try {
             await Tone.context.resume();
+            await audio.init();
             console.log("Audio context resumed");
         } catch (error) {
             console.warn("Could not resume audio context:", error);

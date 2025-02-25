@@ -355,13 +355,19 @@ class SlotMachine {
             return;
         }
 
-        // Play spin button sound
-        audio.playClickSound();
-
-        this.spinning = true;
-        document.getElementById('spinButton').disabled = true;
-
         try {
+            // Ensure audio is initialized
+            if (Tone.context.state !== 'running') {
+                await Tone.start();
+                await audio.init();
+            }
+
+            // Play spin button sound
+            audio.playClickSound();
+
+            this.spinning = true;
+            document.getElementById('spinButton').disabled = true;
+
             const formData = new FormData();
             formData.append('bet', this.currentBet);
 
