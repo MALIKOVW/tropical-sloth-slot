@@ -63,9 +63,12 @@ class SlotMachine {
         console.log('Initializing Slot Machine');
         this.loadingManager = new LoadingManager();
 
-        // Уменьшаем размеры символов до оптимальных
-        this.SYMBOL_SIZE = 60; // Уменьшили с 80px до 60px
-        this.SYMBOL_PADDING = 3; // Уменьшили отступ с 4px до 3px
+        // Уменьшаем размеры обычных символов
+        this.SYMBOL_SIZE = 60;
+        this.SYMBOL_PADDING = 3;
+
+        // Отдельный размер для wild символов
+        this.WILD_SYMBOL_SIZE = 120;
 
         setTimeout(() => {
             this.initializeCanvas();
@@ -280,22 +283,32 @@ class SlotMachine {
         // Draw each symbol
         for (let i = 0; i < 5; i++) {
             for (let j = 0; j < 3; j++) {
+                const symbol = this.reels[i][j];
+                const isWild = this.isWildSymbol(symbol);
+
+                // Определяем размер символа в зависимости от типа
+                const symbolSize = isWild ? this.WILD_SYMBOL_SIZE : this.SYMBOL_SIZE;
+
+                // Вычисляем позицию с учетом центрирования для wild символов
                 const x = i * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
                 const y = j * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
-                const symbol = this.reels[i][j];
+
+                // Если это wild символ, центрируем его
+                const xOffset = isWild ? (this.SYMBOL_SIZE - this.WILD_SYMBOL_SIZE) / 2 : 0;
+                const yOffset = isWild ? (this.SYMBOL_SIZE - this.WILD_SYMBOL_SIZE) / 2 : 0;
 
                 try {
                     const img = this.symbolImages.get(symbol);
                     if (img) {
                         console.log(`Drawing symbol ${symbol} at position ${i},${j}`);
-                        this.ctx.drawImage(img, x, y, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
+                        this.ctx.drawImage(img, x + xOffset, y + yOffset, symbolSize, symbolSize);
                     } else {
                         console.warn(`No image found for symbol ${symbol}, using fallback`);
-                        this.drawFallbackSymbol(symbol, x, y, this.SYMBOL_SIZE);
+                        this.drawFallbackSymbol(symbol, x, y, symbolSize);
                     }
                 } catch (error) {
                     console.error(`Error rendering symbol ${symbol}:`, error);
-                    this.drawFallbackSymbol(symbol, x, y, this.SYMBOL_SIZE);
+                    this.drawFallbackSymbol(symbol, x, y, symbolSize);
                 }
             }
         }
