@@ -419,7 +419,7 @@ class SlotMachine {
                 },
                 'gorilla': {
                     value: 20,
-                    path: '/static/images/symbols/Picsart_25-02-24_13-21-46-889.png',
+                    path: '/static/images/symbols/gorilla.png',
                     multipliers: {3: 20, 4: 40, 5: 100}
                 },
                 'jaguar': {
@@ -429,22 +429,22 @@ class SlotMachine {
                 },
                 'crocodile': {
                     value: 30,
-                    path: '/static/images/symbols/pic2.png',
+                    path: '/static/images/symbols/crocodile.png',
                     multipliers: {3: 30, 4: 60, 5: 150}
                 },
                 'gator': {
                     value: 40,
-                    path: '/static/images/symbols/pic3.png',
+                    path: '/static/images/symbols/gator.png',
                     multipliers: {3: 40, 4: 80, 5: 200}
                 },
                 'leopard': {
                     value: 50,
-                    path: '/static/images/symbols/pic4.png',
+                    path: '/static/images/symbols/leopard.png',
                     multipliers: {3: 50, 4: 100, 5: 250}
                 },
                 'dragon': {
                     value: 100,
-                    path: '/static/images/symbols/pic5.png',
+                    path: '/static/images/symbols/dragon.png',
                     multipliers: {3: 100, 4: 200, 5: 500}
                 },
                 'sloth': {
