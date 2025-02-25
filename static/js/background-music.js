@@ -5,7 +5,7 @@ class BackgroundMusic {
         this.audio.loop = true;
         this.initialized = false;
         this.isMuted = false;
-        this.setupSoundControl();
+        this.setupControls();
 
         // Add event listeners for audio loading
         this.audio.addEventListener('loadeddata', () => {
@@ -17,7 +17,25 @@ class BackgroundMusic {
         });
     }
 
-    setupSoundControl() {
+    setupControls() {
+        // Setup settings button
+        const settingsButton = document.getElementById('settingsButton');
+        if (settingsButton) {
+            settingsButton.addEventListener('click', () => {
+                const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
+                modal.show();
+            });
+        }
+
+        // Setup volume sliders
+        const backgroundSlider = document.getElementById('backgroundMusicVolume');
+        if (backgroundSlider) {
+            backgroundSlider.addEventListener('input', (e) => {
+                this.setVolume(e.target.value / 100);
+            });
+        }
+
+        // Setup mute button
         const soundButton = document.getElementById('toggleSound');
         if (soundButton) {
             soundButton.addEventListener('click', () => {
@@ -31,7 +49,7 @@ class BackgroundMusic {
     toggleSound() {
         const soundButton = document.getElementById('toggleSound');
         if (this.isMuted) {
-            this.audio.volume = 0.5;
+            this.audio.volume = document.getElementById('backgroundMusicVolume').value / 100;
             if (soundButton) {
                 soundButton.innerHTML = '<i class="fas fa-volume-up"></i>';
             }
@@ -45,7 +63,6 @@ class BackgroundMusic {
     }
 
     init() {
-        // Initialize on first user interaction
         if (!this.initialized) {
             document.addEventListener('click', () => {
                 console.log('First user interaction, starting music');

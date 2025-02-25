@@ -14,13 +14,35 @@
             src="/static/images/tropical-sloth-logo.png" 
             alt="The Tropical Sloth" 
             class="loading-logo"
-            onerror="console.error('Failed to load logo:', this.src); this.src='/static/images/symbols/pic1.png';"
+            onerror="console.error('Failed to load logo:', this.src);"
             onload="console.log('Logo loaded successfully:', this.src);"
         >
         <div class="loading-progress">
             <div id="loadingBar" class="loading-bar"></div>
         </div>
         <div id="loadingText" class="loading-text">0%</div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="settingsModalLabel">Настройки звука</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="backgroundMusicVolume" class="form-label">Фоновая музыка</label>
+                        <input type="range" class="form-range" id="backgroundMusicVolume" min="0" max="100" value="50">
+                    </div>
+                    <div class="mb-3">
+                        <label for="soundEffectsVolume" class="form-label">Звуковые эффекты</label>
+                        <input type="range" class="form-range" id="soundEffectsVolume" min="0" max="100" value="50">
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Game Content -->
@@ -88,8 +110,12 @@
                             <div class="bonus-info">
                                 <span class="badge bg-warning text-dark" id="bonusSpinsCount"></span>
                             </div>
-                            <!-- Add Sound Control -->
-                            <div class="sound-control">
+                            <div class="controls-group">
+                                <!-- Settings Button -->
+                                <button id="settingsButton" class="btn btn-outline-light btn-sm me-2" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <!-- Sound Control -->
                                 <button id="toggleSound" class="btn btn-outline-light btn-sm">
                                     <i class="fas fa-volume-up"></i>
                                 </button>
@@ -109,8 +135,6 @@
                                     <button class="btn btn-neon" id="increaseBet">+</button>
                                 </div>
                                 <div class="action-buttons">
-                                    <button id="turboSpinBtn" class="btn btn-info">Turbo</button>
-                                    <button id="autoSpinBtn" class="btn btn-secondary">Auto</button>
                                     <button id="spinButton" class="btn btn-spin">SPIN</button>
                                 </div>
                             </div>
