@@ -960,6 +960,7 @@ h1 {
 .winning-symbol {
     animation: symbolScale 1.5s ease-in-out;
     z-index: 10;
+    pointer-events: none;
 }
 
 @keyframes symbolScale {

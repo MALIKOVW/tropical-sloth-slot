@@ -447,17 +447,17 @@ class SlotMachine {
         // Создаем элементы для подсветки символов и анимируем символы
         linePositions.forEach(pos => {
             // Точное вычисление позиций с учетом всех отступов
-            const cellWidth = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
-            const x = pos.x * cellWidth;
-            const y = pos.y * cellWidth;
+            const cellSize = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
+            const x = pos.x * cellSize;
+            const y = pos.y * cellSize;
 
             // Добавляем подсветку
             const highlight = document.createElement('div');
             highlight.className = 'symbol-highlight';
-            highlight.style.left = `${x}px`;
-            highlight.style.top = `${y}px`;
-            highlight.style.width = `${cellWidth}px`;
-            highlight.style.height = `${cellWidth}px`;
+            highlight.style.left = `${x + this.SYMBOL_PADDING}px`;
+            highlight.style.top = `${y + this.SYMBOL_PADDING}px`;
+            highlight.style.width = `${this.SYMBOL_SIZE}px`;
+            highlight.style.height = `${this.SYMBOL_SIZE}px`;
             container.appendChild(highlight);
 
             // Находим и анимируем сам символ
