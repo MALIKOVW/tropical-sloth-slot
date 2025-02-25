@@ -63,9 +63,9 @@ class SlotMachine {
         console.log('Initializing Slot Machine');
         this.loadingManager = new LoadingManager();
 
-        // Константы для размеров
-        this.SYMBOL_SIZE = 60; // Уменьшили с 80px до 60px
-        this.SYMBOL_PADDING = 3; // Уменьшили с 5px до 3px
+        // Увеличиваем размеры символов
+        this.SYMBOL_SIZE = 120; // Изменили с 60px на 120px
+        this.SYMBOL_PADDING = 5; // Увеличили отступ для больших символов
 
         setTimeout(() => {
             this.initializeCanvas();
@@ -112,11 +112,11 @@ class SlotMachine {
                 'snake': { value: 30, path: '/static/images/symbols/snake.png' },
                 'gorilla': { value: 40, path: '/static/images/symbols/gorilla.png' },
                 'jaguar': { value: 50, path: '/static/images/symbols/jaguar.png' },
-                'crocodile': { value: 60, path: '/static/images/symbols/crocodile.png' },
+                'crocodile': { value: 60, path: '/static/images/symbols/Picsart_25-02-25_16-49-31-091.png' }, // Обновили путь к новому изображению
                 'gator': { value: 70, path: '/static/images/symbols/gator.png' },
                 'leopard': { value: 80, path: '/static/images/symbols/leopard.png' },
                 'dragon': { value: 100, path: '/static/images/symbols/dragon.png' },
-                'sloth': { value: 0, path: '/static/images/symbols/sloth.png' }
+                'sloth': { value: 0, path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png' } // Обновили путь к новому изображению
             };
 
             // Initialize game state
