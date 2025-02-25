@@ -174,6 +174,7 @@ class SlotMachine {
             container.appendChild(line);
 
             // Анимируем символы вдоль линии
+            const symbolElements = [];
             for (const pos of linePositions) {
                 const x = pos.x * cellSize;
                 const y = pos.y * cellSize;
@@ -198,7 +199,18 @@ class SlotMachine {
                     symbol.appendChild(symbolImg);
 
                     container.appendChild(symbol);
+                    symbolElements.push(symbol);
                 }
+            }
+
+            // Активируем анимации с небольшой задержкой
+            await new Promise(resolve => setTimeout(resolve, 50));
+            line.classList.add('active');
+
+            // Активируем символы по очереди
+            for (const symbol of symbolElements) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                symbol.classList.add('active');
             }
 
             // Добавляем возможность пропустить анимацию по клику
