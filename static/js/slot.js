@@ -170,6 +170,7 @@ class SlotMachine {
             line.style.left = `${startX}px`;
             line.style.top = `${startY}px`;
             line.style.transform = `rotate(${angle}deg)`;
+            line.style.transformOrigin = 'left center';
 
             container.appendChild(line);
 
@@ -191,6 +192,7 @@ class SlotMachine {
                     symbol.style.top = `${y + this.SYMBOL_PADDING}px`;
                     symbol.style.width = `${this.SYMBOL_SIZE}px`;
                     symbol.style.height = `${this.SYMBOL_SIZE}px`;
+                    symbol.style.zIndex = '4';
 
                     const symbolImg = document.createElement('img');
                     symbolImg.src = img.src;
@@ -205,12 +207,16 @@ class SlotMachine {
 
             // Активируем анимации с небольшой задержкой
             await new Promise(resolve => setTimeout(resolve, 50));
+
+            // Показываем линию
             line.classList.add('active');
+            line.style.animation = 'paylineGlow 1.5s infinite';
 
             // Активируем символы по очереди
             for (const symbol of symbolElements) {
                 await new Promise(resolve => setTimeout(resolve, 100));
                 symbol.classList.add('active');
+                symbol.style.animation = 'symbolPulse 0.6s ease-in-out infinite';
             }
 
             // Добавляем возможность пропустить анимацию по клику
