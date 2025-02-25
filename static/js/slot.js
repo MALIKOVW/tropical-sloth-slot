@@ -446,10 +446,10 @@ class SlotMachine {
             // Добавляем подсветку
             const highlight = document.createElement('div');
             highlight.className = 'symbol-highlight';
-            highlight.style.left = `${x}px`;
-            highlight.style.top = `${y}px`;
-            highlight.style.width = `${cellSize}px`;
-            highlight.style.height = `${cellSize}px`;
+            highlight.style.left = `${x + this.SYMBOL_PADDING}px`;
+            highlight.style.top = `${y + this.SYMBOL_PADDING}px`;
+            highlight.style.width = `${this.SYMBOL_SIZE}px`;
+            highlight.style.height = `${this.SYMBOL_SIZE}px`;
             container.appendChild(highlight);
 
             // Находим и анимируем сам символ
