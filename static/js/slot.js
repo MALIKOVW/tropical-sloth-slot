@@ -133,21 +133,38 @@ class SlotMachine {
         // Очищаем предыдущие подсветки
         container.innerHTML = '';
 
+        // Создаем линию выплаты
+        const startPos = linePositions[0];
+        const endPos = linePositions[linePositions.length - 1];
+
+        const cellSize = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
+        const startX = startPos.x * cellSize + cellSize / 2;
+        const startY = startPos.y * cellSize + cellSize / 2;
+        const endX = endPos.x * cellSize + cellSize / 2;
+        const endY = endPos.y * cellSize + cellSize / 2;
+
+        // Создаем элемент линии
+        const line = document.createElement('div');
+        line.className = 'payline';
+
+        // Вычисляем длину и угол линии
+        const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+        const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+
+        // Устанавливаем стили линии
+        line.style.width = `${length}px`;
+        line.style.left = `${startX}px`;
+        line.style.top = `${startY}px`;
+        line.style.transform = `rotate(${angle}deg)`;
+
+        container.appendChild(line);
+
+        // Анимируем символы вдоль линии
         linePositions.forEach(pos => {
-            const cellSize = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
             const x = pos.x * cellSize;
             const y = pos.y * cellSize;
 
-            // Добавляем подсветку
-            const highlight = document.createElement('div');
-            highlight.className = 'symbol-highlight';
-            highlight.style.left = `${x}px`;
-            highlight.style.top = `${y}px`;
-            highlight.style.width = `${cellSize}px`;
-            highlight.style.height = `${cellSize}px`;
-            container.appendChild(highlight);
-
-            // Находим и анимируем сам символ
+            // Находим и анимируем символ
             const symbol = document.createElement('div');
             symbol.className = 'winning-symbol';
             symbol.style.position = 'absolute';
@@ -155,7 +172,6 @@ class SlotMachine {
             symbol.style.top = `${y + this.SYMBOL_PADDING}px`;
             symbol.style.width = `${this.SYMBOL_SIZE}px`;
             symbol.style.height = `${this.SYMBOL_SIZE}px`;
-            symbol.style.filter = 'brightness(1.2)';
 
             // Копируем содержимое символа
             const img = this.symbolImages.get(this.reels[pos.x][pos.y]);
@@ -169,6 +185,18 @@ class SlotMachine {
 
             container.appendChild(symbol);
         });
+
+        // Добавляем возможность пропустить анимацию по клику
+        container.addEventListener('click', () => {
+            container.innerHTML = '';
+        });
+
+        // Автоматически убираем подсветку через 2 секунды
+        setTimeout(() => {
+            if (container.innerHTML !== '') {
+                container.innerHTML = '';
+            }
+        }, 2000);
     }
 
     async spin() {
