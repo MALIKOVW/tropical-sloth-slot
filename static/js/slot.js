@@ -116,57 +116,57 @@ class SlotMachine {
 
             // Define symbols and their properties
             this.symbolDefinitions = {
-                'wooden_a': { 
+                'wooden_a': {
                     value: 5,
                     path: '/static/images/symbols/wooden_a.png',
                     multipliers: {3: 5, 4: 10, 5: 20}
                 },
-                'wooden_k': { 
+                'wooden_k': {
                     value: 5,
                     path: '/static/images/symbols/wooden_k.png',
                     multipliers: {3: 5, 4: 10, 5: 20}
                 },
-                'wooden_arch': { 
+                'wooden_arch': {
                     value: 10,
                     path: '/static/images/symbols/wooden_arch.png',
                     multipliers: {3: 10, 4: 20, 5: 50}
                 },
-                'snake': { 
+                'snake': {
                     value: 15,
                     path: '/static/images/symbols/snake.png',
                     multipliers: {3: 15, 4: 30, 5: 75}
                 },
-                'gorilla': { 
+                'gorilla': {
                     value: 20,
                     path: '/static/images/symbols/gorilla.png',
                     multipliers: {3: 20, 4: 40, 5: 100}
                 },
-                'jaguar': { 
+                'jaguar': {
                     value: 25,
                     path: '/static/images/symbols/jaguar.png',
                     multipliers: {3: 25, 4: 50, 5: 125}
                 },
-                'crocodile': { 
+                'crocodile': {
                     value: 30,
                     path: '/static/images/symbols/Picsart_25-02-25_16-49-31-091.png',
                     multipliers: {3: 30, 4: 60, 5: 150}
                 },
-                'gator': { 
+                'gator': {
                     value: 40,
                     path: '/static/images/symbols/gator.png',
                     multipliers: {3: 40, 4: 80, 5: 200}
                 },
-                'leopard': { 
+                'leopard': {
                     value: 50,
                     path: '/static/images/symbols/leopard.png',
                     multipliers: {3: 50, 4: 100, 5: 250}
                 },
-                'dragon': { 
+                'dragon': {
                     value: 100,
                     path: '/static/images/symbols/dragon.png',
                     multipliers: {3: 100, 4: 200, 5: 500}
                 },
-                'sloth': { 
+                'sloth': {
                     value: 0,
                     path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png',
                     multipliers: {3: 2, 4: 10, 5: 50}
@@ -441,7 +441,7 @@ class SlotMachine {
         const container = document.getElementById('paylineContainer');
         if (!container) return;
 
-        // Очищаем предыдущие линии
+        // Очищаем предыдущие подсветки
         container.innerHTML = '';
 
         // Создаем элементы для подсветки символов
@@ -457,40 +457,6 @@ class SlotMachine {
             highlight.style.height = `${this.SYMBOL_SIZE}px`;
             container.appendChild(highlight);
         });
-
-        // Создаем линию между символами
-        const line = document.createElement('div');
-        line.className = 'payline';
-
-        // Точное позиционирование с учетом центров символов
-        const startPos = {
-            x: linePositions[0].x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + (this.SYMBOL_SIZE / 2),
-            y: linePositions[0].y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + (this.SYMBOL_SIZE / 2)
-        };
-
-        const endPos = {
-            x: linePositions[linePositions.length - 1].x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + (this.SYMBOL_SIZE / 2),
-            y: linePositions[linePositions.length - 1].y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + (this.SYMBOL_SIZE / 2)
-        };
-
-        // Вычисляем длину и угол линии
-        const length = Math.sqrt(
-            Math.pow(endPos.x - startPos.x, 2) +
-            Math.pow(endPos.y - startPos.y, 2)
-        );
-
-        const angle = Math.atan2(
-            endPos.y - startPos.y,
-            endPos.x - startPos.x
-        );
-
-        // Устанавливаем стили линии с точным позиционированием
-        line.style.width = `${length}px`;
-        line.style.left = `${startPos.x}px`;
-        line.style.top = `${startPos.y}px`;
-        line.style.transform = `rotate(${angle}rad) translateY(-50%)`;
-
-        container.appendChild(line);
     }
 
     async spin() {
