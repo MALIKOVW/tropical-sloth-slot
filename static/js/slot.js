@@ -263,9 +263,27 @@ class SlotMachine {
             // Play spin button sound
             audio.playClickSound();
 
-            // Создаем тестовый результат (временно, пока сервер не готов)
+            // Создаем массивы символов
+            const regularSymbols = ['wooden_a', 'wooden_k', 'wooden_arch', 'snake', 'gorilla', 'jaguar', 'crocodile', 'gator', 'leopard', 'dragon'];
+            const wildSymbols = ['wild_2x', 'wild_3x', 'wild_5x'];
+            const scatterSymbol = 'sloth';
+
+            // Генерируем случайный результат
             const testResult = {
-                result: Array(5).fill().map(() => Array(3).fill('wooden_a')),
+                result: Array(5).fill().map((_, reelIndex) => {
+                    return Array(3).fill().map(() => {
+                        // Для барабанов 2,3,4 (индексы 1,2,3) можем добавить wild символы с некоторой вероятностью
+                        if (reelIndex >= 1 && reelIndex <= 3 && Math.random() < 0.2) {
+                            return wildSymbols[Math.floor(Math.random() * wildSymbols.length)];
+                        }
+                        // С небольшой вероятностью добавляем scatter
+                        if (Math.random() < 0.1) {
+                            return scatterSymbol;
+                        }
+                        // В остальных случаях используем обычные символы
+                        return regularSymbols[Math.floor(Math.random() * regularSymbols.length)];
+                    });
+                }),
                 win: 0
             };
 
@@ -287,6 +305,20 @@ class SlotMachine {
             // Обновляем состояние
             this.reels = testResult.result;
 
+            // Проверяем выигрышные линии и считаем выигрыш
+            const winningLines = this.checkWinningLines();
+            let totalWin = 0;
+
+            // Рассчитываем общий выигрыш
+            winningLines.forEach(line => {
+                const symbol = this.symbolDefinitions[line.symbol];
+                if (symbol && symbol.multipliers[line.count]) {
+                    totalWin += symbol.multipliers[line.count] * this.currentBet * line.multiplier;
+                }
+            });
+
+            testResult.win = totalWin;
+
             // Добавляем выигрыш к балансу
             if (testResult.win > 0) {
                 const currentCredits = parseFloat(document.getElementById('creditDisplay').textContent);
@@ -299,9 +331,6 @@ class SlotMachine {
                 document.getElementById('spinButton').disabled = false;
                 this.spinning = false;
             }, 1000);
-
-            // Проверяем выигрышные линии
-            const winningLines = this.checkWinningLines();
 
             // Если есть выигрышные линии
             if (winningLines.length > 0) {
@@ -646,6 +675,7 @@ class SlotMachine {
 
         return winningLines;
     }
+
 
 
     resizeCanvas() {
