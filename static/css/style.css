@@ -956,3 +956,23 @@ h1 {
     font-size: 16px;
     margin-bottom: 10px;
 }
+
+.winning-symbol {
+    animation: symbolScale 1.5s ease-in-out;
+    z-index: 10;
+}
+
+@keyframes symbolScale {
+    0% { 
+        transform: scale(1);
+    }
+    20% {
+        transform: scale(1.1);
+    }
+    80% {
+        transform: scale(1.1);
+    }
+    100% { 
+        transform: scale(1);
+    }
+}

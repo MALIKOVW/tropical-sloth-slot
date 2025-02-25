@@ -444,11 +444,12 @@ class SlotMachine {
         // Очищаем предыдущие подсветки
         container.innerHTML = '';
 
-        // Создаем элементы для подсветки символов
+        // Создаем элементы для подсветки символов и анимируем символы
         linePositions.forEach(pos => {
             const x = pos.x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
             const y = pos.y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
 
+            // Добавляем подсветку
             const highlight = document.createElement('div');
             highlight.className = 'symbol-highlight';
             highlight.style.left = `${x}px`;
@@ -456,9 +457,30 @@ class SlotMachine {
             highlight.style.width = `${this.SYMBOL_SIZE}px`;
             highlight.style.height = `${this.SYMBOL_SIZE}px`;
             container.appendChild(highlight);
+
+            // Находим и анимируем сам символ
+            const symbol = document.createElement('div');
+            symbol.className = 'winning-symbol';
+            symbol.style.position = 'absolute';
+            symbol.style.left = `${x}px`;
+            symbol.style.top = `${y}px`;
+            symbol.style.width = `${this.SYMBOL_SIZE}px`;
+            symbol.style.height = `${this.SYMBOL_SIZE}px`;
+
+            // Копируем содержимое символа
+            const img = this.symbolImages.get(this.reels[pos.x][pos.y]);
+            if (img) {
+                const symbolImg = document.createElement('img');
+                symbolImg.src = img.src;
+                symbolImg.style.width = '100%';
+                symbolImg.style.height = '100%';
+                symbol.appendChild(symbolImg);
+            }
+
+            container.appendChild(symbol);
         });
 
-        // Автоматически убираем подсветку через 1.5 секунды
+        // Автоматически убираем подсветку и анимацию через 1.5 секунды
         setTimeout(() => {
             container.innerHTML = '';
         }, 1500);
