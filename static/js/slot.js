@@ -5,7 +5,7 @@ class LoadingManager {
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
-        this.totalAssets = 13; // Total number of symbols including wilds
+        this.totalAssets = 13;
         this.loadedAssets = 0;
         this.lastProgress = 0;
         this.initializeLoading();
@@ -31,7 +31,6 @@ class LoadingManager {
             this.lastProgress = progress;
             this.loadingBar.style.width = `${progress}%`;
             this.loadingText.textContent = `${Math.round(progress)}%`;
-            console.log(`Loading progress: ${progress}%`);
         }
     }
 
@@ -47,12 +46,10 @@ class LoadingManager {
 
     onAssetLoaded() {
         this.loadedAssets++;
-        console.log(`Asset loaded: ${this.loadedAssets}/${this.totalAssets}`);
         const progress = (this.loadedAssets / this.totalAssets) * 100;
         this.updateProgress(progress);
 
         if (this.loadedAssets >= this.totalAssets) {
-            console.log('All assets loaded');
             this.hideLoadingScreen();
         }
     }
@@ -209,11 +206,9 @@ class SlotMachine {
     loadSymbolImages() {
         const loadImage = (symbol, def) => {
             return new Promise((resolve, reject) => {
-                console.log(`Loading image for symbol: ${symbol}, path: ${def.path}`);
                 const img = new Image();
 
                 img.onload = () => {
-                    console.log(`Successfully loaded image for symbol: ${symbol}`);
                     this.symbolImages.set(symbol, img);
                     this.loadingManager.onAssetLoaded();
                     resolve();
@@ -236,7 +231,6 @@ class SlotMachine {
 
         Promise.all(loadPromises)
             .then(() => {
-                console.log('All images loaded successfully');
                 this.draw();
             })
             .catch(error => {
@@ -368,10 +362,8 @@ class SlotMachine {
                 try {
                     const img = this.symbolImages.get(symbol);
                     if (img) {
-                        console.log(`Drawing symbol ${symbol} at position ${i},${j}`);
                         this.ctx.drawImage(img, x, y, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
                     } else {
-                        console.warn(`No image found for symbol ${symbol}, using fallback`);
                         this.drawFallbackSymbol(symbol, x, y, this.SYMBOL_SIZE);
                     }
                 } catch (error) {
