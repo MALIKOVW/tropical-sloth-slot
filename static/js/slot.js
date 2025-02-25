@@ -324,6 +324,9 @@ class SlotMachine {
                 const currentCredits = parseFloat(document.getElementById('creditDisplay').textContent);
                 const newCredits = currentCredits + testResult.win;
                 document.getElementById('creditDisplay').textContent = newCredits.toFixed(2);
+
+                // Показываем окно выигрыша если он достаточно большой
+                this.showWinPopup(testResult.win);
             }
 
             // Разблокируем кнопку через 1 секунду
@@ -353,6 +356,53 @@ class SlotMachine {
             this.spinning = false;
             document.getElementById('spinButton').disabled = false;
         }
+    }
+
+    showWinPopup(winAmount) {
+        const multiplier = winAmount / this.currentBet;
+        const popup = document.getElementById('winPopup');
+        const title = popup.querySelector('.win-title');
+        const multiplierElement = popup.querySelector('.win-multiplier');
+        const amountElement = popup.querySelector('.win-amount');
+
+        // Определяем тип выигрыша
+        let winClass = '';
+        let winText = '';
+        if (multiplier >= 10000) {
+            winClass = 'max-win';
+            winText = 'MAX WIN';
+        } else if (multiplier >= 500) {
+            winClass = 'epic-win';
+            winText = 'EPIC WIN';
+        } else if (multiplier >= 100) {
+            winClass = 'mega-win';
+            winText = 'MEGA WIN';
+        } else if (multiplier >= 20) {
+            winClass = 'big-win';
+            winText = 'BIG WIN';
+        } else {
+            return; // Не показываем окно для маленьких выигрышей
+        }
+
+        // Обновляем класс и содержимое
+        popup.className = `win-popup ${winClass}`;
+        title.textContent = winText;
+        multiplierElement.textContent = `${multiplier.toFixed(2)}x`;
+        amountElement.textContent = winAmount.toFixed(2);
+
+        // Показываем окно
+        popup.style.display = 'block';
+
+        // Добавляем обработчик для кнопки закрытия
+        const closeButton = popup.querySelector('.close-button');
+        const closePopup = () => {
+            popup.style.display = 'none';
+            closeButton.removeEventListener('click', closePopup);
+        };
+        closeButton.addEventListener('click', closePopup);
+
+        // Автоматически закрываем через 5 секунд
+        setTimeout(closePopup, 5000);
     }
 
     async animateSpin(finalResult) {
