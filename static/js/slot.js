@@ -405,7 +405,7 @@ class SlotMachine {
                 },
                 'gorilla': {
                     value: 20,
-                    path: '/static/images/symbols/gorilla.png',
+                    path: '/static/images/symbols/Picsart_25-02-24_13-21-46-889.png',
                     multipliers: {3: 20, 4: 40, 5: 100}
                 },
                 'jaguar': {
@@ -420,12 +420,12 @@ class SlotMachine {
                 },
                 'gator': {
                     value: 40,
-                    path: '/static/images/symbols/gator.png',
+                    path: '/static/images/symbols/Picsart_25-02-24_13-25-10-324.png',
                     multipliers: {3: 40, 4: 80, 5: 200}
                 },
                 'leopard': {
                     value: 50,
-                    path: '/static/images/symbols/leopard.png',
+                    path: '/static/images/symbols/Picsart_25-02-24_13-26-25-593.png',
                     multipliers: {3: 50, 4: 100, 5: 250}
                 },
                 'dragon': {
@@ -479,6 +479,7 @@ class SlotMachine {
                 const img = new Image();
 
                 img.onload = () => {
+                    console.log(`Successfully loaded image for symbol: ${symbol}`);
                     this.symbolImages.set(symbol, img);
                     this.loadingManager.onAssetLoaded();
                     resolve();
@@ -487,8 +488,13 @@ class SlotMachine {
                 img.onerror = (error) => {
                     console.error(`Failed to load image for symbol: ${symbol}`, error);
                     console.error('Attempted path:', def.path);
+                    // Создаем fallback изображение при ошибке загрузки
+                    const fallbackImg = new Image();
+                    fallbackImg.width = this.SYMBOL_SIZE;
+                    fallbackImg.height = this.SYMBOL_SIZE;
+                    this.symbolImages.set(symbol, fallbackImg);
                     this.loadingManager.onAssetLoaded();
-                    reject(error);
+                    resolve(); // Продолжаем выполнение даже при ошибке
                 };
 
                 img.src = def.path;
@@ -501,6 +507,7 @@ class SlotMachine {
 
         Promise.all(loadPromises)
             .then(() => {
+                console.log('All images loaded successfully');
                 this.preloadElements();
                 this.draw();
             })
@@ -659,10 +666,12 @@ class SlotMachine {
     }
 
     drawFallbackSymbol(symbol, x, y, size) {
+        if (!this.ctx) return;
+
         this.ctx.fillStyle = '#333333';
         this.ctx.fillRect(x, y, size, size);
         this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = `${size * 0.5}px Arial`;
+        this.ctx.font = `${size * 0.3}px Arial`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillText(this.getSymbolDisplay(symbol), x + size / 2, y + size / 2);
