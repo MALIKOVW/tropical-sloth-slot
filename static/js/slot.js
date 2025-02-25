@@ -446,24 +446,26 @@ class SlotMachine {
 
         // Создаем элементы для подсветки символов и анимируем символы
         linePositions.forEach(pos => {
-            const x = pos.x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
-            const y = pos.y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
+            // Точное вычисление позиций с учетом всех отступов
+            const cellWidth = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
+            const x = pos.x * cellWidth;
+            const y = pos.y * cellWidth;
 
             // Добавляем подсветку
             const highlight = document.createElement('div');
             highlight.className = 'symbol-highlight';
             highlight.style.left = `${x}px`;
             highlight.style.top = `${y}px`;
-            highlight.style.width = `${this.SYMBOL_SIZE}px`;
-            highlight.style.height = `${this.SYMBOL_SIZE}px`;
+            highlight.style.width = `${cellWidth}px`;
+            highlight.style.height = `${cellWidth}px`;
             container.appendChild(highlight);
 
             // Находим и анимируем сам символ
             const symbol = document.createElement('div');
             symbol.className = 'winning-symbol';
             symbol.style.position = 'absolute';
-            symbol.style.left = `${x}px`;
-            symbol.style.top = `${y}px`;
+            symbol.style.left = `${x + this.SYMBOL_PADDING}px`;
+            symbol.style.top = `${y + this.SYMBOL_PADDING}px`;
             symbol.style.width = `${this.SYMBOL_SIZE}px`;
             symbol.style.height = `${this.SYMBOL_SIZE}px`;
 
