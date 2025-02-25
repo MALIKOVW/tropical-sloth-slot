@@ -317,6 +317,12 @@ class SlotMachine {
                 }
             });
 
+            // Ограничиваем максимальный выигрыш до 10000x ставки
+            const maxWin = this.currentBet * 10000;
+            if (totalWin > maxWin) {
+                totalWin = maxWin;
+            }
+
             testResult.win = totalWin;
 
             // Добавляем выигрыш к балансу
@@ -759,7 +765,7 @@ class SlotMachine {
         if (!this.ctx || !this.canvas) return;
 
         // Clear canvas
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.clearRect(0,0, 0, this.canvas.width, this.canvas.height);
 
         // Calculate exact positions for symbols
         const totalWidth = this.canvas.width;
