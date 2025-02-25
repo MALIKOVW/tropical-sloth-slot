@@ -448,14 +448,14 @@ class SlotMachine {
         linePositions.forEach(pos => {
             // Точное вычисление позиций с учетом всех отступов
             const cellSize = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
-            const x = pos.x * cellSize;
-            const y = pos.y * cellSize;
+            const x = pos.x * cellSize + this.SYMBOL_PADDING;
+            const y = pos.y * cellSize + this.SYMBOL_PADDING;
 
             // Добавляем подсветку
             const highlight = document.createElement('div');
             highlight.className = 'symbol-highlight';
-            highlight.style.left = `${x + this.SYMBOL_PADDING}px`;
-            highlight.style.top = `${y + this.SYMBOL_PADDING}px`;
+            highlight.style.left = `${x}px`;
+            highlight.style.top = `${y}px`;
             highlight.style.width = `${this.SYMBOL_SIZE}px`;
             highlight.style.height = `${this.SYMBOL_SIZE}px`;
             container.appendChild(highlight);
@@ -464,8 +464,8 @@ class SlotMachine {
             const symbol = document.createElement('div');
             symbol.className = 'winning-symbol';
             symbol.style.position = 'absolute';
-            symbol.style.left = `${x + this.SYMBOL_PADDING}px`;
-            symbol.style.top = `${y + this.SYMBOL_PADDING}px`;
+            symbol.style.left = `${x}px`;
+            symbol.style.top = `${y}px`;
             symbol.style.width = `${this.SYMBOL_SIZE}px`;
             symbol.style.height = `${this.SYMBOL_SIZE}px`;
 
