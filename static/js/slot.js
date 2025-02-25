@@ -355,6 +355,9 @@ class SlotMachine {
             return;
         }
 
+        // Play spin button sound
+        audio.playClickSound();
+
         this.spinning = true;
         document.getElementById('spinButton').disabled = true;
 
@@ -376,18 +379,29 @@ class SlotMachine {
                 throw new Error(result.error);
             }
 
+            // Play spin sound when animation starts
+            audio.playSpinSound();
+
             await this.animateSpin(result.result);
+
+            // Stop spin sound when animation ends
+            audio.stopSpinSound();
 
             this.reels = result.result;
             document.getElementById('creditDisplay').textContent = result.credits.toFixed(2);
 
-            // Проверяем выигрышные линии
+            // Check winning lines
             const winningLines = this.checkWinningLines();
 
-            // Показываем каждую выигрышную линию по очереди
+            // If there are winning lines, play win sound
+            if (winningLines.length > 0) {
+                audio.playWinSound();
+            }
+
+            // Show each winning line
             for (const line of winningLines) {
                 this.showWinningLine(line.positions);
-                await new Promise(resolve => setTimeout(resolve, 1500)); // Увеличили время показа каждой линии
+                await new Promise(resolve => setTimeout(resolve, 1500));
             }
 
             this.draw();
@@ -433,6 +447,8 @@ class SlotMachine {
                     for (let j = 0; j < 3; j++) {
                         this.reels[reelIndex][j] = finalResult[reelIndex][j];
                     }
+                    // Play click sound for each reel stopping
+                    audio.playClickSound();
                 }
             }
 
