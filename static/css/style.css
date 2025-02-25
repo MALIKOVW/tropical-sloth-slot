@@ -119,28 +119,15 @@ body {
         inset 0 0 20px rgba(0, 0, 0, 0.5),
         0 5px 15px rgba(0, 0, 0, 0.3);
     overflow: hidden;
-}
-
-.game-field-wrapper::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.1) 0%,
-        rgba(255, 255, 255, 0.05) 50%,
-        transparent 50%
-    );
-    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* Canvas styles */
 #slotCanvas {
     display: block;
-    margin: 0 auto;
+    margin: 0;
     z-index: 2;
     transition: transform 0.3s ease-out;
     will-change: transform;
@@ -153,48 +140,83 @@ body {
 /* Payline container */
 #paylineContainer {
     position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
+    pointer-events: none;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+}
+
+/* Symbol containers */
+.symbol-container {
+    position: relative;
+    width: 100%;
+    padding-top: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.symbol {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+.winning-symbol {
+    position: absolute;
+    animation: symbolPulse 0.6s ease-in-out infinite;
+    z-index: 4;
+    pointer-events: none;
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8)) brightness(1.2);
+    will-change: transform, filter;
+    backface-visibility: hidden;
+}
+
+/* Payline styles */
+#paylineContainer {
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 3;
+    z-index: 1;
 }
 
-/* Winning symbol animation */
-.winning-symbol {
-    animation: symbolPulse 0.6s ease-in-out infinite;
-    z-index: 4;
+.payline {
+    position: absolute;
+    height: 3px;
+    background: linear-gradient(
+        90deg,
+        rgba(255,215,0,0) 0%,
+        rgba(255,215,0,1) 10%,
+        rgba(255,255,255,1) 50%,
+        rgba(255,215,0,1) 90%,
+        rgba(255,215,0,0) 100%
+    );
     pointer-events: none;
-    filter: 
-        drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))
-        brightness(1.2);
-    will-change: transform, filter;
-    backface-visibility: hidden;
+    animation: paylineGlow 1.5s infinite;
+    transform-origin: left center;
+    border-radius: 1.5px;
+    box-shadow: 
+        0 0 10px rgba(255,215,0,0.8),
+        0 0 20px rgba(255,215,0,0.4);
+    z-index: 10;
 }
 
-@keyframes symbolPulse {
-    0% {
-        transform: scale(1);
-        filter: 
-            drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))
-            brightness(1.2);
-    }
-    50% {
-        transform: scale(1.15);
-        filter: 
-            drop-shadow(0 0 20px rgba(255, 215, 0, 1))
-            brightness(1.4);
-    }
-    100% {
-        transform: scale(1);
-        filter: 
-            drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))
-            brightness(1.2);
-    }
-}
-
-/* Symbol highlight */
 .symbol-highlight {
     position: absolute;
     border: 2px solid #ffd700;
@@ -205,8 +227,26 @@ body {
         inset 0 0 20px rgba(255, 215, 0, 0.4);
     animation: highlightPulse 0.6s ease-in-out infinite;
     background: rgba(255, 215, 0, 0.15);
-    z-index: 3;
+    z-index: 9;
     pointer-events: none;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+
+@keyframes paylineGlow {
+    0% { 
+        opacity: 0.7;
+        filter: brightness(0.8);
+    }
+    50% { 
+        opacity: 1;
+        filter: brightness(1.2);
+    }
+    100% { 
+        opacity: 0.7;
+        filter: brightness(0.8);
+    }
 }
 
 @keyframes highlightPulse {
@@ -230,7 +270,574 @@ body {
     }
 }
 
-/* Update existing game container styles */
+.statistics {
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+@keyframes winPulse {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+    10% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+    20% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    80% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+}
+
+.bonus-info {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+}
+
+.bonus-info .badge {
+    font-size: 1.2em;
+    padding: 8px 16px;
+    border: 2px solid #00ff9d;
+    box-shadow: 0 0 15px rgba(0, 255, 157, 0.2);
+    transition: all 0.3s ease;
+}
+
+.bonus-info .badge.active-bonus {
+    animation: pulseGlow 1.5s infinite;
+}
+
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 15px rgba(0, 255, 157, 0.2); }
+    50% { box-shadow: 0 0 25px rgba(0, 255, 157, 0.4); }
+    100% { box-shadow: 0 0 15px rgba(0, 255, 157, 0.2); }
+}
+
+.rick-morty-logo {
+    width: 100%;
+    height: 150px;
+    margin-bottom: 20px;
+}
+
+@keyframes bonusAward {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.bonus-award {
+    animation: bonusAward 0.5s ease-in-out;
+}
+
+.win-message {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ffd700;
+    color: #000;
+    padding: 20px 40px;
+    border-radius: 10px;
+    font-size: 32px;
+    font-weight: bold;
+    animation: winPulse 1s infinite;
+    z-index: 1000;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+}
+
+#spinButton:before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transform: rotate(45deg);
+    animation: shimmer 2s infinite;
+}
+
+/* Alert styles */
+.alert-info {
+    background-color: #17a2b8;
+    border: none;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+h1 {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    color: #fff;
+}
+
+/* Symbol size standardization */
+.symbol {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 3px;
+}
+
+.symbol img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.symbol-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.symbol.wild img {
+    filter: drop-shadow(0 0 5px #ff9f43);
+}
+
+.symbol.scatter img {
+    filter: drop-shadow(0 0 5px #95a5a6);
+}
+
+@keyframes symbolWin {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.symbol.winning {
+    animation: symbolWin 0.5s ease-in-out infinite;
+}
+
+/* Styles for new buttons and modals from original file */
+.spin-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+#turboSpinBtn, #autoSpinBtn, #buyFreespinsBtn {
+    min-width: 100px;
+    height: 40px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+#turboSpinBtn {
+    background: linear-gradient(45deg, #00bcd4, #2196f3);
+    border: none;
+    color: white;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+#autoSpinBtn {
+    background: linear-gradient(45deg, #9c27b0, #673ab7);
+    border: none;
+    color: white;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+#buyFreespinsBtn {
+    background: linear-gradient(45deg, #ffc107, #ff9800);
+    border: none;
+    color: white;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+#turboSpinBtn:hover, #autoSpinBtn:hover, #buyFreespinsBtn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+/* Modal styles from original file */
+.modal-content {
+    background-color: #2a2a2a;
+    color: white;
+    border: 1px solid #444;
+}
+
+.modal-header {
+    border-bottom: 1px solid #444;
+}
+
+.modal-footer {
+    border-top: 1px solid #444;
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.form-control {
+    background-color: #333;
+    border: 1px solid #444;
+    color: white;
+}
+
+.form-control:focus {
+    background-color: #444;
+    border-color: #666;
+    color: white;
+    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
+}
+
+.btn-outline-primary {
+    color: #00ff9d;
+    border-color: #00ff9d;
+}
+
+.btn-outline-primary:hover {
+    background-color: #00ff9d;
+    border-color: #00ff9d;
+    color: #000;
+}
+
+.btn-check:checked + .btn-outline-primary {
+    background-color: #00ff9d;
+    border-color: #00ff9d;
+    color: #000;
+}
+
+.win-animation.bonus-award {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    background: #000000;
+    padding: 40px;
+    border-radius: 20px;
+    border: 3px solid #00ff9d;
+}
+
+.bonus-award .bonus-title {
+    font-size: 48px;
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.bonus-award .spins-awarded {
+    font-size: 36px;
+    color: #00ff9d;
+    text-shadow: 0 0 15px rgba(0, 255, 157, 0.5);
+}
+
+/* Styles for disabled buyFreespins button */
+#buyFreespinsBtn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: linear-gradient(45deg, #808080, #606060);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#buyFreespinsBtn.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Bonus results animation styles */
+.win-animation.bonus-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    background: #000000;
+    padding: 40px 60px;
+    border-radius: 20px;
+    border: 3px solid #ffd700;
+    text-align: center;
+}
+
+.bonus-results-title {
+    font-size: 48px;
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    text-transform: uppercase;
+}
+
+.bonus-results-text {
+    font-size: 24px;
+    color: #fff;
+}
+
+.bonus-results-win {
+    font-size: 64px;
+    color: #00ff9d;
+    text-shadow: 0 0 25px rgba(0, 255, 157, 0.6);
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+/* Animation effects */
+@keyframes bounceStop {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+    75% { transform: translateY(5px); }
+    100% { transform: translateY(0); }
+}
+
+.stopping {
+    animation: bounceStop 0.5s ease-out;
+}
+
+/* Sound control styles */
+.sound-control {
+    margin-left: 15px;
+}
+
+.sound-control button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #00ff9d;
+    transition: all 0.3s ease;
+}
+
+.sound-control button:hover {
+    background: rgba(0, 255, 157, 0.2);
+    transform: scale(1.1);
+}
+
+.sound-control button i {
+    font-size: 18px;
+    color: #00ff9d;
+}
+
+/* Add to existing CSS file */
+.controls-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#settingsButton {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #00ff9d;
+    transition: all 0.3s ease;
+}
+
+#settingsButton:hover {
+    background: rgba(0, 255, 157, 0.2);
+    transform: scale(1.1);
+}
+
+#settingsButton i {
+    font-size: 18px;
+    color: #00ff9d;
+}
+
+/* Modal styles */
+.modal-content {
+    background-color: #1a1a1a;
+    color: #fff;
+    border: 1px solid #00ff9d;
+}
+
+.modal-header {
+    border-bottom: 1px solid #00ff9d;
+}
+
+.form-range {
+    height: 8px;
+    border-radius: 4px;
+    background: #333;
+}
+
+.form-range::-webkit-slider-thumb {
+    background: #00ff9d;
+    border: 2px solid #fff;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.form-range::-moz-range-thumb {
+    background: #00ff9d;
+    border: 2px solid #fff;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.form-label {
+    color: #fff;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.winning-symbol {
+    animation: symbolScale 0.6s ease-in-out infinite;
+    z-index: 10;
+    pointer-events: none;
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+    will-change: transform, filter;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+
+@keyframes symbolScale {
+    0% { 
+        transform: scale(1);
+        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
+    }
+    50% {
+        transform: scale(1.15);
+        filter: drop-shadow(0 0 25px rgba(255, 215, 0, 1));
+    }
+    100% { 
+        transform: scale(1);
+        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
+    }
+}
+
+@keyframes symbolPulse {
+    0% {
+        transform: scale(1);
+        filter: 
+            drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))
+            brightness(1.2);
+    }
+    50% {
+        transform: scale(1.15);
+        filter: 
+            drop-shadow(0 0 20px rgba(255, 215, 0, 1))
+            brightness(1.4);
+    }
+    100% {
+        transform: scale(1);
+        filter: 
+            drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))
+            brightness(1.2);
+    }
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 5px rgba(0, 255, 157, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(0, 255, 157, 0.8); }
+    100% { box-shadow: 0 0 5px rgba(0, 255, 157, 0.5); }
+}
+
+.btn-spin {
+    animation: glow 2s infinite;
+}
+
+.modal-content {
+    background-color: #000000;
+    color: white;
+    border: 1px solid #444;
+}
+
+.modal-header {
+    border-bottom: 1px solid #444;
+}
+
+.modal-footer {
+    border-top: 1px solid #444;
+}
+
+.win-animation {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #00ff9d;
+    font-size: 48px;
+    font-weight: bold;
+    animation: winPulse 2s forwards;
+    z-index: 1000;
+    padding: 30px 60px;
+    border-radius: 20px;
+    border: 2px solid #00ff9d;
+    box-shadow: 0 0 30px rgba(0, 255, 157, 0.3);
+    cursor: pointer;
+    background-color: #000000;
+}
+
+.win-animation::after {
+    content: 'Click to skip';
+    display: block;
+    font-size: 16px;
+    margin-top: 10px;
+    color: #ffffff;
+}
+
+.respin-message {
+    background-color: #000000;
+}
+
+.bonus-award {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    background-color: #000000;
+    padding: 40px;
+    border-radius: 20px;
+    border: 3px solid #00ff9d;
+}
+
+
+.bonus-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    background-color: #000000;
+    padding: 40px 60px;
+    border-radius: 20px;
+    border: 3px solid #ffd700;
+    text-align: center;
+}
+
 .game-container {
     max-width: 1440px;
     min-width: 800px;
@@ -238,7 +845,6 @@ body {
     padding: 20px;
 }
 
-/* Ensure the game wrapper respects the new frame */
 .game-wrapper {
     padding: 20px;
     max-width: 1440px;
@@ -364,7 +970,7 @@ body {
         width: 30px;
         height: 30px;
     }
-    .symbol-pay .pays {
+.symbol-pay .pays {
         font-size: 16px;
     }
     .btn-spin {
@@ -1094,4 +1700,105 @@ h1 {
         transform: scale(1);
         filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
     }
+}
+
+@keyframes symbolPulse {
+    0% {
+        transform: scale(1);
+        filter: 
+            drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))
+            brightness(1.2);
+    }
+    50% {
+        transform: scale(1.15);
+        filter: 
+            drop-shadow(0 0 20px rgba(255, 215, 0, 1))
+            brightness(1.4);
+    }
+    100% {
+        transform: scale(1);
+        filter: 
+            drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))
+            brightness(1.2);
+    }
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 5px rgba(0, 255, 157, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(0, 255, 157, 0.8); }
+    100% { box-shadow: 0 0 5px rgba(0, 255, 157, 0.5); }
+}
+
+.btn-spin {
+    animation: glow 2s infinite;
+}
+
+.modal-content {
+    background-color: #000000;
+    color: white;
+    border: 1px solid #444;
+}
+
+.modal-header {
+    border-bottom: 1px solid #444;
+}
+
+.modal-footer {
+    border-top: 1px solid #444;
+}
+
+.win-animation {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #00ff9d;
+    font-size: 48px;
+    font-weight: bold;
+    animation: winPulse 2s forwards;
+    z-index: 1000;
+    padding: 30px 60px;
+    border-radius: 20px;
+    border: 2px solid #00ff9d;
+    box-shadow: 0 0 30px rgba(0, 255, 157, 0.3);
+    cursor: pointer;
+    background-color: #000000;
+}
+
+.win-animation::after {
+    content: 'Click to skip';
+    display: block;
+    font-size: 16px;
+    margin-top: 10px;
+    color: #ffffff;
+}
+
+.respin-message {
+    background-color: #000000;
+}
+
+.bonus-award {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    background-color: #000000;
+    padding: 40px;
+    border-radius: 20px;
+    border: 3px solid #00ff9d;
+}
+
+
+.bonus-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    background-color: #000000;
+    padding: 40px 60px;
+    border-radius: 20px;
+    border: 3px solid #ffd700;
+    text-align: center;
 }

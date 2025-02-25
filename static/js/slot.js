@@ -484,7 +484,6 @@ class SlotMachine {
     }
 
 
-
     resizeCanvas() {
         if (!this.ctx || !this.canvas) return;
 
@@ -492,18 +491,20 @@ class SlotMachine {
             const numReels = 5;
             const numRows = 3;
 
-            // Рассчитываем размеры холста на основе размера символов
-            const totalWidth = (this.SYMBOL_SIZE + this.SYMBOL_PADDING) * numReels + this.SYMBOL_PADDING;
-            const totalHeight = (this.SYMBOL_SIZE + this.SYMBOL_PADDING) * numRows + this.SYMBOL_PADDING;
+            // Calculate total size with padding
+            const horizontalPadding = this.SYMBOL_PADDING * 6; // 6 gaps (5 between symbols + 2 edges)
+            const verticalPadding = this.SYMBOL_PADDING * 4;   // 4 gaps (3 between symbols + 2 edges)
+
+            const totalWidth = (this.SYMBOL_SIZE * numReels) + horizontalPadding;
+            const totalHeight = (this.SYMBOL_SIZE * numRows) + verticalPadding;
 
             this.canvas.width = totalWidth;
             this.canvas.height = totalHeight;
 
-            // Сохраняем логические размеры
+            // Save logical dimensions
             this.logicalWidth = totalWidth;
             this.logicalHeight = totalHeight;
 
-            console.log(`Canvas resized to ${totalWidth}x${totalHeight}`);
             this.draw();
         } catch (error) {
             console.error('Error resizing canvas:', error);
@@ -516,23 +517,34 @@ class SlotMachine {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Calculate exact positions for symbols
+        const totalWidth = this.canvas.width;
+        const totalHeight = this.canvas.height;
+        const symbolWidth = this.SYMBOL_SIZE;
+        const symbolHeight = this.SYMBOL_SIZE;
+
+        // Calculate gaps between symbols
+        const horizontalGap = (totalWidth - (5 * symbolWidth)) / 6;
+        const verticalGap = (totalHeight - (3 * symbolHeight)) / 4;
+
         // Draw each symbol
         for (let i = 0; i < 5; i++) {
             for (let j = 0; j < 3; j++) {
                 const symbol = this.reels[i][j];
-                const x = i * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
-                const y = j * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING;
+                // Calculate exact position with even spacing
+                const x = horizontalGap + i * (symbolWidth + horizontalGap);
+                const y = verticalGap + j * (symbolHeight + verticalGap);
 
                 try {
                     const img = this.symbolImages.get(symbol);
                     if (img) {
-                        this.ctx.drawImage(img, x, y, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
+                        this.ctx.drawImage(img, x, y, symbolWidth, symbolHeight);
                     } else {
-                        this.drawFallbackSymbol(symbol, x, y, this.SYMBOL_SIZE);
+                        this.drawFallbackSymbol(symbol, x, y, symbolWidth);
                     }
                 } catch (error) {
                     console.error(`Error rendering symbol ${symbol}:`, error);
-                    this.drawFallbackSymbol(symbol, x, y, this.SYMBOL_SIZE);
+                    this.drawFallbackSymbol(symbol, x, y, symbolWidth);
                 }
             }
         }
