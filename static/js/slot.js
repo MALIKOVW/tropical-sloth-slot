@@ -63,9 +63,9 @@ class SlotMachine {
         console.log('Initializing Slot Machine');
         this.loadingManager = new LoadingManager();
 
-        // Увеличиваем размеры символов
-        this.SYMBOL_SIZE = 120; // Изменили с 60px на 120px
-        this.SYMBOL_PADDING = 5; // Увеличили отступ для больших символов
+        // Уменьшаем размеры символов до оптимальных
+        this.SYMBOL_SIZE = 80; // Изменили со 120px на 80px
+        this.SYMBOL_PADDING = 4; // Уменьшили отступ
 
         setTimeout(() => {
             this.initializeCanvas();
