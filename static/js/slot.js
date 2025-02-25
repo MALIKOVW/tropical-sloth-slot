@@ -72,18 +72,31 @@ class SlotMachine {
             this.init();
         }, 100);
 
-        // Определяем линии выплат
+        // Определяем линии выплат (20 линий как в The Dog House)
         this.paylines = [
             // Горизонтальные линии
-            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // Верхняя
-            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // Средняя
-            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // Нижняя
-            // V-образные линии
-            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // V
-            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}], // Перевернутая V
-            // Зигзагообразные линии
-            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 0}],
-            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 2}]
+            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // 1
+            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // 2
+            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // 3
+
+            // V-образные и зигзагообразные
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // 4
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}], // 5
+            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 2}], // 6
+            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 0}], // 7
+            [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 1}], // 8
+            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 1}], // 9
+            [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 1}], // 10
+            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}], // 11
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 0}], // 12
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 2}], // 13
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 0}], // 14
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 2}], // 15
+            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 1}], // 16
+            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 1}], // 17
+            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 2}, {x: 3, y: 0}, {x: 4, y: 0}], // 18
+            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 0}, {x: 3, y: 2}, {x: 4, y: 2}], // 19
+            [{x: 0, y: 0}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 0}]  // 20
         ];
 
         // Определяем на каких барабанах могут появляться wild символы
@@ -103,17 +116,61 @@ class SlotMachine {
 
             // Define symbols and their properties
             this.symbolDefinitions = {
-                'wooden_a': { value: 2, path: '/static/images/symbols/wooden_a.png' },
-                'wooden_k': { value: 3, path: '/static/images/symbols/wooden_k.png' },
-                'wooden_arch': { value: 4, path: '/static/images/symbols/wooden_arch.png' },
-                'snake': { value: 5, path: '/static/images/symbols/snake.png' },
-                'gorilla': { value: 6, path: '/static/images/symbols/gorilla.png' },
-                'jaguar': { value: 8, path: '/static/images/symbols/jaguar.png' },
-                'crocodile': { value: 10, path: '/static/images/symbols/Picsart_25-02-25_16-49-31-091.png' },
-                'gator': { value: 15, path: '/static/images/symbols/gator.png' },
-                'leopard': { value: 20, path: '/static/images/symbols/leopard.png' },
-                'dragon': { value: 50, path: '/static/images/symbols/dragon.png' },
-                'sloth': { value: 0, path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png' },
+                'wooden_a': { 
+                    value: 5,
+                    path: '/static/images/symbols/wooden_a.png',
+                    multipliers: {3: 5, 4: 10, 5: 20}
+                },
+                'wooden_k': { 
+                    value: 5,
+                    path: '/static/images/symbols/wooden_k.png',
+                    multipliers: {3: 5, 4: 10, 5: 20}
+                },
+                'wooden_arch': { 
+                    value: 10,
+                    path: '/static/images/symbols/wooden_arch.png',
+                    multipliers: {3: 10, 4: 20, 5: 50}
+                },
+                'snake': { 
+                    value: 15,
+                    path: '/static/images/symbols/snake.png',
+                    multipliers: {3: 15, 4: 30, 5: 75}
+                },
+                'gorilla': { 
+                    value: 20,
+                    path: '/static/images/symbols/gorilla.png',
+                    multipliers: {3: 20, 4: 40, 5: 100}
+                },
+                'jaguar': { 
+                    value: 25,
+                    path: '/static/images/symbols/jaguar.png',
+                    multipliers: {3: 25, 4: 50, 5: 125}
+                },
+                'crocodile': { 
+                    value: 30,
+                    path: '/static/images/symbols/Picsart_25-02-25_16-49-31-091.png',
+                    multipliers: {3: 30, 4: 60, 5: 150}
+                },
+                'gator': { 
+                    value: 40,
+                    path: '/static/images/symbols/gator.png',
+                    multipliers: {3: 40, 4: 80, 5: 200}
+                },
+                'leopard': { 
+                    value: 50,
+                    path: '/static/images/symbols/leopard.png',
+                    multipliers: {3: 50, 4: 100, 5: 250}
+                },
+                'dragon': { 
+                    value: 100,
+                    path: '/static/images/symbols/dragon.png',
+                    multipliers: {3: 100, 4: 200, 5: 500}
+                },
+                'sloth': { 
+                    value: 0,
+                    path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png',
+                    multipliers: {3: 2, 4: 10, 5: 50}
+                },
                 'wild_2x': {
                     value: 0,
                     path: '/static/images/symbols/Picsart_25-02-25_18-10-53-970.png',
@@ -215,13 +272,24 @@ class SlotMachine {
                 // Если есть хотя бы один обычный символ, проверяем комбинацию
                 if (nonWildSymbols.length > 0) {
                     const mainSymbol = nonWildSymbols[0];
-                    const isWinning = nonWildSymbols.every(symbol => symbol === mainSymbol);
+                    let consecutiveCount = 0;
 
-                    if (isWinning) {
+                    // Подсчитываем количество последовательных символов
+                    for (let i = 0; i < symbols.length; i++) {
+                        if (symbols[i] === mainSymbol || this.isWildSymbol(symbols[i])) {
+                            consecutiveCount++;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    // Проверяем выигрышные комбинации для 3+ символов
+                    if (consecutiveCount >= 3) {
                         winningLines.push({
                             lineIndex: index,
-                            positions: line,
+                            positions: line.slice(0, consecutiveCount),
                             symbol: mainSymbol,
+                            count: consecutiveCount,
                             multiplier: wildMultiplier
                         });
                     }
@@ -230,15 +298,24 @@ class SlotMachine {
                 // Стандартная проверка без wild символов
                 const firstSymbol = symbols[0];
                 if (firstSymbol !== 'sloth') {
-                    const isWinning = symbols.every(symbol =>
-                        symbol === firstSymbol || this.isWildSymbol(symbol)
-                    );
+                    let consecutiveCount = 1;
 
-                    if (isWinning) {
+                    // Подсчитываем количество последовательных символов
+                    for (let i = 1; i < symbols.length; i++) {
+                        if (symbols[i] === firstSymbol || this.isWildSymbol(symbols[i])) {
+                            consecutiveCount++;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    // Проверяем выигрышные комбинации для 3+ символов
+                    if (consecutiveCount >= 3) {
                         winningLines.push({
                             lineIndex: index,
-                            positions: line,
+                            positions: line.slice(0, consecutiveCount),
                             symbol: firstSymbol,
+                            count: consecutiveCount,
                             multiplier: 1
                         });
                     }
@@ -392,8 +469,8 @@ class SlotMachine {
         };
 
         const endPos = {
-            x: linePositions[4].x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2,
-            y: linePositions[4].y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2
+            x: linePositions[linePositions.length -1].x * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2,
+            y: linePositions[linePositions.length -1].y * (this.SYMBOL_SIZE + this.SYMBOL_PADDING) + this.SYMBOL_PADDING + this.SYMBOL_SIZE / 2
         };
 
         // Вычисляем длину и угол линии с учетом padding
