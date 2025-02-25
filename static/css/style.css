@@ -485,6 +485,9 @@ body {
     background: rgba(255, 215, 0, 0.15);
     z-index: 9;
     pointer-events: none;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform: translateZ(0);
 }
 
 @keyframes paylineGlow {
@@ -896,7 +899,6 @@ h1 {
 }
 
 /* Add to existing CSS file */
-
 .controls-group {
     display: flex;
     align-items: center;
@@ -971,6 +973,9 @@ h1 {
     z-index: 10;
     pointer-events: none;
     filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+    will-change: transform, filter;
+    backface-visibility: hidden;
+    transform: translateZ(0);
 }
 
 @keyframes symbolScale {

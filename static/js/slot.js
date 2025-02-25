@@ -5,7 +5,7 @@ class LoadingManager {
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
-        this.totalAssets = 13;
+        this.totalAssets = 14; // Увеличили количество ассетов
         this.loadedAssets = 0;
         this.lastProgress = 0;
         this.initializeLoading();
@@ -64,8 +64,14 @@ class SlotMachine {
         this.SYMBOL_SIZE = 60;
         this.SYMBOL_PADDING = 3;
 
-        // Создаем контейнер для анимированных символов заранее
+        // Флаги состояния
+        this.spinning = false;
+        this.isAnimatingWin = false;
+        this.skipWinAnimation = false;
+
+        // Предзагруженные элементы для анимации
         this.animatedSymbols = new Map();
+        this.preloadedElements = new Map();
 
         setTimeout(() => {
             this.initializeCanvas();
@@ -74,12 +80,9 @@ class SlotMachine {
 
         // Определяем линии выплат (20 линий как в The Dog House)
         this.paylines = [
-            // Горизонтальные линии
             [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // 1
             [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // 2
             [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // 3
-
-            // V-образные и зигзагообразные
             [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // 4
             [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}], // 5
             [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 2}], // 6
@@ -101,6 +104,153 @@ class SlotMachine {
 
         // Определяем на каких барабанах могут появляться wild символы
         this.wildReels = [1, 2, 3]; // индексы 1,2,3 соответствуют 2,3,4 барабанам
+    }
+
+    // Метод для предварительной загрузки элементов
+    preloadElements() {
+        Object.entries(this.symbolDefinitions).forEach(([symbol, def]) => {
+            // Создаем шаблон для анимированного символа
+            const symbolElement = document.createElement('div');
+            symbolElement.className = 'winning-symbol';
+            symbolElement.style.position = 'absolute';
+            symbolElement.style.width = `${this.SYMBOL_SIZE}px`;
+            symbolElement.style.height = `${this.SYMBOL_SIZE}px`;
+
+            const symbolImg = document.createElement('img');
+            symbolImg.src = def.path;
+            symbolImg.style.width = '100%';
+            symbolImg.style.height = '100%';
+            symbolElement.appendChild(symbolImg);
+
+            this.preloadedElements.set(symbol, symbolElement);
+        });
+    }
+
+    async showWinningLine(linePositions) {
+        if (this.skipWinAnimation) return;
+
+        const container = document.getElementById('paylineContainer');
+        if (!container) return;
+
+        // Очищаем предыдущие подсветки
+        container.innerHTML = '';
+
+        // Создаем элементы для подсветки символов
+        linePositions.forEach(pos => {
+            const cellSize = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
+            const x = pos.x * cellSize;
+            const y = pos.y * cellSize;
+
+            // Добавляем подсветку
+            const highlight = document.createElement('div');
+            highlight.className = 'symbol-highlight';
+            highlight.style.left = `${x + this.SYMBOL_PADDING}px`;
+            highlight.style.top = `${y + this.SYMBOL_PADDING}px`;
+            highlight.style.width = `${this.SYMBOL_SIZE}px`;
+            highlight.style.height = `${this.SYMBOL_SIZE}px`;
+            container.appendChild(highlight);
+
+            // Используем предзагруженный элемент для анимации
+            const symbol = this.reels[pos.x][pos.y];
+            const preloadedElement = this.preloadedElements.get(symbol);
+            if (preloadedElement) {
+                const clonedElement = preloadedElement.cloneNode(true);
+                clonedElement.style.left = `${x + this.SYMBOL_PADDING}px`;
+                clonedElement.style.top = `${y + this.SYMBOL_PADDING}px`;
+                container.appendChild(clonedElement);
+            }
+        });
+    }
+
+    async spin() {
+        if (this.spinning) return;
+
+        const credits = parseFloat(document.getElementById('creditDisplay').textContent);
+        if (!this.bonusSpinsRemaining && credits < this.currentBet) {
+            alert('Insufficient credits!');
+            return;
+        }
+
+        try {
+            // Ensure audio is initialized
+            if (Tone.context.state !== 'running') {
+                await Tone.start();
+                await audio.init();
+            }
+
+            this.spinning = true;
+            this.skipWinAnimation = true; // Пропускаем текущую анимацию
+            document.getElementById('spinButton').disabled = true;
+
+            // Play spin button sound
+            audio.playClickSound();
+
+            const formData = new FormData();
+            formData.append('bet', this.currentBet);
+
+            const response = await fetch('/spin', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            if (result.error) {
+                throw new Error(result.error);
+            }
+
+            // Play spin sound
+            audio.playSpinSound();
+
+            // Очищаем предыдущие анимации
+            const container = document.getElementById('paylineContainer');
+            if (container) {
+                container.innerHTML = '';
+            }
+
+            // Анимация вращения
+            await this.animateSpin(result.result);
+
+            // Stop spin sound
+            audio.stopSpinSound();
+
+            // Обновляем состояние
+            this.reels = result.result;
+            document.getElementById('creditDisplay').textContent = result.credits.toFixed(2);
+
+            // Разблокируем кнопку через 1 секунду
+            setTimeout(() => {
+                document.getElementById('spinButton').disabled = false;
+                this.spinning = false;
+                this.skipWinAnimation = false;
+            }, 1000);
+
+            // Проверяем выигрышные линии
+            const winningLines = this.checkWinningLines();
+
+            // Если есть выигрышные линии
+            if (winningLines.length > 0) {
+                audio.playWinSound();
+
+                for (const line of winningLines) {
+                    if (!this.skipWinAnimation) {
+                        await this.showWinningLine(line.positions);
+                        await new Promise(resolve => setTimeout(resolve, 1500));
+                    }
+                }
+            }
+
+            this.draw();
+
+        } catch (error) {
+            console.error('Error during spin:', error);
+            alert('An error occurred during spin. Please try again.');
+            this.spinning = false;
+            document.getElementById('spinButton').disabled = false;
+        }
     }
 
     initializeCanvas() {
@@ -234,6 +384,7 @@ class SlotMachine {
 
         Promise.all(loadPromises)
             .then(() => {
+                this.preloadElements();
                 this.draw();
             })
             .catch(error => {
@@ -429,155 +580,6 @@ class SlotMachine {
         const newBet = Math.max(0.20, Math.min(100, this.currentBet + amount));
         this.currentBet = Number(newBet.toFixed(2));
         document.getElementById('currentBet').textContent = this.currentBet.toFixed(2);
-    }
-
-    // Метод для отображения выигрышной линии
-    showWinningLine(linePositions) {
-        const container = document.getElementById('paylineContainer');
-        if (!container) return;
-
-        // Очищаем предыдущие подсветки
-        container.innerHTML = '';
-
-        // Создаем элементы для подсветки символов и анимируем символы
-        linePositions.forEach(pos => {
-            // Точное вычисление позиций с учетом всех отступов
-            const cellSize = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
-            const x = pos.x * cellSize;
-            const y = pos.y * cellSize;
-
-            // Добавляем подсветку
-            const highlight = document.createElement('div');
-            highlight.className = 'symbol-highlight';
-            highlight.style.left = `${x + this.SYMBOL_PADDING}px`;
-            highlight.style.top = `${y + this.SYMBOL_PADDING}px`;
-            highlight.style.width = `${this.SYMBOL_SIZE}px`;
-            highlight.style.height = `${this.SYMBOL_SIZE}px`;
-            container.appendChild(highlight);
-
-            // Находим и анимируем сам символ
-            const symbol = document.createElement('div');
-            symbol.className = 'winning-symbol';
-            symbol.style.position = 'absolute';
-            symbol.style.left = `${x + this.SYMBOL_PADDING}px`;
-            symbol.style.top = `${y + this.SYMBOL_PADDING}px`;
-            symbol.style.width = `${this.SYMBOL_SIZE}px`;
-            symbol.style.height = `${this.SYMBOL_SIZE}px`;
-            symbol.style.filter = 'brightness(1.2)'; // Делаем символы немного ярче
-
-            // Копируем содержимое символа
-            const img = this.symbolImages.get(this.reels[pos.x][pos.y]);
-            if (img) {
-                const symbolImg = document.createElement('img');
-                symbolImg.src = img.src;
-                symbolImg.style.width = '100%';
-                symbolImg.style.height = '100%';
-                symbol.appendChild(symbolImg);
-            }
-
-            container.appendChild(symbol);
-        });
-
-        // Добавляем возможность пропустить анимацию по клику
-        container.addEventListener('click', () => {
-            container.innerHTML = '';
-        });
-
-        // Автоматически убираем подсветку и анимацию через 2 секунды
-        setTimeout(() => {
-            if (container.innerHTML !== '') {
-                container.innerHTML = '';
-            }
-        }, 2000);
-    }
-
-    async spin() {
-        if (this.spinning) return;
-
-        const credits = parseFloat(document.getElementById('creditDisplay').textContent);
-        if (!this.bonusSpinsRemaining && credits < this.currentBet) {
-            alert('Insufficient credits!');
-            return;
-        }
-
-        try {
-            // Ensure audio is initialized
-            if (Tone.context.state !== 'running') {
-                await Tone.start();
-                await audio.init();
-            }
-
-            // Play spin button sound
-            audio.playClickSound();
-
-            this.spinning = true;
-            document.getElementById('spinButton').disabled = true;
-
-            const formData = new FormData();
-            formData.append('bet', this.currentBet);
-
-            const response = await fetch('/spin', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
-            if (result.error) {
-                throw new Error(result.error);
-            }
-
-            // Play spin sound when animation starts
-            audio.playSpinSound();
-
-            // Очищаем предыдущие анимации при новом спине
-            const container = document.getElementById('paylineContainer');
-            if (container) {
-                container.innerHTML = '';
-            }
-
-            await this.animateSpin(result.result);
-
-            // Stop spin sound when animation ends
-            audio.stopSpinSound();
-
-            this.reels = result.result;
-            document.getElementById('creditDisplay').textContent = result.credits.toFixed(2);
-
-            // Разблокируем кнопку спина после анимации вращения
-            document.getElementById('spinButton').disabled = false;
-            this.spinning = false;
-
-            // Check winning lines
-            const winningLines = this.checkWinningLines();
-
-            // If there are winning lines, play win sound
-            if (winningLines.length > 0) {
-                audio.playWinSound();
-            }
-
-            // Show each winning line
-            for (const line of winningLines) {
-                // Проверяем, не был ли начат новый спин
-                if (!this.spinning) {
-                    this.showWinningLine(line.positions);
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                } else {
-                    break;
-                }
-            }
-
-            this.draw();
-
-        } catch (error) {
-            console.error('Error during spin:', error);
-            alert('An error occurred during spin. Please try again.');
-            this.spinning = false;
-            document.getElementById('spinButton').disabled = false;
-        }
     }
 
     async animateSpin(finalResult) {
