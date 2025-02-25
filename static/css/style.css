@@ -478,7 +478,7 @@ body {
     border: 2px solid #ffd700;
     border-radius: 4px;
     box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
-    animation: symbolHighlight 1.5s ease-in-out;
+    animation: symbolPulse 1.5s;
     background: rgba(255, 215, 0, 0.1);
     z-index: 9;
     pointer-events: none;
@@ -499,26 +499,18 @@ body {
     }
 }
 
-@keyframes symbolHighlight {
+@keyframes symbolPulse {
     0% { 
         opacity: 0;
-        transform: scale(1);
     }
     20% {
         opacity: 1;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 1;
-        transform: scale(1.05);
     }
     80% {
         opacity: 1;
-        transform: scale(1);
     }
     100% { 
         opacity: 0;
-        transform: scale(1);
     }
 }
 
