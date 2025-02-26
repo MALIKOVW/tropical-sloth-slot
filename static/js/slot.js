@@ -379,26 +379,31 @@ class SlotMachine {
                     }
                     symbol.style.left = `${x}px`;
                     symbol.style.top = `${y}px`;
+                    symbol.style.width = `${this.SYMBOL_SIZE}px`;
+                    symbol.style.height = `${this.SYMBOL_SIZE}px`;
 
                     const symbolImg = document.createElement('img');
                     symbolImg.src = img.src;
+                    symbolImg.style.width = '100%';
+                    symbolImg.style.height = '100%';
+                    symbolImg.style.objectFit = 'contain';
                     symbol.appendChild(symbolImg);
 
                     container.appendChild(symbol);
 
                     // Активируем анимацию с небольшой задержкой
-                    setTimeout(() => {
+                    requestAnimationFrame(() => {
                         symbol.classList.add('active');
-                    }, 100);
+                    });
                 }
             });
 
-            // Очистка анимаций
+            // Очистка анимаций через 2 секунды
             setTimeout(() => {
                 container.innerHTML = '';
             }, 2000);
         } catch (error) {
-            console.error('Error showing winning line:', error);
+            console.error('Error showing winning symbols:', error);
             container.innerHTML = '';
         }
     }
