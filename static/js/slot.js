@@ -1,15 +1,19 @@
 // Оптимизированный менеджер загрузки
 class LoadingManager {
     constructor() {
-        // Получаем элементы загрузки
+        console.log('LoadingManager: Starting initialization');
         this.loadingScreen = document.getElementById('loadingScreen');
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
 
-        // Проверяем наличие всех элементов
         if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
-            console.error('Required loading elements not found');
+            console.error('LoadingManager: Required elements not found', {
+                loadingScreen: !!this.loadingScreen,
+                loadingBar: !!this.loadingBar,
+                loadingText: !!this.loadingText,
+                gameContent: !!this.gameContent
+            });
             return;
         }
 
@@ -17,96 +21,85 @@ class LoadingManager {
         this.totalAssets = 0;
         this.loadedAssets = 0;
         this.imageCache = new Map();
-        this.lastProgress = 0;
 
         // Инициализация начального состояния
         this.initializeLoadingScreen();
     }
 
     initializeLoadingScreen() {
-        // Добавляем CSS transitions для плавности
+        console.log('LoadingManager: Initializing loading screen');
         this.loadingScreen.style.transition = 'opacity 0.5s ease-in-out';
         this.gameContent.style.transition = 'opacity 0.5s ease-in-out';
         this.loadingBar.style.transition = 'width 0.3s ease-out';
 
-        // Скрываем игровой контент и показываем экран загрузки
         this.gameContent.style.opacity = '0';
         this.gameContent.style.display = 'none';
-
         this.loadingScreen.style.opacity = '1';
         this.loadingScreen.style.display = 'flex';
-
-        // Сбрасываем прогресс
         this.updateProgress(0);
     }
 
     updateProgress(progress) {
         if (!this.loadingBar || !this.loadingText) return;
 
-        // Нормализуем прогресс
         progress = Math.min(100, Math.max(0, progress));
-
-        // Обновляем только при значимых изменениях
-        if (Math.abs(progress - this.lastProgress) >= 1) {
-            this.lastProgress = progress;
-
-            // Используем requestAnimationFrame для плавной анимации
-            requestAnimationFrame(() => {
-                this.loadingBar.style.width = `${progress}%`;
-                this.loadingText.textContent = `${Math.round(progress)}%`;
-            });
-        }
+        this.loadingBar.style.width = `${progress}%`;
+        this.loadingText.textContent = `${Math.round(progress)}%`;
+        console.log(`LoadingManager: Progress ${progress}%`);
     }
 
     onAssetLoaded() {
         this.loadedAssets++;
         const progress = (this.loadedAssets / this.totalAssets) * 100;
+        console.log(`LoadingManager: Asset loaded ${this.loadedAssets}/${this.totalAssets}`);
         this.updateProgress(progress);
 
-        // Если все ассеты загружены, показываем игру
         if (this.loadedAssets >= this.totalAssets) {
+            console.log('LoadingManager: All assets loaded');
             this.showGameContent();
         }
     }
 
     showGameContent() {
-        // Плавно скрываем экран загрузки
+        console.log('LoadingManager: Showing game content');
         this.loadingScreen.style.opacity = '0';
-
-        // Показываем игровой контент после скрытия экрана загрузки
         setTimeout(() => {
             this.loadingScreen.style.display = 'none';
             this.gameContent.style.display = 'block';
-
-            // Плавно показываем игровой контент
             requestAnimationFrame(() => {
                 this.gameContent.style.opacity = '1';
             });
-        }, 500); // Время должно совпадать с transition
+        }, 500);
     }
 
     async loadImage(path) {
         try {
-            // Проверяем кэш
+            console.log(`LoadingManager: Loading image ${path}`);
+
             if (this.imageCache.has(path)) {
+                console.log(`LoadingManager: Image found in cache ${path}`);
                 return this.imageCache.get(path);
             }
 
-            // Загружаем новое изображение
             const img = await new Promise((resolve, reject) => {
                 const image = new Image();
-                image.onload = () => resolve(image);
-                image.onerror = () => reject(new Error(`Failed to load image: ${path}`));
+                image.onload = () => {
+                    console.log(`LoadingManager: Image loaded successfully ${path}`);
+                    resolve(image);
+                };
+                image.onerror = () => {
+                    console.error(`LoadingManager: Failed to load image ${path}`);
+                    reject(new Error(`Failed to load image: ${path}`));
+                };
                 image.src = path;
             });
 
-            // Кэшируем и обновляем прогресс
             this.imageCache.set(path, img);
             this.onAssetLoaded();
             return img;
 
         } catch (error) {
-            console.error(`Failed to load image: ${path}`, error);
+            console.error(`LoadingManager: Error loading image ${path}`, error);
             throw error;
         }
     }
@@ -114,7 +107,7 @@ class LoadingManager {
 
 class SlotMachine {
     constructor() {
-        // Ждем загрузки DOM
+        console.log('SlotMachine: Starting initialization');
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.initialize());
         } else {
@@ -124,7 +117,7 @@ class SlotMachine {
 
     async initialize() {
         try {
-            console.log('Initializing slot machine...');
+            console.log('SlotMachine: Initializing...');
 
             // Создаем загрузчик
             this.loadingManager = new LoadingManager();
@@ -136,20 +129,20 @@ class SlotMachine {
             this.spinning = false;
             this.currentBet = 10;
 
-            // Определяем символы
+            // Определяем символы и их пути (исправленные пути)
             this.symbolDefinitions = {
-                '10': { value: 5, path: '/static/images/symbols/10.png', multipliers: {3: 5, 4: 10, 5: 20} },
-                'J': { value: 5, path: '/static/images/symbols/J.png', multipliers: {3: 5, 4: 10, 5: 20} },
-                'Q': { value: 10, path: '/static/images/symbols/Q.png', multipliers: {3: 10, 4: 20, 5: 50} },
-                'K': { value: 15, path: '/static/images/symbols/K.png', multipliers: {3: 15, 4: 30, 5: 75} },
-                'A': { value: 20, path: '/static/images/symbols/A.png', multipliers: {3: 20, 4: 40, 5: 100} },
-                'dog1': { value: 25, path: '/static/images/symbols/dog1.png', multipliers: {3: 25, 4: 50, 5: 125} },
-                'dog2': { value: 30, path: '/static/images/symbols/dog2.png', multipliers: {3: 30, 4: 60, 5: 150} },
-                'dog3': { value: 40, path: '/static/images/symbols/dog3.png', multipliers: {3: 40, 4: 80, 5: 200} },
-                'toy1': { value: 50, path: '/static/images/symbols/toy1.png', multipliers: {3: 50, 4: 100, 5: 250} },
-                'toy2': { value: 100, path: '/static/images/symbols/toy2.png', multipliers: {3: 100, 4: 200, 5: 500} },
-                'scatter': { value: 0, path: '/static/images/symbols/scatter.png', isScatter: true },
-                'wild': { value: 0, path: '/static/images/symbols/wild.png', multiplier: 2, isWild: true }
+                '10': { value: 5, path: '/static/images/symbols/pic1.png', multipliers: {3: 5, 4: 10, 5: 20} },
+                'J': { value: 5, path: '/static/images/symbols/pic2.png', multipliers: {3: 5, 4: 10, 5: 20} },
+                'Q': { value: 10, path: '/static/images/symbols/pic3.png', multipliers: {3: 10, 4: 20, 5: 50} },
+                'K': { value: 15, path: '/static/images/symbols/pic4.png', multipliers: {3: 15, 4: 30, 5: 75} },
+                'A': { value: 20, path: '/static/images/symbols/pic5.png', multipliers: {3: 20, 4: 40, 5: 100} },
+                'dog1': { value: 25, path: '/static/images/symbols/pic6.png', multipliers: {3: 25, 4: 50, 5: 125} },
+                'dog2': { value: 30, path: '/static/images/symbols/pic7.png', multipliers: {3: 30, 4: 60, 5: 150} },
+                'dog3': { value: 40, path: '/static/images/symbols/pic8.png', multipliers: {3: 40, 4: 80, 5: 200} },
+                'toy1': { value: 50, path: '/static/images/symbols/pic9.png', multipliers: {3: 50, 4: 100, 5: 250} },
+                'toy2': { value: 100, path: '/static/images/symbols/pic10.png', multipliers: {3: 100, 4: 200, 5: 500} },
+                'scatter': { value: 0, path: '/static/images/symbols/pic11.png', isScatter: true },
+                'wild': { value: 0, path: '/static/images/symbols/wild_2x.png', multiplier: 2, isWild: true }
             };
 
             // Инициализация канваса
@@ -163,6 +156,7 @@ class SlotMachine {
 
             // Установка количества ассетов
             this.loadingManager.totalAssets = Object.keys(this.symbolDefinitions).length;
+            console.log(`SlotMachine: Set total assets to ${this.loadingManager.totalAssets}`);
 
             // Загрузка изображений
             await this.loadSymbols();
@@ -172,9 +166,9 @@ class SlotMachine {
             this.initializeEventListeners();
             this.draw();
 
-            console.log('Slot machine initialized successfully');
+            console.log('SlotMachine: Initialization complete');
         } catch (error) {
-            console.error('Failed to initialize slot machine:', error);
+            console.error('SlotMachine: Failed to initialize:', error);
         }
     }
 
@@ -692,8 +686,9 @@ class SlotMachine {
     };
 }
 
-// Инициализация слота
+// Инициализация слота при загрузке DOM
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Document loaded, creating slot machine instance');
     try {
         window.slotMachine = new SlotMachine();
     } catch (error) {
