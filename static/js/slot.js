@@ -40,39 +40,8 @@ class LoadingManager {
         this.updateProgress(progress);
     }
 
-    createFallbackSymbol(symbolName) {
-        console.log(`LoadingManager: Creating fallback for ${symbolName}`);
-        const canvas = document.createElement('canvas');
-        canvas.width = 60;
-        canvas.height = 60;
-        const ctx = canvas.getContext('2d');
-
-        // Создаем градиентный фон
-        const gradient = ctx.createLinearGradient(0, 0, 60, 60);
-        gradient.addColorStop(0, '#2a2a2a');
-        gradient.addColorStop(1, '#1a1a1a');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 60, 60);
-
-        // Добавляем рамку
-        ctx.strokeStyle = '#444';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(2, 2, 56, 56);
-
-        // Добавляем текст
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 24px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(symbolName, 30, 30);
-
-        const img = new Image();
-        img.src = canvas.toDataURL();
-        return img;
-    }
-
     loadImage(path, symbolName) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             console.log(`LoadingManager: Starting to load ${path}`);
             const img = new Image();
             img.onload = () => {
@@ -81,12 +50,9 @@ class LoadingManager {
                 this.onAssetLoaded();
                 resolve(img);
             };
-            img.onerror = () => {
-                console.log(`LoadingManager: Failed to load ${path}, creating fallback`);
-                const fallbackImg = this.createFallbackSymbol(symbolName);
-                this.imageCache.set(symbolName, fallbackImg);
-                this.onAssetLoaded();
-                resolve(fallbackImg);
+            img.onerror = (error) => {
+                console.error(`LoadingManager: Failed to load ${path}`, error);
+                reject(new Error(`Failed to load image: ${path}`));
             };
             img.src = path;
         });
@@ -155,7 +121,6 @@ class SlotMachine {
                     console.log(`SlotMachine: Successfully loaded ${symbol.name}`);
                 } catch (error) {
                     console.error(`SlotMachine: Failed to load ${symbol.name}:`, error);
-                    // Fallback already handled in LoadingManager
                 }
             }
 
@@ -171,26 +136,6 @@ class SlotMachine {
         } catch (error) {
             console.error('SlotMachine: Failed to initialize:', error);
         }
-    }
-
-    createFallbackSymbol(symbolName) {
-        console.log(`SlotMachine: Creating fallback for ${symbolName}`);
-        const canvas = document.createElement('canvas');
-        canvas.width = this.SYMBOL_SIZE;
-        canvas.height = this.SYMBOL_SIZE;
-        const ctx = canvas.getContext('2d');
-
-        ctx.fillStyle = '#333333';
-        ctx.fillRect(0, 0, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(symbolName, this.SYMBOL_SIZE / 2, this.SYMBOL_SIZE / 2);
-
-        const img = new Image();
-        img.src = canvas.toDataURL();
-        return img;
     }
 
     draw() {
@@ -263,6 +208,7 @@ class SlotMachine {
             [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}]  // Линия 20
         ];
     }
+
 
     resizeCanvas() {
         // Removed - canvas is no longer used
