@@ -30,7 +30,7 @@ class LoadingManager {
     onAssetLoaded() {
         this.loadedAssets++;
         const progress = (this.loadedAssets / this.totalAssets) * 100;
-        console.log(`LoadingManager: Asset ${this.loadedAssets}/${this.totalAssets} loaded`);
+        console.log(`LoadingManager: Asset loaded ${this.loadedAssets}/${this.totalAssets}`);
         this.updateProgress(progress);
 
         if (this.loadedAssets >= this.totalAssets) {
@@ -101,10 +101,10 @@ class SlotMachine {
                 { name: 'dragon', path: '/static/images/symbols/dragon.png' },
 
                 // Special symbols
-                { name: 'sloth', path: '/static/images/symbols/sloth.png' },
-                { name: 'wild_2x', path: '/static/images/symbols/wild_2x.png' },
-                { name: 'wild_3x', path: '/static/images/symbols/wild_3x.png' },
-                { name: 'wild_5x', path: '/static/images/symbols/wild_5x.png' }
+                { name: 'sloth', path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png' },
+                { name: 'wild_2x', path: '/static/images/symbols/Picsart_25-02-25_16-49-31-091.png' },
+                { name: 'wild_3x', path: '/static/images/symbols/Picsart_25-02-25_18-10-53-970.png' },
+                { name: 'wild_5x', path: '/static/images/symbols/Picsart_25-02-25_18-12-23-513.png' }
             ];
 
             // Set total assets
