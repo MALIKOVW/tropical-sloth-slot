@@ -371,6 +371,11 @@ class SlotMachine {
         const multiplierElement = popup.querySelector('.win-multiplier');
         const amountElement = popup.querySelector('.win-amount');
 
+        // Проверяем, не идет ли уже анимация
+        if (popup.style.display === 'block') {
+            return;
+        }
+
         // Определяем конечный тип выигрыша
         let finalWinClass = '';
         let finalWinText = '';
@@ -401,59 +406,86 @@ class SlotMachine {
         let currentClass = 'big-win';
         let currentText = 'BIG WIN';
         let animationSpeed = 1;
-        let updateInterval = 200; // Увеличили базовый интервал до 200
+        let updateInterval = 200; // Базовый интервал обновления
 
-        // Функция обновления значений
-        const updateValues = () => {
-            // Увеличиваем значения более плавно
-            const step = Math.max(1, Math.floor((multiplier - currentMultiplier) / 50)); // Уменьшили делитель до 50 для более плавного изменения
-            currentMultiplier = Math.min(currentMultiplier + step, multiplier);
-            currentAmount = this.currentBet * currentMultiplier;
+        // Создаем функцию анимации с использованием requestAnimationFrame
+        let lastUpdate = performance.now();
+        let animationFrame;
 
-            // Обновляем класс и текст в зависимости от текущего множителя
-            if (currentMultiplier >= 10000 && currentClass !== 'max-win') {
-                currentClass = 'max-win';
-                currentText = 'MAX WIN';
-                popup.className = `win-popup ${currentClass}`;
-                title.textContent = currentText;
-            } else if (currentMultiplier >= 500 && currentClass !== 'epic-win' && currentMultiplier < 10000) {
-                currentClass = 'epic-win';
-                currentText = 'EPIC WIN';
-                popup.className = `win-popup ${currentClass}`;
-                title.textContent = currentText;
-            } else if (currentMultiplier >= 100 && currentClass !== 'mega-win' && currentMultiplier < 500) {
-                currentClass = 'mega-win';
-                currentText = 'MEGA WIN';
-                popup.className = `win-popup ${currentClass}`;
-                title.textContent = currentText;
+        const animate = (currentTime) => {
+            const deltaTime = currentTime - lastUpdate;
+
+            // Обновляем значения только если прошло достаточно времени
+            if (deltaTime >= updateInterval) {
+                // Увеличиваем значения более плавно
+                const step = Math.max(1, Math.floor((multiplier - currentMultiplier) / 50));
+                currentMultiplier = Math.min(currentMultiplier + step, multiplier);
+                currentAmount = this.currentBet * currentMultiplier;
+
+                // Обновляем класс и текст в зависимости от текущего множителя
+                if (currentMultiplier >= 10000 && currentClass !== 'max-win') {
+                    currentClass = 'max-win';
+                    currentText = 'MAX WIN';
+                    popup.className = `win-popup ${currentClass}`;
+                    title.textContent = currentText;
+                } else if (currentMultiplier >= 500 && currentClass !== 'epic-win' && currentMultiplier < 10000) {
+                    currentClass = 'epic-win';
+                    currentText = 'EPIC WIN';
+                    popup.className = `win-popup ${currentClass}`;
+                    title.textContent = currentText;
+                } else if (currentMultiplier >= 100 && currentClass !== 'mega-win' && currentMultiplier < 500) {
+                    currentClass = 'mega-win';
+                    currentText = 'MEGA WIN';
+                    popup.className = `win-popup ${currentClass}`;
+                    title.textContent = currentText;
+                }
+
+                // Обновляем отображение
+                multiplierElement.textContent = `${currentMultiplier.toFixed(2)}x`;
+                amountElement.textContent = currentAmount.toFixed(2);
+
+                // Обновляем время последнего обновления
+                lastUpdate = currentTime;
+
+                // Увеличиваем скорость более плавно
+                animationSpeed *= 1.01;
+                updateInterval = Math.max(50, Math.floor(200 / animationSpeed));
             }
-
-            // Обновляем отображение
-            multiplierElement.textContent = `${currentMultiplier.toFixed(2)}x`;
-            amountElement.textContent = currentAmount.toFixed(2);
 
             // Продолжаем анимацию если не достигли целевых значений
             if (currentMultiplier < multiplier) {
-                // Увеличиваем скорость более плавно
-                animationSpeed *= 1.02; // Уменьшили коэффициент до 1.02
-                updateInterval = Math.max(50, Math.floor(200 / animationSpeed)); // Увеличили минимальный интервал до 50
-                setTimeout(updateValues, updateInterval);
+                animationFrame = requestAnimationFrame(animate);
+            } else {
+                // Автоматически закрываем через 15 секунд после окончания анимации
+                setTimeout(() => {
+                    popup.style.display = 'none';
+                }, 15000);
             }
         };
 
         // Запускаем анимацию
-        updateValues();
+        animationFrame = requestAnimationFrame(animate);
 
         // Добавляем обработчик для кнопки закрытия
         const closeButton = popup.querySelector('.close-button');
         const closePopup = () => {
+            cancelAnimationFrame(animationFrame);
             popup.style.display = 'none';
             closeButton.removeEventListener('click', closePopup);
         };
         closeButton.addEventListener('click', closePopup);
 
-        // Автоматически закрываем через 15 секунд после окончания анимации
-        setTimeout(closePopup, 15000); // Увеличили время показа до 15 секунд
+        // Добавляем возможность пропустить анимацию по клику на окно
+        popup.addEventListener('click', (e) => {
+            if (e.target !== closeButton) {
+                cancelAnimationFrame(animationFrame);
+                // Показываем финальные значения
+                popup.className = `win-popup ${finalWinClass}`;
+                title.textContent = finalWinText;
+                multiplierElement.textContent = `${multiplier.toFixed(2)}x`;
+                amountElement.textContent = winAmount.toFixed(2);
+            }
+        });
     }
 
     async animateSpin(finalResult) {
@@ -713,7 +745,7 @@ class SlotMachine {
 
             // Если в линии есть wild, проверяем возможные комбинации
             if (wilds.length > 0) {
-                // Получаем символы, исключая wild и scatter
+                // Получаем символы, исключаем wild и scatter
                 const nonWildSymbols = symbols.filter(symbol =>
                     !this.isWildSymbol(symbol) && symbol !== 'sloth'
                 );
@@ -776,10 +808,6 @@ class SlotMachine {
 
         return winningLines;
     }
-
-
-
-
 
     resizeCanvas() {
         if (!this.ctx || !this.canvas) return;
