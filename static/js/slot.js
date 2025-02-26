@@ -1,19 +1,12 @@
-// Оптимизированный менеджер загрузки
 class LoadingManager {
     constructor() {
-        console.log('LoadingManager: Starting initialization');
         this.loadingScreen = document.getElementById('loadingScreen');
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
 
         if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
-            console.error('LoadingManager: Required elements not found', {
-                loadingScreen: !!this.loadingScreen,
-                loadingBar: !!this.loadingBar,
-                loadingText: !!this.loadingText,
-                gameContent: !!this.gameContent
-            });
+            console.error('LoadingManager: Required elements not found');
             return;
         }
 
@@ -22,84 +15,62 @@ class LoadingManager {
         this.loadedAssets = 0;
         this.imageCache = new Map();
 
-        // Инициализация начального состояния
+        // Начальное состояние
         this.initializeLoadingScreen();
     }
 
     initializeLoadingScreen() {
-        console.log('LoadingManager: Initializing loading screen');
-        this.loadingScreen.style.transition = 'opacity 0.5s ease-in-out';
-        this.gameContent.style.transition = 'opacity 0.5s ease-in-out';
-        this.loadingBar.style.transition = 'width 0.3s ease-out';
-
-        this.gameContent.style.opacity = '0';
+        // Скрываем игровой контент
         this.gameContent.style.display = 'none';
-        this.loadingScreen.style.opacity = '1';
+        // Показываем экран загрузки
         this.loadingScreen.style.display = 'flex';
         this.updateProgress(0);
     }
 
     updateProgress(progress) {
         if (!this.loadingBar || !this.loadingText) return;
-
         progress = Math.min(100, Math.max(0, progress));
         this.loadingBar.style.width = `${progress}%`;
         this.loadingText.textContent = `${Math.round(progress)}%`;
-        console.log(`LoadingManager: Progress ${progress}%`);
     }
 
     onAssetLoaded() {
         this.loadedAssets++;
         const progress = (this.loadedAssets / this.totalAssets) * 100;
-        console.log(`LoadingManager: Asset loaded ${this.loadedAssets}/${this.totalAssets}`);
         this.updateProgress(progress);
 
         if (this.loadedAssets >= this.totalAssets) {
-            console.log('LoadingManager: All assets loaded');
             this.showGameContent();
         }
     }
 
     showGameContent() {
-        console.log('LoadingManager: Showing game content');
-        this.loadingScreen.style.opacity = '0';
         setTimeout(() => {
             this.loadingScreen.style.display = 'none';
             this.gameContent.style.display = 'block';
-            requestAnimationFrame(() => {
-                this.gameContent.style.opacity = '1';
-            });
         }, 500);
     }
 
     async loadImage(path) {
         try {
-            console.log(`LoadingManager: Loading image ${path}`);
-
             if (this.imageCache.has(path)) {
-                console.log(`LoadingManager: Image found in cache ${path}`);
                 return this.imageCache.get(path);
             }
 
             const img = await new Promise((resolve, reject) => {
                 const image = new Image();
                 image.onload = () => {
-                    console.log(`LoadingManager: Image loaded successfully ${path}`);
+                    this.imageCache.set(path, img);
+                    this.onAssetLoaded();
                     resolve(image);
                 };
-                image.onerror = () => {
-                    console.error(`LoadingManager: Failed to load image ${path}`);
-                    reject(new Error(`Failed to load image: ${path}`));
-                };
+                image.onerror = () => reject(new Error(`Failed to load image: ${path}`));
                 image.src = path;
             });
 
-            this.imageCache.set(path, img);
-            this.onAssetLoaded();
             return img;
-
         } catch (error) {
-            console.error(`LoadingManager: Error loading image ${path}`, error);
+            console.error(`Error loading image: ${path}`, error);
             throw error;
         }
     }
@@ -107,21 +78,12 @@ class LoadingManager {
 
 class SlotMachine {
     constructor() {
-        console.log('SlotMachine: Starting initialization');
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.initialize());
-        } else {
-            this.initialize();
-        }
+        this.loadingManager = new LoadingManager();
+        this.initialize();
     }
 
     async initialize() {
         try {
-            console.log('SlotMachine: Initializing...');
-
-            // Создаем загрузчик
-            this.loadingManager = new LoadingManager();
-
             // Базовая инициализация
             this.SYMBOL_SIZE = 60;
             this.SYMBOL_PADDING = 3;
@@ -129,7 +91,7 @@ class SlotMachine {
             this.spinning = false;
             this.currentBet = 10;
 
-            // Определяем символы и их пути (исправленные пути)
+            // Определение символов
             this.symbolDefinitions = {
                 '10': { value: 5, path: '/static/images/symbols/pic1.png', multipliers: {3: 5, 4: 10, 5: 20} },
                 'J': { value: 5, path: '/static/images/symbols/pic2.png', multipliers: {3: 5, 4: 10, 5: 20} },
@@ -154,44 +116,37 @@ class SlotMachine {
             this.ctx = this.canvas.getContext('2d');
             this.ctx.imageSmoothingEnabled = false;
 
-            // Установка количества ассетов
+            // Установка количества ассетов для загрузки
             this.loadingManager.totalAssets = Object.keys(this.symbolDefinitions).length;
-            console.log(`SlotMachine: Set total assets to ${this.loadingManager.totalAssets}`);
 
-            // Загрузка изображений
+            // Инициализация барабанов
+            this.reels = Array(5).fill().map(() => Array(3).fill('10'));
+
+            // Загрузка изображений и инициализация игры
             await this.loadSymbols();
-
-            // Инициализация игры
-            this.initializeGame();
+            this.initPaylines();
             this.initializeEventListeners();
+            this.resizeCanvas();
             this.draw();
 
-            console.log('SlotMachine: Initialization complete');
         } catch (error) {
-            console.error('SlotMachine: Failed to initialize:', error);
+            console.error('Failed to initialize slot:', error);
         }
     }
 
     async loadSymbols() {
-        const loadPromises = Object.entries(this.symbolDefinitions).map(async ([symbol, def]) => {
+        for (const [symbol, def] of Object.entries(this.symbolDefinitions)) {
             try {
                 const img = await this.loadingManager.loadImage(def.path);
                 this.symbolImages.set(symbol, img);
-                console.log(`Loaded symbol: ${symbol}`);
             } catch (error) {
                 console.error(`Failed to load symbol ${symbol}:`, error);
                 this.createFallbackSymbol(symbol);
             }
-        });
-
-        await Promise.all(loadPromises);
+        }
     }
 
-    initializeGame() {
-        // Инициализация барабанов
-        this.reels = Array(5).fill().map(() => Array(3).fill('10'));
-
-        // Линии выплат
+    initPaylines() {
         this.paylines = [
             [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}],
             [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}],
@@ -199,14 +154,25 @@ class SlotMachine {
             [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}],
             [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}]
         ];
+    }
 
-        // Настройка размеров
-        this.resizeCanvas();
+    createFallbackSymbol(symbol) {
+        const canvas = document.createElement('canvas');
+        canvas.width = this.SYMBOL_SIZE;
+        canvas.height = this.SYMBOL_SIZE;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(0, 0, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(symbol, this.SYMBOL_SIZE / 2, this.SYMBOL_SIZE / 2);
+        this.symbolImages.set(symbol, canvas);
+        this.loadingManager.onAssetLoaded();
     }
 
     resizeCanvas() {
-        if (!this.canvas) return;
-
         const numReels = 5;
         const numRows = 3;
         const horizontalPadding = this.SYMBOL_PADDING * 6;
@@ -214,6 +180,33 @@ class SlotMachine {
 
         this.canvas.width = (this.SYMBOL_SIZE * numReels) + horizontalPadding;
         this.canvas.height = (this.SYMBOL_SIZE * numRows) + verticalPadding;
+    }
+
+    draw() {
+        if (!this.ctx || !this.canvas) return;
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        const totalWidth = this.canvas.width;
+        const totalHeight = this.canvas.height;
+        const symbolWidth = this.SYMBOL_SIZE;
+        const symbolHeight = this.SYMBOL_SIZE;
+
+        const horizontalGap = (totalWidth - (5 * symbolWidth)) / 6;
+        const verticalGap = (totalHeight - (3 * symbolHeight)) / 4;
+
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 3; j++) {
+                const symbol = this.reels[i][j];
+                const x = horizontalGap + i * (symbolWidth + horizontalGap);
+                const y = verticalGap + j * (symbolHeight + verticalGap);
+
+                const img = this.symbolImages.get(symbol);
+                if (img) {
+                    this.ctx.drawImage(img, x, y, symbolWidth, symbolHeight);
+                }
+            }
+        }
     }
 
     initializeEventListeners() {
@@ -231,48 +224,19 @@ class SlotMachine {
         if (decreaseBet) {
             decreaseBet.addEventListener('click', () => this.adjustBet(-1));
         }
-
-        // Оптимизация ресайза
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            if (resizeTimeout) {
-                clearTimeout(resizeTimeout);
-            }
-            resizeTimeout = setTimeout(() => {
-                this.resizeCanvas();
-                this.draw();
-            }, 250);
-        });
     }
 
-    draw() {
-        if (!this.ctx || !this.canvas) return;
+    adjustBet(amount) {
+        const betValues = [10, 20, 30, 40, 50, 100, 200, 300, 400, 500, 1000];
+        const currentIndex = betValues.indexOf(this.currentBet);
+        const newIndex = amount > 0
+            ? Math.min(currentIndex + 1, betValues.length - 1)
+            : Math.max(currentIndex - 1, 0);
 
-        // Очистка canvas
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        const totalWidth = this.canvas.width;
-        const totalHeight = this.canvas.height;
-        const symbolWidth = this.SYMBOL_SIZE;
-        const symbolHeight = this.SYMBOL_SIZE;
-
-        const horizontalGap = (totalWidth - (5 * symbolWidth)) / 6;
-        const verticalGap = (totalHeight - (3 * symbolHeight)) / 4;
-
-        // Оптимизированная отрисовка символов
-        for (let i = 0; i < 5; i++) {
-            for (let j = 0; j < 3; j++) {
-                const symbol = this.reels[i][j];
-                const x = horizontalGap + i * (symbolWidth + horizontalGap);
-                const y = verticalGap + j * (symbolHeight + verticalGap);
-
-                const img = this.symbolImages.get(symbol);
-                if (img) {
-                    this.ctx.drawImage(img, x, y, symbolWidth, symbolHeight);
-                } else {
-                    this.drawFallbackSymbol(symbol, x, y);
-                }
-            }
+        this.currentBet = betValues[newIndex];
+        const currentBetElement = document.getElementById('currentBet');
+        if (currentBetElement) {
+            currentBetElement.textContent = this.currentBet.toFixed(2);
         }
     }
 
@@ -364,19 +328,6 @@ class SlotMachine {
         }
     }
 
-    adjustBet(amount) {
-        const betValues = [10, 20, 30, 40, 50, 100, 200, 300, 400, 500, 1000];
-        const currentIndex = betValues.indexOf(this.currentBet);
-        const newIndex = amount > 0
-            ? Math.min(currentIndex + 1, betValues.length - 1)
-            : Math.max(currentIndex - 1, 0);
-
-        this.currentBet = betValues[newIndex];
-        const currentBetElement = document.getElementById('currentBet');
-        if (currentBetElement) {
-            currentBetElement.textContent = this.currentBet.toFixed(2);
-        }
-    }
 
     showWinningLine(linePositions) {
         const container = document.getElementById('paylineContainer');
@@ -666,21 +617,7 @@ class SlotMachine {
         return symbolMap[symbol] || symbol;
     }
 
-    createFallbackSymbol(symbol) {
-        const canvas = document.createElement('canvas');
-        canvas.width = this.SYMBOL_SIZE;
-        canvas.height = this.SYMBOL_SIZE;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#333333';
-        ctx.fillRect(0, 0, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `${this.SYMBOL_SIZE * 0.3}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(this.getSymbolDisplay(symbol), this.SYMBOL_SIZE / 2, this.SYMBOL_SIZE / 2);
-        this.symbolImages.set(symbol, canvas);
-    }
-
+    
     symbolDefinitions = {
         'wild': { isWild: true, multiplier: 2 }
     };
