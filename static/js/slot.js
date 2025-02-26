@@ -247,41 +247,66 @@ class SlotMachine {
     }
 
     async animateSpin(finalResult) {
-        const steps = 20;
-        const stepDelay = 50;
+        const steps = 30; // Увеличиваем количество шагов для более плавной анимации
+        const baseStepDelay = 50;
+        const bounceSteps = 3;
 
-        for (let step = 0; step < steps; step++) {
+        // Массив для хранения позиций каждого барабана
+        const reelPositions = Array(5).fill(0);
+        const reelSpeeds = Array(5).fill(1);
+        const stopOrder = [0, 1, 2, 3, 4]; // Порядок остановки барабанов
+
+        for (let step = 0; step < steps + stopOrder.length * bounceSteps; step++) {
             for (let i = 0; i < 5; i++) {
-                // Skip animation for reels 1 and 5
-                if (i === 0 || i === 4) {
-                    if (step === steps - 1) {
-                        this.reels[i] = finalResult[i];
-                    }
-                    continue;
-                }
+                // Определяем, должен ли барабан все еще вращаться
+                const shouldSpin = step < steps - stopOrder.indexOf(i) * bounceSteps;
 
-                if (step < i * 2) continue;
+                if (shouldSpin) {
+                    // Обновляем позицию барабана
+                    reelPositions[i] += reelSpeeds[i];
 
-                if (step < steps - 1) {
+                    // Генерируем символы для вращения
                     for (let j = 0; j < 3; j++) {
-                        // Only add wild symbols to reels 2, 3, and 4
                         if (i >= 1 && i <= 3 && Math.random() < 0.20) {
+                            // Wild символы только для барабанов 2,3,4
                             const wildSymbols = ['wild_2x', 'wild_3x', 'wild_5x'];
                             this.reels[i][j] = wildSymbols[Math.floor(Math.random() * wildSymbols.length)];
                         } else {
-                            const regularSymbols = ['wooden_a', 'wooden_k', 'wooden_arch', 'snake', 'gorilla', 'jaguar',
-                                                  'crocodile', 'gator', 'leopard', 'dragon', 'sloth'];
+                            const regularSymbols = ['wooden_a', 'wooden_k', 'wooden_arch', 'snake',
+                                                  'gorilla', 'jaguar', 'crocodile', 'gator',
+                                                  'leopard', 'dragon', 'sloth'];
                             this.reels[i][j] = regularSymbols[Math.floor(Math.random() * regularSymbols.length)];
                         }
                     }
-                } else {
-                    this.reels[i] = finalResult[i];
+                } else if (step >= steps - stopOrder.indexOf(i) * bounceSteps && step < steps - stopOrder.indexOf(i) * bounceSteps + bounceSteps) {
+                    // Эффект bounce при остановке
+                    let bounceIndex = step - (steps - stopOrder.indexOf(i) * bounceSteps);
+                    if (bounceIndex % 2 === 0) {
+                        this.reels[i] = finalResult[i];
+                    } else {
+                        const tempSymbols = [...this.reels[i]];
+                        //Slight variation for bounce effect
+                        let tempReel = [...finalResult[i]];
+                        if (tempReel.length > 0) {
+                            let randomIndex = Math.floor(Math.random() * tempReel.length);
+                            let randomSymbol = regularSymbols[Math.floor(Math.random() * regularSymbols.length)];
+                            tempReel[randomIndex] = randomSymbol;
+                            this.reels[i] = tempReel;
+                        }
+                    }
+                    this.draw();
+                    await new Promise(resolve => setTimeout(resolve, baseStepDelay / 2));
                 }
             }
 
+            // Отрисовываем текущее состояние
             this.draw();
-            await new Promise(resolve => setTimeout(resolve, stepDelay));
+
+            // Динамическая задержка - быстрее в начале, медленнее к концу
+            const currentDelay = baseStepDelay + (step / (steps + stopOrder.length * bounceSteps)) * baseStepDelay;
+            await new Promise(resolve => setTimeout(resolve, currentDelay));
         }
+        this.reels = finalResult;
     }
 
     isWildSymbol(symbol) {
