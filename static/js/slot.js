@@ -25,33 +25,68 @@ class LoadingManager {
         console.log(`LoadingManager: Progress ${progress}%`);
         this.loadingBar.style.width = `${progress}%`;
         this.loadingText.textContent = `${Math.round(progress)}%`;
+
+        if (progress >= 100) {
+            setTimeout(() => {
+                this.loadingScreen.style.display = 'none';
+                this.gameContent.style.display = 'block';
+            }, 500);
+        }
     }
 
     onAssetLoaded() {
         this.loadedAssets++;
         const progress = (this.loadedAssets / this.totalAssets) * 100;
-        console.log(`LoadingManager: Asset loaded ${this.loadedAssets}/${this.totalAssets}`);
         this.updateProgress(progress);
-
-        if (this.loadedAssets >= this.totalAssets) {
-            this.loadingScreen.style.display = 'none';
-            this.gameContent.style.display = 'block';
-        }
     }
 
-    loadImage(path) {
-        return new Promise((resolve, reject) => {
+    createFallbackSymbol(symbolName) {
+        console.log(`LoadingManager: Creating fallback for ${symbolName}`);
+        const canvas = document.createElement('canvas');
+        canvas.width = 60;
+        canvas.height = 60;
+        const ctx = canvas.getContext('2d');
+
+        // Создаем градиентный фон
+        const gradient = ctx.createLinearGradient(0, 0, 60, 60);
+        gradient.addColorStop(0, '#2a2a2a');
+        gradient.addColorStop(1, '#1a1a1a');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 60, 60);
+
+        // Добавляем рамку
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(2, 2, 56, 56);
+
+        // Добавляем текст
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(symbolName, 30, 30);
+
+        const img = new Image();
+        img.src = canvas.toDataURL();
+        return img;
+    }
+
+    loadImage(path, symbolName) {
+        return new Promise((resolve) => {
             console.log(`LoadingManager: Starting to load ${path}`);
             const img = new Image();
             img.onload = () => {
                 console.log(`LoadingManager: Successfully loaded ${path}`);
-                this.imageCache.set(path, img);
+                this.imageCache.set(symbolName, img);
                 this.onAssetLoaded();
                 resolve(img);
             };
-            img.onerror = (error) => {
-                console.error(`LoadingManager: Failed to load ${path}`, error);
-                reject(new Error(`Failed to load image: ${path}`));
+            img.onerror = () => {
+                console.log(`LoadingManager: Failed to load ${path}, creating fallback`);
+                const fallbackImg = this.createFallbackSymbol(symbolName);
+                this.imageCache.set(symbolName, fallbackImg);
+                this.onAssetLoaded();
+                resolve(fallbackImg);
             };
             img.src = path;
         });
@@ -73,13 +108,11 @@ class SlotMachine {
             this.spinning = false;
             this.currentBet = 10;
 
-            // Initialize canvas
-            this.canvas = document.getElementById('slotCanvas');
+            // Initialize game field
             this.gameField = document.querySelector('.game-field-wrapper');
-            if (!this.canvas || !this.gameField) {
-                throw new Error('Required elements not found');
+            if (!this.gameField) {
+                throw new Error('Game field not found');
             }
-            this.ctx = this.canvas.getContext('2d');
 
             // Initialize LoadingManager
             this.loadingManager = new LoadingManager();
@@ -117,12 +150,12 @@ class SlotMachine {
             for (const symbol of symbols) {
                 try {
                     console.log(`SlotMachine: Loading symbol ${symbol.name} from ${symbol.path}`);
-                    const img = await this.loadingManager.loadImage(symbol.path);
+                    const img = await this.loadingManager.loadImage(symbol.path, symbol.name);
                     this.symbolImages.set(symbol.name, img);
                     console.log(`SlotMachine: Successfully loaded ${symbol.name}`);
                 } catch (error) {
                     console.error(`SlotMachine: Failed to load ${symbol.name}:`, error);
-                    this.createFallbackSymbol(symbol.name);
+                    // Fallback already handled in LoadingManager
                 }
             }
 
@@ -132,7 +165,6 @@ class SlotMachine {
             // Initialize game components
             this.initPaylines();
             this.initializeEventListeners();
-            this.resizeCanvas();
             this.draw();
 
             console.log('SlotMachine: Initialization complete');
@@ -141,8 +173,8 @@ class SlotMachine {
         }
     }
 
-    createFallbackSymbol(symbol) {
-        console.log(`SlotMachine: Creating fallback for ${symbol}`);
+    createFallbackSymbol(symbolName) {
+        console.log(`SlotMachine: Creating fallback for ${symbolName}`);
         const canvas = document.createElement('canvas');
         canvas.width = this.SYMBOL_SIZE;
         canvas.height = this.SYMBOL_SIZE;
@@ -154,54 +186,14 @@ class SlotMachine {
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(symbol, this.SYMBOL_SIZE / 2, this.SYMBOL_SIZE / 2);
+        ctx.fillText(symbolName, this.SYMBOL_SIZE / 2, this.SYMBOL_SIZE / 2);
 
         const img = new Image();
         img.src = canvas.toDataURL();
-        this.symbolImages.set(symbol, img);
-        this.loadingManager.onAssetLoaded();
-    }
-
-    initPaylines() {
-        this.paylines = [
-            // Горизонтальные линии (1-3)
-            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // Линия 1 - центр
-            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // Линия 2 - верх
-            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // Линия 3 - низ
-
-            // V-образные линии (4-8)
-            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // Линия 4
-            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}], // Линия 5
-            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 0}], // Линия 6
-            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 2}], // Линия 7
-            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 1}], // Линия 8
-
-            // Зигзагообразные линии (9-13)
-            [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 1}], // Линия 9
-            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}], // Линия 10
-            [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 1}], // Линия 11
-            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 0}], // Линия 12
-            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 2}], // Линия 13
-
-            // Сложные паттерны (14-20)
-            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 0}], // Линия 14
-            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 2}], // Линия 15
-            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 1}], // Линия 16
-            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 1}], // Линия 17
-            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 2}, {x: 3, y: 0}, {x: 4, y: 0}], // Линия 18
-            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 0}, {x: 3, y: 2}, {x: 4, y: 2}], // Линия 19
-            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}]  // Линия 20
-        ];
-    }
-
-    resizeCanvas() {
-        this.canvas.width = (this.SYMBOL_SIZE * 5) + (this.SYMBOL_PADDING * 6);
-        this.canvas.height = (this.SYMBOL_SIZE * 3) + (this.SYMBOL_PADDING * 4);
+        return img;
     }
 
     draw() {
-        if (!this.ctx || !this.canvas) return;
-
         // Очищаем предыдущие символы
         const existingSymbols = this.gameField.querySelectorAll('.symbol');
         existingSymbols.forEach(symbol => symbol.remove());
@@ -239,6 +231,43 @@ class SlotMachine {
             }
         }
     }
+
+    initPaylines() {
+        this.paylines = [
+            // Горизонтальные линии (1-3)
+            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // Линия 1 - центр
+            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // Линия 2 - верх
+            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // Линия 3 - низ
+
+            // V-образные линии (4-8)
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // Линия 4
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}], // Линия 5
+            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 0}], // Линия 6
+            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 2}], // Линия 7
+            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 1}], // Линия 8
+
+            // Зигзагообразные линии (9-13)
+            [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 1}], // Линия 9
+            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}], // Линия 10
+            [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 1}], // Линия 11
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 0}], // Линия 12
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 2}], // Линия 13
+
+            // Сложные паттерны (14-20)
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 0}], // Линия 14
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 2}], // Линия 15
+            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 1}], // Линия 16
+            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 1}], // Линия 17
+            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 2}, {x: 3, y: 0}, {x: 4, y: 0}], // Линия 18
+            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 0}, {x: 3, y: 2}, {x: 4, y: 2}], // Линия 19
+            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}]  // Линия 20
+        ];
+    }
+
+    resizeCanvas() {
+        // Removed - canvas is no longer used
+    }
+
 
     initializeEventListeners() {
         const spinButton = document.getElementById('spinButton');
