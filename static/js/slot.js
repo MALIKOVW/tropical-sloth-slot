@@ -236,10 +236,14 @@ class SlotMachine {
         // Check for wins
         const winningLines = this.checkWinningLines();
         if (winningLines.length > 0) {
+            let totalWinAmount = 0;
             for (const line of winningLines) {
+                const winAmount = this.calculateWinAmount(line);
+                totalWinAmount += winAmount;
                 this.showWinningLine(line.positions);
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
+            this.showWinPopup(totalWinAmount);
         }
 
         if (spinButton) spinButton.disabled = false;
@@ -331,17 +335,18 @@ class SlotMachine {
 
         container.innerHTML = '';
 
-        const cellSize = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
+        const cellSize = this.SYMBOL_SIZE + this.SYMBOL_PADDING * 2;
         const startPos = positions[0];
         const endPos = positions[positions.length - 1];
+
+        // Create payline
+        const line = document.createElement('div');
+        line.className = 'payline active';
 
         const startX = startPos.x * cellSize + cellSize / 2;
         const startY = startPos.y * cellSize + cellSize / 2;
         const endX = endPos.x * cellSize + cellSize / 2;
         const endY = endPos.y * cellSize + cellSize / 2;
-
-        const line = document.createElement('div');
-        line.className = 'payline active';
 
         const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
         const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
@@ -353,6 +358,7 @@ class SlotMachine {
 
         container.appendChild(line);
 
+        // Animate winning symbols
         positions.forEach(pos => {
             const x = pos.x * cellSize;
             const y = pos.y * cellSize;
@@ -363,6 +369,9 @@ class SlotMachine {
             if (img) {
                 const symbol = document.createElement('div');
                 symbol.className = 'winning-symbol active';
+                if (this.isWildSymbol(symbolKey)) {
+                    symbol.classList.add('wild');
+                }
                 symbol.style.left = `${x}px`;
                 symbol.style.top = `${y}px`;
 
@@ -374,9 +383,30 @@ class SlotMachine {
             }
         });
 
+        // Clear animations after delay
         setTimeout(() => {
             container.innerHTML = '';
         }, 2000);
+    }
+
+    calculateWinAmount(line) {
+        const symbolValues = {
+            'wooden_a': 2,
+            'wooden_k': 3,
+            'wooden_arch': 4,
+            'snake': 5,
+            'gorilla': 6,
+            'jaguar': 8,
+            'crocodile': 10,
+            'gator': 15,
+            'leopard': 20,
+            'dragon': 50
+        };
+
+        const base_value = symbolValues[line.symbol] || 0;
+        const line_win = this.currentBet * base_value * line.multiplier;
+
+        return line_win;
     }
 
     checkWinningLines() {
@@ -391,12 +421,14 @@ class SlotMachine {
 
             let consecutiveCount = 1;
             let multiplier = 1;
+            let wildCount = 0;
 
             for (let i = 1; i < symbols.length; i++) {
                 const currentSymbol = symbols[i];
                 if (currentSymbol === firstSymbol || this.isWildSymbol(currentSymbol)) {
                     consecutiveCount++;
                     if (this.isWildSymbol(currentSymbol)) {
+                        wildCount++;
                         multiplier *= this.getWildMultiplier(currentSymbol);
                     }
                 } else {
@@ -404,23 +436,22 @@ class SlotMachine {
                 }
             }
 
+            // Проверяем выигрышную комбинацию
             if (consecutiveCount >= 3) {
                 winningLines.push({
                     lineIndex: index,
                     positions: line.slice(0, consecutiveCount),
                     symbol: firstSymbol,
                     count: consecutiveCount,
-                    multiplier: multiplier
+                    multiplier: multiplier,
+                    wildCount: wildCount
                 });
             }
         });
 
         return winningLines;
     }
-    calculateWinAmount(line) {
-        // Placeholder -  Needs implementation based on symbol definitions
-        return line.multiplier * this.currentBet * line.count;
-    }
+
     showWinPopup(winAmount) {
         const popup = document.getElementById('winPopup');
         const multiplierElement = popup.querySelector('.win-multiplier');
