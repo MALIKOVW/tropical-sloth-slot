@@ -25,28 +25,27 @@ class LoadingManager {
         console.log(`LoadingManager: Progress ${progress}%`);
         this.loadingBar.style.width = `${progress}%`;
         this.loadingText.textContent = `${Math.round(progress)}%`;
-
-        if (progress >= 100) {
-            setTimeout(() => {
-                this.loadingScreen.style.display = 'none';
-                this.gameContent.style.display = 'block';
-            }, 500);
-        }
     }
 
     onAssetLoaded() {
         this.loadedAssets++;
         const progress = (this.loadedAssets / this.totalAssets) * 100;
+        console.log(`LoadingManager: Asset loaded ${this.loadedAssets}/${this.totalAssets}`);
         this.updateProgress(progress);
+
+        if (this.loadedAssets >= this.totalAssets) {
+            this.loadingScreen.style.display = 'none';
+            this.gameContent.style.display = 'block';
+        }
     }
 
-    loadImage(path, symbolName) {
+    loadImage(path) {
         return new Promise((resolve, reject) => {
             console.log(`LoadingManager: Starting to load ${path}`);
             const img = new Image();
             img.onload = () => {
                 console.log(`LoadingManager: Successfully loaded ${path}`);
-                this.imageCache.set(symbolName, img);
+                this.imageCache.set(path, img);
                 this.onAssetLoaded();
                 resolve(img);
             };
@@ -74,21 +73,20 @@ class SlotMachine {
             this.spinning = false;
             this.currentBet = 10;
 
-            // Initialize game field
-            this.gameField = document.querySelector('.game-field-wrapper');
-            if (!this.gameField) {
-                throw new Error('Game field not found');
+            // Initialize canvas
+            this.canvas = document.getElementById('slotCanvas');
+            if (!this.canvas) {
+                throw new Error('Canvas not found');
             }
+            this.ctx = this.canvas.getContext('2d');
+            this.ctx.imageSmoothingEnabled = false;
 
             // Initialize LoadingManager
             this.loadingManager = new LoadingManager();
 
             // Define available symbols with actual paths
             const symbols = [
-                // Basic symbols (от низких к высоким)
-                { name: '10', path: '/static/images/symbols/10.png' },
-                { name: 'J', path: '/static/images/symbols/J.png' },
-                { name: 'Q', path: '/static/images/symbols/Q.png' },
+                // Basic symbols
                 { name: 'wooden_a', path: '/static/images/symbols/wooden_a.png' },
                 { name: 'wooden_k', path: '/static/images/symbols/wooden_k.png' },
                 { name: 'wooden_arch', path: '/static/images/symbols/wooden_arch.png' },
@@ -111,25 +109,28 @@ class SlotMachine {
 
             // Set total assets
             this.loadingManager.totalAssets = symbols.length;
+            console.log(`SlotMachine: Will load ${symbols.length} symbols`);
 
             // Load all symbols
             for (const symbol of symbols) {
                 try {
                     console.log(`SlotMachine: Loading symbol ${symbol.name} from ${symbol.path}`);
-                    const img = await this.loadingManager.loadImage(symbol.path, symbol.name);
+                    const img = await this.loadingManager.loadImage(symbol.path);
                     this.symbolImages.set(symbol.name, img);
                     console.log(`SlotMachine: Successfully loaded ${symbol.name}`);
                 } catch (error) {
                     console.error(`SlotMachine: Failed to load ${symbol.name}:`, error);
+                    this.createFallbackSymbol(symbol.name);
                 }
             }
 
             // Initialize reels with default symbol
-            this.reels = Array(5).fill().map(() => Array(3).fill('10'));
+            this.reels = Array(5).fill().map(() => Array(3).fill('wooden_a'));
 
             // Initialize game components
             this.initPaylines();
             this.initializeEventListeners();
+            this.resizeCanvas();
             this.draw();
 
             console.log('SlotMachine: Initialization complete');
@@ -138,43 +139,25 @@ class SlotMachine {
         }
     }
 
-    draw() {
-        // Очищаем предыдущие символы
-        const existingSymbols = this.gameField.querySelectorAll('.symbol');
-        existingSymbols.forEach(symbol => symbol.remove());
+    createFallbackSymbol(symbol) {
+        console.log(`SlotMachine: Creating fallback for ${symbol}`);
+        const canvas = document.createElement('canvas');
+        canvas.width = this.SYMBOL_SIZE;
+        canvas.height = this.SYMBOL_SIZE;
+        const ctx = canvas.getContext('2d');
 
-        const cellSize = this.SYMBOL_SIZE + this.SYMBOL_PADDING * 2;
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(0, 0, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(symbol, this.SYMBOL_SIZE / 2, this.SYMBOL_SIZE / 2);
 
-        for (let i = 0; i < 5; i++) {
-            for (let j = 0; j < 3; j++) {
-                const symbol = this.reels[i][j];
-                const x = this.SYMBOL_PADDING + i * cellSize;
-                const y = this.SYMBOL_PADDING + j * cellSize;
-
-                const img = this.symbolImages.get(symbol);
-                if (img) {
-                    // Создаем контейнер для символа
-                    const symbolContainer = document.createElement('div');
-                    symbolContainer.className = 'symbol';
-                    symbolContainer.dataset.position = `${i}-${j}`;
-                    symbolContainer.style.position = 'absolute';
-                    symbolContainer.style.left = `${x}px`;
-                    symbolContainer.style.top = `${y}px`;
-                    symbolContainer.style.width = `${this.SYMBOL_SIZE}px`;
-                    symbolContainer.style.height = `${this.SYMBOL_SIZE}px`;
-
-                    // Создаем изображение символа
-                    const symbolImg = document.createElement('img');
-                    symbolImg.src = img.src;
-                    symbolImg.style.width = '100%';
-                    symbolImg.style.height = '100%';
-                    symbolImg.style.objectFit = 'contain';
-
-                    symbolContainer.appendChild(symbolImg);
-                    this.gameField.appendChild(symbolContainer);
-                }
-            }
-        }
+        const img = new Image();
+        img.src = canvas.toDataURL();
+        this.symbolImages.set(symbol, img);
+        this.loadingManager.onAssetLoaded();
     }
 
     initPaylines() {
@@ -209,11 +192,30 @@ class SlotMachine {
         ];
     }
 
-
     resizeCanvas() {
-        // Removed - canvas is no longer used
+        this.canvas.width = (this.SYMBOL_SIZE * 5) + (this.SYMBOL_PADDING * 6);
+        this.canvas.height = (this.SYMBOL_SIZE * 3) + (this.SYMBOL_PADDING * 4);
     }
 
+    draw() {
+        if (!this.ctx || !this.canvas) return;
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 3; j++) {
+                const symbol = this.reels[i][j];
+                const x = this.SYMBOL_PADDING + i * (this.SYMBOL_SIZE + this.SYMBOL_PADDING);
+                const y = this.SYMBOL_PADDING + j * (this.SYMBOL_SIZE + this.SYMBOL_PADDING);
+
+                const img = this.symbolImages.get(symbol);
+                if (img) {
+                    this.ctx.drawImage(img, x, y, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
+                } else {
+                    console.error(`Missing image for symbol: ${symbol}`);
+                }
+            }
+        }
+    }
 
     initializeEventListeners() {
         const spinButton = document.getElementById('spinButton');
@@ -230,7 +232,7 @@ class SlotMachine {
         if (spinButton) spinButton.disabled = true;
 
         // Get available symbols
-        const regularSymbols = ['10', 'J', 'Q', 'wooden_a', 'wooden_k', 'wooden_arch', 'snake', 'gorilla', 'jaguar',
+        const regularSymbols = ['wooden_a', 'wooden_k', 'wooden_arch', 'snake', 'gorilla', 'jaguar',
                                'crocodile', 'gator', 'leopard', 'dragon', 'sloth'];
         const wildSymbols = ['wild_2x', 'wild_3x', 'wild_5x'];
 
@@ -276,7 +278,7 @@ class SlotMachine {
         const bounceSteps = 3;
 
         // Определяем массивы символов
-        const regularSymbols = ['10', 'J', 'Q', 'wooden_a', 'wooden_k', 'wooden_arch', 'snake',
+        const regularSymbols = ['wooden_a', 'wooden_k', 'wooden_arch', 'snake',
                               'gorilla', 'jaguar', 'crocodile', 'gator',
                               'leopard', 'dragon', 'sloth'];
         const wildSymbols = ['wild_2x', 'wild_3x', 'wild_5x'];
@@ -305,7 +307,7 @@ class SlotMachine {
                         }
                     }
                 } else if (step >= steps - stopOrder.indexOf(i) * bounceSteps && 
-                           step < steps - stopOrder.indexOf(i) * bounceSteps + bounceSteps) {
+                          step < steps - stopOrder.indexOf(i) * bounceSteps + bounceSteps) {
                     // Эффект bounce при остановке
                     let bounceIndex = step - (steps - stopOrder.indexOf(i) * bounceSteps);
                     if (bounceIndex % 2 === 0) {
@@ -352,42 +354,65 @@ class SlotMachine {
     showWinningLine(positions) {
         if (!positions || !positions.length) return;
 
+        const container = document.getElementById('paylineContainer');
+        if (!container) return;
+
+        container.innerHTML = '';
+
         try {
+            const cellSize = this.SYMBOL_SIZE + this.SYMBOL_PADDING * 2;
+
             // Анимация символов
             positions.forEach(pos => {
-                const symbolElement = document.querySelector(`.symbol[data-position="${pos.x}-${pos.y}"]`);
-                if (symbolElement) {
-                    const symbolKey = this.reels[pos.x][pos.y];
-                    symbolElement.classList.add('winning-symbol');
+                if (!this.reels[pos.x] || !this.reels[pos.x][pos.y]) return;
+
+                const x = pos.x * cellSize;
+                const y = pos.y * cellSize;
+                const symbolKey = this.reels[pos.x][pos.y];
+                const img = this.symbolImages.get(symbolKey);
+
+                if (img) {
+                    const symbol = document.createElement('div');
+                    symbol.className = 'winning-symbol';
                     if (this.isWildSymbol(symbolKey)) {
-                        symbolElement.classList.add('wild');
+                        symbol.classList.add('wild');
                     }
+                    symbol.style.left = `${x}px`;
+                    symbol.style.top = `${y}px`;
+                    symbol.style.width = `${this.SYMBOL_SIZE}px`;
+                    symbol.style.height = `${this.SYMBOL_SIZE}px`;
+
+                    const symbolImg = document.createElement('img');
+                    symbolImg.src = img.src;
+                    symbolImg.style.width = '100%';
+                    symbolImg.style.height = '100%';
+                    symbolImg.style.objectFit = 'contain';
+                    symbol.appendChild(symbolImg);
+
+                    container.appendChild(symbol);
+
+                    // Активируем анимацию с небольшой задержкой
+                    requestAnimationFrame(() => {
+                        symbol.classList.add('active');
+                    });
                 }
             });
 
             // Очистка анимаций через 2 секунды
             setTimeout(() => {
-                const symbols = document.querySelectorAll('.symbol');
-                symbols.forEach(symbol => {
-                    symbol.classList.remove('winning-symbol', 'wild');
-                });
+                container.innerHTML = '';
             }, 2000);
         } catch (error) {
             console.error('Error showing winning symbols:', error);
+            container.innerHTML = '';
         }
     }
 
     calculateWinAmount(line) {
         const symbolValues = {
-            // Базовые символы
-            '10': 1,
-            'J': 1.5,
-            'Q': 1.8,
             'wooden_a': 2,
             'wooden_k': 3,
             'wooden_arch': 4,
-
-            // Средние символы
             'snake': 5,
             'gorilla': 6,
             'jaguar': 8,
