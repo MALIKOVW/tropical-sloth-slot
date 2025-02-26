@@ -5,13 +5,6 @@ class LoadingManager {
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
 
-        console.log('LoadingManager: Initializing with DOM elements', {
-            loadingScreen: !!this.loadingScreen,
-            loadingBar: !!this.loadingBar,
-            loadingText: !!this.loadingText,
-            gameContent: !!this.gameContent
-        });
-
         if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
             console.error('Required loading elements not found');
             return;
@@ -30,7 +23,6 @@ class LoadingManager {
     updateProgress(progress) {
         if (!this.loadingBar || !this.loadingText) return;
         progress = Math.min(100, Math.max(0, progress));
-        console.log(`LoadingManager: Updating progress to ${progress}%`);
         this.loadingBar.style.width = `${progress}%`;
         this.loadingText.textContent = `${Math.round(progress)}%`;
     }
@@ -38,22 +30,14 @@ class LoadingManager {
     onAssetLoaded() {
         this.loadedAssets++;
         const progress = (this.loadedAssets / this.totalAssets) * 100;
-        console.log(`LoadingManager: Asset loaded ${this.loadedAssets}/${this.totalAssets}`);
         this.updateProgress(progress);
 
         if (this.loadedAssets >= this.totalAssets) {
-            console.log('LoadingManager: All assets loaded, showing game content');
-            this.showGame();
+            setTimeout(() => {
+                this.loadingScreen.style.display = 'none';
+                this.gameContent.style.display = 'block';
+            }, 500);
         }
-    }
-
-    showGame() {
-        this.loadingScreen.style.opacity = '0';
-        this.loadingScreen.style.transition = 'opacity 0.5s ease-out';
-        setTimeout(() => {
-            this.loadingScreen.style.display = 'none';
-            this.gameContent.style.display = 'block';
-        }, 500);
     }
 
     async loadImage(path) {
@@ -62,23 +46,18 @@ class LoadingManager {
                 return this.imageCache.get(path);
             }
 
-            console.log(`LoadingManager: Loading image ${path}`);
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.onload = () => {
-                    console.log(`LoadingManager: Successfully loaded ${path}`);
                     this.imageCache.set(path, img);
                     this.onAssetLoaded();
                     resolve(img);
                 };
-                img.onerror = (error) => {
-                    console.error(`LoadingManager: Failed to load ${path}`, error);
-                    reject(new Error(`Failed to load image: ${path}`));
-                };
+                img.onerror = () => reject(new Error(`Failed to load image: ${path}`));
                 img.src = path;
             });
         } catch (error) {
-            console.error(`LoadingManager: Error in loadImage: ${path}`, error);
+            console.error(`Error loading image: ${path}`, error);
             throw error;
         }
     }
@@ -86,12 +65,14 @@ class LoadingManager {
 
 class SlotMachine {
     constructor() {
-        console.log('SlotMachine: Constructor called');
         this.init();
     }
 
     async init() {
         try {
+            // Create loading manager
+            this.loadingManager = new LoadingManager();
+
             // Basic initialization
             this.SYMBOL_SIZE = 60;
             this.SYMBOL_PADDING = 3;
@@ -127,49 +108,33 @@ class SlotMachine {
                 'wild': { value: 0, path: '/static/images/symbols/wild_2x.png', multiplier: 2, isWild: true }
             };
 
+            // Set total assets
+            this.loadingManager.totalAssets = Object.keys(this.symbolDefinitions).length;
+
             // Load images
             await this.loadSymbols();
 
-            // Initialize game components
+            // Initialize other components
             this.initPaylines();
             this.initializeEventListeners();
             this.resizeCanvas();
             this.draw();
 
-            // Show game content
-            document.getElementById('loadingScreen').style.display = 'none';
-            document.getElementById('gameContent').style.display = 'block';
-
-            console.log('SlotMachine: Initialization complete');
         } catch (error) {
-            console.error('SlotMachine: Initialization failed:', error);
+            console.error('Failed to initialize slot:', error);
         }
     }
 
     async loadSymbols() {
-        console.log('SlotMachine: Loading symbols...');
         for (const [symbol, def] of Object.entries(this.symbolDefinitions)) {
             try {
-                const img = await this.loadImage(def.path);
+                const img = await this.loadingManager.loadImage(def.path);
                 this.symbolImages.set(symbol, img);
-                console.log(`SlotMachine: Loaded symbol ${symbol}`);
             } catch (error) {
-                console.error(`SlotMachine: Failed to load symbol ${symbol}:`, error);
+                console.error(`Failed to load symbol ${symbol}:`, error);
                 this.createFallbackSymbol(symbol);
             }
         }
-    }
-
-    loadImage(path) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = () => {
-                console.error(`Failed to load image: ${path}`);
-                reject(new Error(`Failed to load image: ${path}`));
-            };
-            img.src = path;
-        });
     }
 
     createFallbackSymbol(symbol) {
@@ -177,14 +142,19 @@ class SlotMachine {
         canvas.width = this.SYMBOL_SIZE;
         canvas.height = this.SYMBOL_SIZE;
         const ctx = canvas.getContext('2d');
+
         ctx.fillStyle = '#333333';
-        ctx.fillRect(0, 0, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#ffffff';
-        ctx.font = `${this.SYMBOL_SIZE * 0.3}px Arial`;
+        ctx.font = '12px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(symbol, this.SYMBOL_SIZE / 2, this.SYMBOL_SIZE / 2);
-        this.symbolImages.set(symbol, canvas);
+        ctx.fillText(symbol, canvas.width / 2, canvas.height / 2);
+
+        const img = new Image();
+        img.src = canvas.toDataURL();
+        this.symbolImages.set(symbol, img);
+        this.loadingManager.onAssetLoaded();
     }
 
     initPaylines() {
@@ -229,8 +199,6 @@ class SlotMachine {
                 const img = this.symbolImages.get(symbol);
                 if (img) {
                     this.ctx.drawImage(img, x, y, symbolWidth, symbolHeight);
-                } else {
-                    this.drawFallbackSymbol(symbol, x, y);
                 }
             }
         }
@@ -317,132 +285,32 @@ class SlotMachine {
             }
         }
 
-        // Unblock button
+        // Re-enable spin button
         if (spinButton) spinButton.disabled = false;
         this.spinning = false;
     }
 
     async animateSpin(finalResult) {
-        const totalSteps = 30;
+        const steps = 30;
         const stepDelay = 50;
-        const symbolPool = Object.keys(this.symbolDefinitions);
 
-        let lastFrameTime = performance.now();
-        const targetFrameTime = 1000 / 60; // 60 FPS
+        for (let step = 0; step < steps; step++) {
+            for (let i = 0; i < 5; i++) {
+                if (step < i * 2) continue;
 
-        for (let step = 0; step < totalSteps; step++) {
-            const currentTime = performance.now();
-            const deltaTime = currentTime - lastFrameTime;
-
-            if (deltaTime >= targetFrameTime) {
-                for (let i = 0; i < 5; i++) {
-                    if (step < i * 2) continue;
-
-                    if (step < totalSteps - 1) {
-                        for (let j = 0; j < 3; j++) {
-                            this.reels[i][j] = symbolPool[Math.floor(Math.random() * symbolPool.length)];
-                        }
-                    } else {
-                        this.reels[i] = finalResult[i];
+                if (step < steps - 1) {
+                    for (let j = 0; j < 3; j++) {
+                        const symbols = Object.keys(this.symbolDefinitions);
+                        this.reels[i][j] = symbols[Math.floor(Math.random() * symbols.length)];
                     }
+                } else {
+                    this.reels[i] = finalResult[i];
                 }
-
-                this.draw();
-                lastFrameTime = currentTime;
             }
 
+            this.draw();
             await new Promise(resolve => setTimeout(resolve, stepDelay));
         }
-    }
-
-    checkWinningLines() {
-        const winningLines = [];
-
-        this.paylines.forEach((line, index) => {
-            const symbols = line.map(pos => this.reels[pos.x][pos.y]);
-
-            const wilds = symbols.filter(symbol => this.isWildSymbol(symbol));
-            const wildMultiplier = wilds.reduce((total, wild) => total * this.getWildMultiplier(wild), 1);
-
-            if (wilds.length > 0) {
-                const nonWildSymbols = symbols.filter(symbol =>
-                    !this.isWildSymbol(symbol) && symbol !== 'scatter'
-                );
-
-                if (nonWildSymbols.length > 0) {
-                    const mainSymbol = nonWildSymbols[0];
-                    let consecutiveCount = 0;
-
-                    for (let i = 0; i < symbols.length; i++) {
-                        if (symbols[i] === mainSymbol || this.isWildSymbol(symbols[i])) {
-                            consecutiveCount++;
-                        } else {
-                            break;
-                        }
-                    }
-
-                    if (consecutiveCount >= 3) {
-                        winningLines.push({
-                            lineIndex: index,
-                            positions: line.slice(0, consecutiveCount),
-                            symbol: mainSymbol,
-                            count: consecutiveCount,
-                            multiplier: wildMultiplier
-                        });
-                    }
-                }
-            } else {
-                const firstSymbol = symbols[0];
-                if (firstSymbol !== 'scatter') {
-                    let consecutiveCount = 1;
-
-                    for (let i = 1; i < symbols.length; i++) {
-                        if (symbols[i] === firstSymbol || this.isWildSymbol(symbols[i])) {
-                            consecutiveCount++;
-                        } else {
-                            break;
-                        }
-                    }
-
-                    if (consecutiveCount >= 3) {
-                        winningLines.push({
-                            lineIndex: index,
-                            positions: line.slice(0, consecutiveCount),
-                            symbol: firstSymbol,
-                            count: consecutiveCount,
-                            multiplier: 1
-                        });
-                    }
-                }
-            }
-        });
-
-        return winningLines;
-    }
-
-    calculateWinAmount(line) {
-        const symbol = line.symbol;
-        const count = line.count;
-        const multiplier = line.multiplier;
-        const baseWin = this.symbolDefinitions[symbol].multipliers[count] || 0;
-        return baseWin * this.currentBet * multiplier;
-    }
-
-    showWinPopup(winAmount) {
-        const popup = document.getElementById('winPopup');
-        const title = popup.querySelector('.win-title');
-        const multiplierElement = popup.querySelector('.win-multiplier');
-        const amountElement = popup.querySelector('.win-amount');
-        const multiplier = winAmount / this.currentBet;
-
-        popup.style.display = 'block';
-        title.textContent = 'BIG WIN';
-        multiplierElement.textContent = `${multiplier.toFixed(2)}x`;
-        amountElement.textContent = winAmount.toFixed(2);
-
-        setTimeout(() => {
-            popup.style.display = 'none';
-        }, 3000);
     }
 
     showWinningLine(positions) {
@@ -499,39 +367,63 @@ class SlotMachine {
         }, 2000);
     }
 
+    checkWinningLines() {
+        const winningLines = [];
+
+        this.paylines.forEach((line, index) => {
+            const symbols = line.map(pos => this.reels[pos.x][pos.y]);
+            const firstSymbol = symbols[0];
+
+            if (firstSymbol === 'scatter') return;
+
+            let consecutiveCount = 1;
+            for (let i = 1; i < symbols.length; i++) {
+                if (symbols[i] === firstSymbol || this.isWildSymbol(symbols[i])) {
+                    consecutiveCount++;
+                } else {
+                    break;
+                }
+            }
+
+            if (consecutiveCount >= 3) {
+                winningLines.push({
+                    lineIndex: index,
+                    positions: line.slice(0, consecutiveCount),
+                    symbol: firstSymbol,
+                    count: consecutiveCount
+                });
+            }
+        });
+
+        return winningLines;
+    }
+
+    calculateWinAmount(line) {
+        const symbol = line.symbol;
+        const count = line.count;
+        return this.symbolDefinitions[symbol].multipliers[count] || 0;
+    }
+
+    showWinPopup(winAmount) {
+        const popup = document.getElementById('winPopup');
+        const multiplierElement = popup.querySelector('.win-multiplier');
+        const amountElement = popup.querySelector('.win-amount');
+
+        popup.style.display = 'block';
+        multiplierElement.textContent = `${(winAmount / this.currentBet).toFixed(2)}x`;
+        amountElement.textContent = winAmount.toFixed(2);
+
+        setTimeout(() => {
+            popup.style.display = 'none';
+        }, 3000);
+    }
+
     isWildSymbol(symbol) {
         return this.symbolDefinitions[symbol]?.isWild || false;
-    }
-
-    getWildMultiplier(symbol) {
-        return this.symbolDefinitions[symbol]?.multiplier || 1;
-    }
-    drawFallbackSymbol(symbol, x, y) {
-        if (!this.ctx) return;
-
-        this.ctx.fillStyle = '#333333';
-        this.ctx.fillRect(x, y, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = `${this.SYMBOL_SIZE * 0.3}px Arial`;
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(this.getSymbolDisplay(symbol), x + this.SYMBOL_SIZE / 2, y + this.SYMBOL_SIZE / 2);
-    }
-
-    getSymbolDisplay(symbol) {
-        const symbolMap = {
-            '10': '10', 'J': 'J', 'Q': 'Q', 'K': 'K', 'A': 'A',
-            'dog1': '🐶', 'dog2': '🐕', 'dog3': '🐩',
-            'toy1': '🧸', 'toy2': '🎁',
-            'scatter': 'Scatter',
-            'wild': 'Wild'
-        };
-        return symbolMap[symbol] || symbol;
     }
 }
 
 // Initialize slot machine when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, creating slot machine');
     window.slotMachine = new SlotMachine();
 });
