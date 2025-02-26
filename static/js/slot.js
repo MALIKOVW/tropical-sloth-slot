@@ -23,8 +23,6 @@ class LoadingManager {
         // Add transitions
         this.loadingScreen.style.transition = 'opacity 0.5s ease-out';
         this.gameContent.style.transition = 'opacity 0.5s ease-in';
-
-        console.log('LoadingManager: Initialized successfully');
     }
 
     updateProgress(progress) {
@@ -59,16 +57,15 @@ class LoadingManager {
 
     loadImage(path) {
         return new Promise((resolve, reject) => {
-            console.log(`LoadingManager: Loading image ${path}`);
+            console.log(`LoadingManager: Starting to load image ${path}`);
             const img = new Image();
             img.onload = () => {
                 console.log(`LoadingManager: Successfully loaded ${path}`);
-                this.imageCache.set(path, img);
                 this.onAssetLoaded();
                 resolve(img);
             };
-            img.onerror = () => {
-                console.error(`LoadingManager: Failed to load ${path}`);
+            img.onerror = (error) => {
+                console.error(`LoadingManager: Failed to load ${path}`, error);
                 reject(new Error(`Failed to load image: ${path}`));
             };
             img.src = path;
@@ -78,15 +75,16 @@ class LoadingManager {
 
 class SlotMachine {
     constructor() {
+        console.log('SlotMachine: Starting initialization');
         this.init();
     }
 
     async init() {
         try {
-            console.log('SlotMachine: Starting initialization');
+            // Create loading manager first
             this.loadingManager = new LoadingManager();
 
-            // Basic setup
+            // Basic initialization
             this.SYMBOL_SIZE = 60;
             this.SYMBOL_PADDING = 3;
             this.symbolImages = new Map();
@@ -96,55 +94,62 @@ class SlotMachine {
             // Initialize canvas
             this.canvas = document.getElementById('slotCanvas');
             if (!this.canvas) {
-                throw new Error('SlotMachine: Canvas not found');
+                throw new Error('Canvas not found');
             }
-
             this.ctx = this.canvas.getContext('2d');
             this.ctx.imageSmoothingEnabled = false;
 
-            // Initialize reels
+            // Initialize reels with default symbol
             this.reels = Array(5).fill().map(() => Array(3).fill('wooden_a'));
 
-            // Define symbols with correct paths
-            const symbols = [
-                { symbol: 'wooden_a', path: '/static/images/symbols/wooden_a.png' },
-                { symbol: 'wooden_k', path: '/static/images/symbols/wooden_k.png' },
-                { symbol: 'wooden_arch', path: '/static/images/symbols/wooden_arch.png' },
-                { symbol: 'snake', path: '/static/images/symbols/snake.png' },
-                { symbol: 'gorilla', path: '/static/images/symbols/gorilla.png' },
-                { symbol: 'jaguar', path: '/static/images/symbols/jaguar.png' },
-                { symbol: 'crocodile', path: '/static/images/symbols/crocodile.png' },
-                { symbol: 'gator', path: '/static/images/symbols/gator.png' },
-                { symbol: 'leopard', path: '/static/images/symbols/leopard.png' },
-                { symbol: 'dragon', path: '/static/images/symbols/dragon.png' },
-                { symbol: 'sloth', path: '/static/images/symbols/sloth.png' },
-                { symbol: 'wild', path: '/static/images/symbols/wild_2x.png' }
+            // Define available symbols
+            const symbolPaths = [
+                { name: 'wooden_a', path: '/static/images/symbols/wooden_a.png' },
+                { name: 'wooden_k', path: '/static/images/symbols/wooden_k.png' },
+                { name: 'wooden_arch', path: '/static/images/symbols/wooden_arch.png' },
+                { name: 'snake', path: '/static/images/symbols/snake.png' },
+                { name: 'gorilla', path: '/static/images/symbols/gorilla.png' },
+                { name: 'jaguar', path: '/static/images/symbols/jaguar.png' },
+                { name: 'crocodile', path: '/static/images/symbols/crocodile.png' },
+                { name: 'gator', path: '/static/images/symbols/gator.png' },
+                { name: 'leopard', path: '/static/images/symbols/leopard.png' },
+                { name: 'dragon', path: '/static/images/symbols/dragon.png' },
+                { name: 'sloth', path: '/static/images/symbols/sloth.png' },
+                { name: 'wild', path: '/static/images/symbols/wild_2x.png' },
+                { name: 'wild_3x', path: '/static/images/symbols/wild_3x.png' },
+                { name: 'wild_5x', path: '/static/images/symbols/wild_5x.png' }
             ];
 
-            // Set total assets to load
-            this.loadingManager.totalAssets = symbols.length;
-            console.log(`SlotMachine: Loading ${symbols.length} symbols`);
+            // Set total assets
+            this.loadingManager.totalAssets = symbolPaths.length;
+            console.log(`SlotMachine: Will load ${symbolPaths.length} symbols`);
 
             // Load all symbols
-            for (const { symbol, path } of symbols) {
+            let loadedCount = 0;
+            for (const symbol of symbolPaths) {
                 try {
-                    const img = await this.loadingManager.loadImage(path);
-                    this.symbolImages.set(symbol, img);
-                    console.log(`SlotMachine: Loaded symbol ${symbol}`);
+                    console.log(`SlotMachine: Loading symbol ${symbol.name} from ${symbol.path}`);
+                    const img = await this.loadingManager.loadImage(symbol.path);
+                    this.symbolImages.set(symbol.name, img);
+                    loadedCount++;
+                    console.log(`SlotMachine: Successfully loaded ${symbol.name} (${loadedCount}/${symbolPaths.length})`);
                 } catch (error) {
-                    console.error(`SlotMachine: Failed to load symbol ${symbol}:`, error);
-                    this.createFallbackSymbol(symbol);
+                    console.error(`SlotMachine: Failed to load ${symbol.name}:`, error);
+                    this.createFallbackSymbol(symbol.name);
                 }
             }
 
             // Initialize game components
+            console.log('SlotMachine: Initializing game components');
             this.initPaylines();
             this.initializeEventListeners();
             this.resizeCanvas();
             this.draw();
 
+            console.log('SlotMachine: Initialization complete');
+
         } catch (error) {
-            console.error('SlotMachine: Failed to initialize:', error);
+            console.error('SlotMachine: Initialization failed:', error);
         }
     }
 
@@ -195,6 +200,8 @@ class SlotMachine {
                 const img = this.symbolImages.get(symbol);
                 if (img) {
                     this.ctx.drawImage(img, x, y, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
+                } else {
+                    console.error(`Missing image for symbol: ${symbol}`);
                 }
             }
         }
@@ -204,6 +211,8 @@ class SlotMachine {
         const spinButton = document.getElementById('spinButton');
         if (spinButton) {
             spinButton.addEventListener('click', () => this.spin());
+        } else {
+            console.error('Spin button not found');
         }
     }
 
@@ -214,16 +223,12 @@ class SlotMachine {
         const spinButton = document.getElementById('spinButton');
         if (spinButton) spinButton.disabled = true;
 
+        const symbols = Array.from(this.symbolImages.keys());
         const result = Array(5).fill().map(() =>
-            Array(3).fill().map(() => {
-                const symbols = ['wooden_a', 'wooden_k', 'wooden_arch', 'snake', 'gorilla', 'jaguar',
-                               'crocodile', 'gator', 'leopard', 'dragon', 'sloth', 'wild'];
-                return symbols[Math.floor(Math.random() * symbols.length)];
-            })
+            Array(3).fill().map(() => symbols[Math.floor(Math.random() * symbols.length)])
         );
 
         await this.animateSpin(result);
-
         this.reels = result;
         this.draw();
 
@@ -241,7 +246,7 @@ class SlotMachine {
 
                 if (step < steps - 1) {
                     for (let j = 0; j < 3; j++) {
-                        const symbols = ['wooden_a', 'wooden_k', 'wooden_arch', 'snake', 'gorilla'];
+                        const symbols = Array.from(this.symbolImages.keys());
                         this.reels[i][j] = symbols[Math.floor(Math.random() * symbols.length)];
                     }
                 } else {
@@ -253,9 +258,8 @@ class SlotMachine {
             await new Promise(resolve => setTimeout(resolve, stepDelay));
         }
     }
-
     isWildSymbol(symbol) {
-        return symbol === 'wild';
+        return symbol === 'wild' || symbol === 'wild_3x' || symbol === 'wild_5x';
     }
     showWinningLine(positions) {
         const container = document.getElementById('paylineContainer');
