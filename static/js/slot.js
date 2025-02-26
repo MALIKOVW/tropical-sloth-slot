@@ -260,7 +260,7 @@ class SlotMachine {
         // Массив для хранения позиций каждого барабана
         const reelPositions = Array(5).fill(0);
         const reelSpeeds = Array(5).fill(1);
-        const stopOrder = [0, 1, 2, 3, 4]; // Порядок остановки барабанов
+        const stopOrder = [4, 3, 2, 1, 0]; // Изменен порядок остановки барабанов (справа налево)
 
         for (let step = 0; step < steps + stopOrder.length * bounceSteps; step++) {
             for (let i = 0; i < 5; i++) {
