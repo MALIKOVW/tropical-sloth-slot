@@ -21,8 +21,14 @@ class LoadingManager {
         this.imageCache = new Map();
 
         // Initial state
+        this.gameContent.style.opacity = '0';
         this.gameContent.style.display = 'none';
         this.loadingScreen.style.display = 'flex';
+
+        // Add transitions
+        this.loadingScreen.style.transition = 'opacity 0.5s ease-out';
+        this.gameContent.style.transition = 'opacity 0.5s ease-in';
+
         console.log('LoadingManager: Initialized successfully');
     }
 
@@ -41,9 +47,23 @@ class LoadingManager {
 
         if (this.loadedAssets >= this.totalAssets) {
             console.log('LoadingManager: All assets loaded, showing game content');
+            this.showGame();
+        }
+    }
+
+    showGame() {
+        // Fade out loading screen
+        this.loadingScreen.style.opacity = '0';
+
+        setTimeout(() => {
             this.loadingScreen.style.display = 'none';
             this.gameContent.style.display = 'block';
-        }
+
+            // Fade in game content
+            requestAnimationFrame(() => {
+                this.gameContent.style.opacity = '1';
+            });
+        }, 500);
     }
 
     loadImage(path) {
@@ -53,6 +73,7 @@ class LoadingManager {
 
             img.onload = () => {
                 console.log(`LoadingManager: Successfully loaded ${path}`);
+                this.imageCache.set(path, img);
                 this.onAssetLoaded();
                 resolve(img);
             };
@@ -97,7 +118,7 @@ class SlotMachine {
             // Initialize reels
             this.reels = Array(5).fill().map(() => Array(3).fill('10'));
 
-            // Start with just one test image to verify loading
+            // Start with just one test image
             console.log('SlotMachine: Loading test image');
             this.loadingManager.totalAssets = 1;
 
@@ -141,6 +162,7 @@ class SlotMachine {
         const img = new Image();
         img.src = canvas.toDataURL();
         this.symbolImages.set(symbol, img);
+        this.loadingManager.onAssetLoaded();
         console.log(`SlotMachine: Created fallback symbol for ${symbol}`);
     }
 
@@ -335,6 +357,7 @@ class SlotMachine {
     }
 }
 
+// Initialize slot machine when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Document loaded, creating slot machine');
     window.slotMachine = new SlotMachine();
