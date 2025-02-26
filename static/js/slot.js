@@ -361,35 +361,6 @@ class SlotMachine {
 
         try {
             const cellSize = this.SYMBOL_SIZE + this.SYMBOL_PADDING * 2;
-            const startPos = positions[0];
-            const endPos = positions[positions.length - 1];
-
-            // Создаем линию выигрыша
-            const line = document.createElement('div');
-            line.className = 'winning-line';
-
-            // Вычисляем параметры линии
-            const startX = startPos.x * cellSize + cellSize / 2;
-            const startY = startPos.y * cellSize + cellSize / 2;
-            const endX = endPos.x * cellSize + cellSize / 2;
-            const endY = endPos.y * cellSize + cellSize / 2;
-
-            // Вычисляем длину и угол линии
-            const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
-            const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
-
-            // Устанавливаем стили линии
-            line.style.width = `${length}px`;
-            line.style.left = `${startX}px`;
-            line.style.top = `${startY}px`;
-            line.style.transform = `rotate(${angle}deg)`;
-
-            container.appendChild(line);
-
-            // Добавляем класс active с небольшой задержкой для анимации
-            setTimeout(() => {
-                line.classList.add('active');
-            }, 50);
 
             // Анимация символов
             positions.forEach(pos => {
@@ -415,12 +386,32 @@ class SlotMachine {
 
                     container.appendChild(symbol);
 
-                    // Добавляем класс для активации анимации с небольшой задержкой
+                    // Активируем анимацию с небольшой задержкой
                     setTimeout(() => {
                         symbol.classList.add('active');
                     }, 100);
                 }
             });
+
+            // Создаем линию выигрыша
+            const line = document.createElement('div');
+            line.className = 'win-line';
+
+            // Вычисляем позицию и размер линии
+            const startPos = positions[0];
+            const endPos = positions[positions.length - 1];
+            const startX = startPos.x * cellSize + cellSize / 2;
+            const startY = startPos.y * cellSize + cellSize / 2;
+            const endX = endPos.x * cellSize + cellSize / 2;
+            const endY = endPos.y * cellSize + cellSize /2;
+
+            line.style.width = `${Math.abs(endX - startX)}px`;
+            line.style.left = `${Math.min(startX, endX)}px`;
+            line.style.top = `${startY}px`;
+            line.style.transform = `rotate(${Math.atan2(endY - startY, endX - startX) * 180 / Math.PI}deg)`;
+
+            container.appendChild(line);
+
 
             // Очистка анимаций
             setTimeout(() => {

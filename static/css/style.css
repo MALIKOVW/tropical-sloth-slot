@@ -150,58 +150,54 @@ body {
 }
 
 /* Winning line animation */
-.winning-line {
+.win-line {
     position: absolute;
-    height: 3px;
+    height: 2px;
     background: linear-gradient(
         90deg,
         rgba(255, 215, 0, 0) 0%,
-        rgba(255, 215, 0, 1) 10%,
+        rgba(255, 215, 0, 0.8) 20%,
         rgba(255, 255, 255, 1) 50%,
-        rgba(255, 215, 0, 1) 90%,
+        rgba(255, 215, 0, 0.8) 80%,
         rgba(255, 215, 0, 0) 100%
     );
     pointer-events: none;
-    transform-origin: left center;
-    border-radius: 2px;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.8),
-                0 0 20px rgba(255, 215, 0, 0.4);
     z-index: 3;
     opacity: 0;
-    animation: paylineGlow 1.5s infinite;
+    transform-origin: left;
+    animation: winLineAnimation 2s ease-in-out;
 }
 
-.winning-line.active {
-    opacity: 1;
-}
-
-@keyframes paylineGlow {
+@keyframes winLineAnimation {
     0% {
-        filter: brightness(1) blur(0px);
-        box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+        opacity: 0;
+        transform: scaleX(0);
     }
-    50% {
-        filter: brightness(1.5) blur(1px);
-        box-shadow: 0 0 20px rgba(255, 215, 0, 1);
+    20% {
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+        transform: scaleX(1);
     }
     100% {
-        filter: brightness(1) blur(0px);
-        box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+        opacity: 0;
+        transform: scaleX(1);
     }
 }
+
 
 /* Winning symbol animation */
 .winning-symbol {
     position: absolute;
     z-index: 4;
     pointer-events: none;
-    transform: scale(0.8);
+    transform: scale(1);
     opacity: 0;
     transition: all 0.3s ease-out;
 }
 
 .winning-symbol.active {
-    transform: scale(1);
     opacity: 1;
     animation: symbolPulse 0.6s ease-in-out infinite;
 }
