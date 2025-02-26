@@ -734,11 +734,11 @@ class SlotMachine {
 
                     // Проверяем выигрышные комбинации для 3+ символов
                     if (consecutiveCount >= 3) {
-                        console.log(`Winning line found with ${consecutiveCount` symbols (including wilds). Wild multiplier: ${wildMultiplier}`);
+                        console.log(`Winning line found with ${consecutiveCount} symbols(including wilds). Wild multiplier: ${wildMultiplier}`);
                         winningLines.push({
                             lineIndex: index,
                             positions: line.slice(0, consecutiveCount),
-                            symbol:mainSymbol,
+                            symbol: mainSymbol,
                             count: consecutiveCount,
                             multiplier: wildMultiplier
                         });
