@@ -1,50 +1,30 @@
+// Simple loader implementation
 class LoadingManager {
     constructor() {
-        console.log('LoadingManager: Constructor called');
-        this.initialize();
-    }
-
-    initialize() {
-        console.log('LoadingManager: Initializing...');
         this.loadingScreen = document.getElementById('loadingScreen');
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
 
-        if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
-            console.error('LoadingManager: Required elements not found', {
-                loadingScreen: !!this.loadingScreen,
-                loadingBar: !!this.loadingBar,
-                loadingText: !!this.loadingText,
-                gameContent: !!this.gameContent
-            });
-            return false;
-        }
-
-        this.totalAssets = 0;
         this.loadedAssets = 0;
+        this.totalAssets = 0;
         this.imageCache = new Map();
 
-        // Начальное состояние
+        if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
+            throw new Error('Required loading elements not found');
+        }
+
+        // Initial state
         this.gameContent.style.display = 'none';
         this.loadingScreen.style.display = 'flex';
-        this.updateProgress(0);
-
-        console.log('LoadingManager: Initialized successfully');
-        return true;
     }
 
     setTotalAssets(count) {
         this.totalAssets = count;
-        console.log(`LoadingManager: Set total assets to ${count}`);
+        this.updateProgress(0);
     }
 
     updateProgress(progress) {
-        if (!this.loadingBar || !this.loadingText) return;
-
-        progress = Math.min(100, Math.max(0, progress));
-        console.log(`LoadingManager: Updating progress to ${progress}%`);
-
         this.loadingBar.style.width = `${progress}%`;
         this.loadingText.textContent = `${Math.round(progress)}%`;
     }
@@ -52,98 +32,71 @@ class LoadingManager {
     onAssetLoaded() {
         this.loadedAssets++;
         const progress = (this.loadedAssets / this.totalAssets) * 100;
-        console.log(`LoadingManager: Asset loaded (${this.loadedAssets}/${this.totalAssets})`);
         this.updateProgress(progress);
 
         if (this.loadedAssets >= this.totalAssets) {
-            console.log('LoadingManager: All assets loaded, showing game content');
-            this.hideLoadingScreen();
+            setTimeout(() => {
+                this.loadingScreen.style.display = 'none';
+                this.gameContent.style.display = 'block';
+            }, 500);
         }
-    }
-
-    hideLoadingScreen() {
-        if (!this.loadingScreen || !this.gameContent) return;
-
-        console.log('LoadingManager: Hiding loading screen');
-        this.loadingScreen.classList.add('hidden');
-
-        setTimeout(() => {
-            this.loadingScreen.style.display = 'none';
-            this.gameContent.style.display = 'block';
-            console.log('LoadingManager: Game content shown');
-        }, 500);
     }
 
     async loadImage(path) {
-        try {
-            if (this.imageCache.has(path)) {
-                console.log(`LoadingManager: Image found in cache: ${path}`);
-                return this.imageCache.get(path);
-            }
-
-            console.log(`LoadingManager: Loading image: ${path}`);
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-
-                img.onload = () => {
-                    console.log(`LoadingManager: Image loaded successfully: ${path}`);
-                    this.imageCache.set(path, img);
-                    this.onAssetLoaded();
-                    resolve(img);
-                };
-
-                img.onerror = (error) => {
-                    console.error(`LoadingManager: Failed to load image: ${path}`, error);
-                    reject(error);
-                };
-
-                img.src = path;
-            });
-        } catch (error) {
-            console.error(`LoadingManager: Error in loadImage: ${path}`, error);
-            throw error;
+        if (this.imageCache.has(path)) {
+            return this.imageCache.get(path);
         }
+
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                this.imageCache.set(path, img);
+                this.onAssetLoaded();
+                resolve(img);
+            };
+            img.onerror = () => {
+                reject(new Error(`Failed to load image: ${path}`));
+            };
+            img.src = path;
+        });
     }
 }
 
+// Slot machine implementation
 class SlotMachine {
     constructor() {
-        console.log('SlotMachine: Constructor called');
-        // Ждем полной загрузки DOM
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.initialize());
+            document.addEventListener('DOMContentLoaded', () => this.init());
         } else {
-            this.initialize();
+            this.init();
         }
     }
 
-    async initialize() {
+    async init() {
         try {
-            console.log('SlotMachine: Initializing...');
-
-            // Создаем и инициализируем LoadingManager
+            // Create loading manager first
             this.loadingManager = new LoadingManager();
 
-            // Базовая инициализация
+            // Basic initialization
             this.SYMBOL_SIZE = 60;
             this.SYMBOL_PADDING = 3;
             this.symbolImages = new Map();
             this.spinning = false;
             this.currentBet = 10;
 
-            // Инициализация канваса
+            // Initialize canvas
             this.canvas = document.getElementById('slotCanvas');
             if (!this.canvas) {
-                throw new Error('Canvas element not found');
+                throw new Error('Canvas not found');
             }
 
             this.ctx = this.canvas.getContext('2d');
             this.ctx.imageSmoothingEnabled = false;
 
-            // Инициализация барабанов
+            // Initialize reels
             this.reels = Array(5).fill().map(() => Array(3).fill('10'));
 
-            // Определение символов
+            // Define symbols to load
             const symbols = {
                 '10': '/static/images/symbols/10.png',
                 'J': '/static/images/symbols/J.png',
@@ -159,31 +112,26 @@ class SlotMachine {
                 'wild': '/static/images/symbols/wild.png'
             };
 
-            // Устанавливаем количество ассетов для загрузки
+            // Set total assets and start loading
             this.loadingManager.setTotalAssets(Object.keys(symbols).length);
 
-            // Загрузка изображений
-            const loadPromises = Object.entries(symbols).map(async ([symbol, path]) => {
+            // Load all images
+            for (const [symbol, path] of Object.entries(symbols)) {
                 try {
                     const img = await this.loadingManager.loadImage(path);
                     this.symbolImages.set(symbol, img);
                 } catch (error) {
-                    console.error(`Failed to load symbol ${symbol}:`, error);
                     this.createFallbackSymbol(symbol);
                 }
-            });
+            }
 
-            await Promise.all(loadPromises);
-
-            // Инициализация остальных компонентов
-            this.initPaylines();
-            this.initializeEventListeners();
+            // Initialize other components
             this.resizeCanvas();
+            this.initializeEventListeners();
             this.draw();
 
-            console.log('SlotMachine: Initialization complete');
         } catch (error) {
-            console.error('SlotMachine: Initialization failed:', error);
+            console.error('Failed to initialize slot:', error);
         }
     }
 
@@ -262,11 +210,12 @@ class SlotMachine {
     adjustBet(amount) {
         const betValues = [10, 20, 30, 40, 50, 100, 200, 300, 400, 500, 1000];
         const currentIndex = betValues.indexOf(this.currentBet);
-        let newIndex = amount > 0
+        const newIndex = amount > 0 
             ? Math.min(currentIndex + 1, betValues.length - 1)
             : Math.max(currentIndex - 1, 0);
 
         this.currentBet = betValues[newIndex];
+
         const currentBetElement = document.getElementById('currentBet');
         if (currentBetElement) {
             currentBetElement.textContent = this.currentBet.toFixed(2);
@@ -286,11 +235,12 @@ class SlotMachine {
         const spinButton = document.getElementById('spinButton');
         if (spinButton) spinButton.disabled = true;
 
+        // Update credits
         const newCredits = credits - this.currentBet;
         const creditDisplay = document.getElementById('creditDisplay');
         if (creditDisplay) creditDisplay.textContent = newCredits.toFixed(2);
 
-        // Создаем случайный результат
+        // Generate random result
         const result = Array(5).fill().map(() =>
             Array(3).fill().map(() => {
                 const symbols = ['10', 'J', 'Q', 'K', 'A', 'dog1', 'dog2', 'dog3', 'toy1', 'toy2'];
@@ -298,12 +248,14 @@ class SlotMachine {
             })
         );
 
-        // Анимация вращения
+        // Animate spin
         await this.animateSpin(result);
 
+        // Update reels and redraw
         this.reels = result;
         this.draw();
 
+        // Re-enable spin button
         if (spinButton) spinButton.disabled = false;
         this.spinning = false;
         const winningLines = this.checkWinningLines();
@@ -664,12 +616,11 @@ class SlotMachine {
     }
 }
 
-// Инициализация слота при загрузке DOM
+// Initialize the slot machine
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Document loaded, creating slot machine instance');
     try {
         window.slotMachine = new SlotMachine();
     } catch (error) {
-        console.error('Failed to create SlotMachine instance:', error);
+        console.error('Failed to create slot machine:', error);
     }
 });
