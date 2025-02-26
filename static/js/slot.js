@@ -1,13 +1,15 @@
 class LoadingManager {
     constructor() {
         console.log('LoadingManager: Constructor called');
+        // Get DOM elements
         this.loadingScreen = document.getElementById('loadingScreen');
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
 
+        // Verify DOM elements
         if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
-            console.error('LoadingManager: Required elements not found:', {
+            console.error('LoadingManager: Missing elements:', {
                 loadingScreen: !!this.loadingScreen,
                 loadingBar: !!this.loadingBar,
                 loadingText: !!this.loadingText,
@@ -16,19 +18,21 @@ class LoadingManager {
             return;
         }
 
+        // Initialize counters
         this.loadedAssets = 0;
         this.totalAssets = 0;
+        this.imageCache = new Map();
 
-        // Initial state
+        // Set initial states
         this.gameContent.style.display = 'none';
         this.loadingScreen.style.display = 'flex';
         this.updateProgress(0);
-
-        console.log('LoadingManager: Initialized');
     }
 
     updateProgress(progress) {
-        console.log(`LoadingManager: Updating progress to ${progress}%`);
+        if (!this.loadingBar || !this.loadingText) return;
+        progress = Math.min(100, Math.max(0, progress));
+        console.log(`LoadingManager: Progress ${progress}%`);
         this.loadingBar.style.width = `${progress}%`;
         this.loadingText.textContent = `${Math.round(progress)}%`;
     }
@@ -36,7 +40,7 @@ class LoadingManager {
     onAssetLoaded() {
         this.loadedAssets++;
         const progress = (this.loadedAssets / this.totalAssets) * 100;
-        console.log(`LoadingManager: Asset loaded ${this.loadedAssets}/${this.totalAssets}`);
+        console.log(`LoadingManager: Asset ${this.loadedAssets}/${this.totalAssets} loaded`);
         this.updateProgress(progress);
 
         if (this.loadedAssets >= this.totalAssets) {
@@ -48,17 +52,18 @@ class LoadingManager {
 
     loadImage(path) {
         return new Promise((resolve, reject) => {
-            console.log(`LoadingManager: Starting to load ${path}`);
+            console.log(`LoadingManager: Loading image ${path}`);
             const img = new Image();
 
             img.onload = () => {
                 console.log(`LoadingManager: Successfully loaded ${path}`);
+                this.imageCache.set(path, img);
                 this.onAssetLoaded();
                 resolve(img);
             };
 
-            img.onerror = () => {
-                console.error(`LoadingManager: Failed to load ${path}`);
+            img.onerror = (error) => {
+                console.error(`LoadingManager: Failed to load ${path}`, error);
                 reject(new Error(`Failed to load image: ${path}`));
             };
 
@@ -69,20 +74,20 @@ class LoadingManager {
 
 class SlotMachine {
     constructor() {
-        console.log('SlotMachine: Constructor called');
-        // Wait for DOM content to be loaded
         if (document.readyState === 'loading') {
+            console.log('SlotMachine: Waiting for DOMContentLoaded');
             document.addEventListener('DOMContentLoaded', () => this.init());
         } else {
+            console.log('SlotMachine: DOM already loaded, initializing');
             this.init();
         }
     }
 
     async init() {
         try {
-            console.log('SlotMachine: Starting initialization');
+            console.log('SlotMachine: Initialization started');
 
-            // Basic initialization
+            // Basic setup
             this.SYMBOL_SIZE = 60;
             this.SYMBOL_PADDING = 3;
             this.symbolImages = new Map();
@@ -97,39 +102,40 @@ class SlotMachine {
             this.ctx = this.canvas.getContext('2d');
             this.ctx.imageSmoothingEnabled = false;
 
-            // Create loading manager
+            // Initialize LoadingManager
             this.loadingManager = new LoadingManager();
 
-            // Start with just one test image
-            console.log('SlotMachine: Starting test load');
+            // Test single image load
+            console.log('SlotMachine: Testing image load');
             this.loadingManager.totalAssets = 1;
 
             try {
-                const testImg = await this.loadingManager.loadImage('/static/images/symbols/wooden_a.png');
-                this.symbolImages.set('test', testImg);
+                const img = await this.loadingManager.loadImage('/static/images/symbols/pic1.png');
                 console.log('SlotMachine: Test image loaded successfully');
+                this.symbolImages.set('test', img);
             } catch (error) {
-                console.error('SlotMachine: Test load failed:', error);
+                console.error('SlotMachine: Test image load failed:', error);
                 this.createFallbackSymbol('test');
             }
 
             // Initialize reels with test symbol
             this.reels = Array(5).fill().map(() => Array(3).fill('test'));
 
-            // Initialize game components
+            // Initialize basic components
             this.initPaylines();
             this.initializeEventListeners();
             this.resizeCanvas();
             this.draw();
 
             console.log('SlotMachine: Initialization complete');
+
         } catch (error) {
             console.error('SlotMachine: Initialization failed:', error);
         }
     }
 
     createFallbackSymbol(symbol) {
-        console.log(`SlotMachine: Creating fallback symbol for ${symbol}`);
+        console.log(`SlotMachine: Creating fallback for ${symbol}`);
         const canvas = document.createElement('canvas');
         canvas.width = this.SYMBOL_SIZE;
         canvas.height = this.SYMBOL_SIZE;
