@@ -162,9 +162,11 @@ class SlotMachine {
 
     initPaylines() {
         this.paylines = [
-            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}],
-            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}],
-            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}]
+            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // Top
+            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // Middle
+            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // Bottom
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // V
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}]  // Inverted V
         ];
     }
 
@@ -220,6 +222,15 @@ class SlotMachine {
         this.reels = result;
         this.draw();
 
+        // Check for wins
+        const winningLines = this.checkWinningLines();
+        if (winningLines.length > 0) {
+            for (const line of winningLines) {
+                this.showWinningLine(line.positions);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
+
         if (spinButton) spinButton.disabled = false;
         this.spinning = false;
     }
@@ -251,9 +262,17 @@ class SlotMachine {
         return symbol.startsWith('wild_');
     }
 
+    getWildMultiplier(symbol) {
+        if (symbol === 'wild_2x') return 2;
+        if (symbol === 'wild_3x') return 3;
+        if (symbol === 'wild_5x') return 5;
+        return 1;
+    }
+
     isSlothSymbol(symbol) {
         return symbol === 'sloth';
     }
+
     showWinningLine(positions) {
         const container = document.getElementById('paylineContainer');
         if (!container) return;
@@ -315,11 +334,19 @@ class SlotMachine {
             const symbols = line.map(pos => this.reels[pos.x][pos.y]);
             const firstSymbol = symbols[0];
 
+            // Skip if first symbol is wild or sloth
+            if (this.isWildSymbol(firstSymbol) || this.isSlothSymbol(firstSymbol)) return;
 
             let consecutiveCount = 1;
+            let multiplier = 1;
+
             for (let i = 1; i < symbols.length; i++) {
-                if (symbols[i] === firstSymbol || this.isWildSymbol(symbols[i])) {
+                const currentSymbol = symbols[i];
+                if (currentSymbol === firstSymbol || this.isWildSymbol(currentSymbol)) {
                     consecutiveCount++;
+                    if (this.isWildSymbol(currentSymbol)) {
+                        multiplier *= this.getWildMultiplier(currentSymbol);
+                    }
                 } else {
                     break;
                 }
@@ -330,20 +357,17 @@ class SlotMachine {
                     lineIndex: index,
                     positions: line.slice(0, consecutiveCount),
                     symbol: firstSymbol,
-                    count: consecutiveCount
+                    count: consecutiveCount,
+                    multiplier: multiplier
                 });
             }
         });
 
         return winningLines;
     }
-
     calculateWinAmount(line) {
-        const symbol = line.symbol;
-        const count = line.count;
-        const symbolDef = this.symbolDefinitions[symbol];
-        return symbolDef && symbolDef.multipliers && symbolDef.multipliers[count] ? symbolDef.multipliers[count] * this.currentBet : 0;
-
+        // Placeholder -  Needs implementation based on symbol definitions
+        return line.multiplier * this.currentBet * line.count;
     }
     showWinPopup(winAmount) {
         const popup = document.getElementById('winPopup');
