@@ -251,6 +251,12 @@ class SlotMachine {
         const baseStepDelay = 50;
         const bounceSteps = 3;
 
+        // Определяем массивы символов
+        const regularSymbols = ['wooden_a', 'wooden_k', 'wooden_arch', 'snake',
+                              'gorilla', 'jaguar', 'crocodile', 'gator',
+                              'leopard', 'dragon', 'sloth'];
+        const wildSymbols = ['wild_2x', 'wild_3x', 'wild_5x'];
+
         // Массив для хранения позиций каждого барабана
         const reelPositions = Array(5).fill(0);
         const reelSpeeds = Array(5).fill(1);
@@ -269,23 +275,18 @@ class SlotMachine {
                     for (let j = 0; j < 3; j++) {
                         if (i >= 1 && i <= 3 && Math.random() < 0.20) {
                             // Wild символы только для барабанов 2,3,4
-                            const wildSymbols = ['wild_2x', 'wild_3x', 'wild_5x'];
                             this.reels[i][j] = wildSymbols[Math.floor(Math.random() * wildSymbols.length)];
                         } else {
-                            const regularSymbols = ['wooden_a', 'wooden_k', 'wooden_arch', 'snake',
-                                                  'gorilla', 'jaguar', 'crocodile', 'gator',
-                                                  'leopard', 'dragon', 'sloth'];
                             this.reels[i][j] = regularSymbols[Math.floor(Math.random() * regularSymbols.length)];
                         }
                     }
-                } else if (step >= steps - stopOrder.indexOf(i) * bounceSteps && step < steps - stopOrder.indexOf(i) * bounceSteps + bounceSteps) {
+                } else if (step >= steps - stopOrder.indexOf(i) * bounceSteps && 
+                          step < steps - stopOrder.indexOf(i) * bounceSteps + bounceSteps) {
                     // Эффект bounce при остановке
                     let bounceIndex = step - (steps - stopOrder.indexOf(i) * bounceSteps);
                     if (bounceIndex % 2 === 0) {
                         this.reels[i] = finalResult[i];
                     } else {
-                        const tempSymbols = [...this.reels[i]];
-                        //Slight variation for bounce effect
                         let tempReel = [...finalResult[i]];
                         if (tempReel.length > 0) {
                             let randomIndex = Math.floor(Math.random() * tempReel.length);
