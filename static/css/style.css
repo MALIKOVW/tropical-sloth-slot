@@ -318,6 +318,7 @@ body {
     align-items: center;
     justify-content: center;
     margin: 0;
+    transition: transform 0.3s ease-out;
 }
 
 .symbol img {
@@ -351,18 +352,7 @@ body {
     filter: drop-shadow(0 0 5px #95a5a6);
 }
 
-@keyframes symbolWin {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
+/* Winning animations */
 .symbol.winning-symbol {
     z-index: 4;
     animation: symbolPulse 1s ease-in-out infinite;
@@ -752,6 +742,7 @@ body {
     padding: 40px;
     border-radius: 20px;
     border: 3px solid #00ff9d;
+    animation: bonusAward 0.5s ease-in-out;
 }
 
 
@@ -837,10 +828,6 @@ body {
     100% {
         transform: scale(1);
     }
-}
-
-.bonus-award {
-    animation: bonusAward 0.5s ease-in-out;
 }
 
 .win-message {

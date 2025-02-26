@@ -209,7 +209,25 @@ class SlotMachine {
 
                 const img = this.symbolImages.get(symbol);
                 if (img) {
-                    this.ctx.drawImage(img, x, y, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
+                    // Создаем контейнер для символа
+                    const symbolContainer = document.createElement('div');
+                    symbolContainer.className = 'symbol';
+                    symbolContainer.dataset.position = `${i}-${j}`;
+                    symbolContainer.style.position = 'absolute';
+                    symbolContainer.style.left = `${x}px`;
+                    symbolContainer.style.top = `${y}px`;
+                    symbolContainer.style.width = `${this.SYMBOL_SIZE}px`;
+                    symbolContainer.style.height = `${this.SYMBOL_SIZE}px`;
+
+                    // Создаем изображение символа
+                    const symbolImg = document.createElement('img');
+                    symbolImg.src = img.src;
+                    symbolImg.style.width = '100%';
+                    symbolImg.style.height = '100%';
+                    symbolImg.style.objectFit = 'contain';
+
+                    symbolContainer.appendChild(symbolImg);
+                    this.canvas.parentElement.appendChild(symbolContainer);
                 } else {
                     console.error(`Missing image for symbol: ${symbol}`);
                 }
@@ -355,18 +373,11 @@ class SlotMachine {
         if (!positions || !positions.length) return;
 
         try {
-            // Находим все символы на поле
-            const symbols = document.querySelectorAll('.symbol');
-
-            // Для каждой позиции в выигрышной линии
+            // Находим символы для анимации
             positions.forEach(pos => {
-                if (!this.reels[pos.x] || !this.reels[pos.x][pos.y]) return;
-
-                const symbolKey = this.reels[pos.x][pos.y];
-                const symbolIndex = pos.y * 5 + pos.x;
-                const symbolElement = symbols[symbolIndex];
-
+                const symbolElement = document.querySelector(`.symbol[data-position="${pos.x}-${pos.y}"]`);
                 if (symbolElement) {
+                    const symbolKey = this.reels[pos.x][pos.y];
                     symbolElement.classList.add('winning-symbol');
                     if (this.isWildSymbol(symbolKey)) {
                         symbolElement.classList.add('wild');
@@ -376,6 +387,7 @@ class SlotMachine {
 
             // Очистка анимаций через 2 секунды
             setTimeout(() => {
+                const symbols = document.querySelectorAll('.symbol');
                 symbols.forEach(symbol => {
                     symbol.classList.remove('winning-symbol', 'wild');
                 });
