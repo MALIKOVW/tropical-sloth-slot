@@ -75,18 +75,21 @@ class SlotMachine {
 
             // Initialize canvas
             this.canvas = document.getElementById('slotCanvas');
-            if (!this.canvas) {
-                throw new Error('Canvas not found');
+            this.gameField = document.querySelector('.game-field-wrapper');
+            if (!this.canvas || !this.gameField) {
+                throw new Error('Required elements not found');
             }
             this.ctx = this.canvas.getContext('2d');
-            this.ctx.imageSmoothingEnabled = false;
 
             // Initialize LoadingManager
             this.loadingManager = new LoadingManager();
 
             // Define available symbols with actual paths
             const symbols = [
-                // Basic symbols
+                // Basic symbols (от низких к высоким)
+                { name: '10', path: '/static/images/symbols/10.png' },
+                { name: 'J', path: '/static/images/symbols/J.png' },
+                { name: 'Q', path: '/static/images/symbols/Q.png' },
                 { name: 'wooden_a', path: '/static/images/symbols/wooden_a.png' },
                 { name: 'wooden_k', path: '/static/images/symbols/wooden_k.png' },
                 { name: 'wooden_arch', path: '/static/images/symbols/wooden_arch.png' },
@@ -109,7 +112,6 @@ class SlotMachine {
 
             // Set total assets
             this.loadingManager.totalAssets = symbols.length;
-            console.log(`SlotMachine: Will load ${symbols.length} symbols`);
 
             // Load all symbols
             for (const symbol of symbols) {
@@ -125,7 +127,7 @@ class SlotMachine {
             }
 
             // Initialize reels with default symbol
-            this.reels = Array(5).fill().map(() => Array(3).fill('wooden_a'));
+            this.reels = Array(5).fill().map(() => Array(3).fill('10'));
 
             // Initialize game components
             this.initPaylines();
@@ -201,6 +203,10 @@ class SlotMachine {
         if (!this.ctx || !this.canvas) return;
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Очищаем предыдущие символы
+        const existingSymbols = this.gameField.querySelectorAll('.symbol');
+        existingSymbols.forEach(symbol => symbol.remove());
+
         for (let i = 0; i < 5; i++) {
             for (let j = 0; j < 3; j++) {
                 const symbol = this.reels[i][j];
@@ -227,9 +233,7 @@ class SlotMachine {
                     symbolImg.style.objectFit = 'contain';
 
                     symbolContainer.appendChild(symbolImg);
-                    this.canvas.parentElement.appendChild(symbolContainer);
-                } else {
-                    console.error(`Missing image for symbol: ${symbol}`);
+                    this.gameField.appendChild(symbolContainer);
                 }
             }
         }
@@ -250,7 +254,7 @@ class SlotMachine {
         if (spinButton) spinButton.disabled = true;
 
         // Get available symbols
-        const regularSymbols = ['wooden_a', 'wooden_k', 'wooden_arch', 'snake', 'gorilla', 'jaguar',
+        const regularSymbols = ['10', 'J', 'Q', 'wooden_a', 'wooden_k', 'wooden_arch', 'snake', 'gorilla', 'jaguar',
                                'crocodile', 'gator', 'leopard', 'dragon', 'sloth'];
         const wildSymbols = ['wild_2x', 'wild_3x', 'wild_5x'];
 
@@ -296,7 +300,7 @@ class SlotMachine {
         const bounceSteps = 3;
 
         // Определяем массивы символов
-        const regularSymbols = ['wooden_a', 'wooden_k', 'wooden_arch', 'snake',
+        const regularSymbols = ['10', 'J', 'Q', 'wooden_a', 'wooden_k', 'wooden_arch', 'snake',
                               'gorilla', 'jaguar', 'crocodile', 'gator',
                               'leopard', 'dragon', 'sloth'];
         const wildSymbols = ['wild_2x', 'wild_3x', 'wild_5x'];
@@ -325,7 +329,7 @@ class SlotMachine {
                         }
                     }
                 } else if (step >= steps - stopOrder.indexOf(i) * bounceSteps && 
-                          step < steps - stopOrder.indexOf(i) * bounceSteps + bounceSteps) {
+                           step < steps - stopOrder.indexOf(i) * bounceSteps + bounceSteps) {
                     // Эффект bounce при остановке
                     let bounceIndex = step - (steps - stopOrder.indexOf(i) * bounceSteps);
                     if (bounceIndex % 2 === 0) {
@@ -399,9 +403,15 @@ class SlotMachine {
 
     calculateWinAmount(line) {
         const symbolValues = {
+            // Базовые символы
+            '10': 1,
+            'J': 1.5,
+            'Q': 1.8,
             'wooden_a': 2,
             'wooden_k': 3,
             'wooden_arch': 4,
+
+            // Средние символы
             'snake': 5,
             'gorilla': 6,
             'jaguar': 8,

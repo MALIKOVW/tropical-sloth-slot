@@ -18,3 +18,8 @@ UI elements:
 - ui/spin_button_disabled.png
 - ui/increase_bet.png
 - ui/decrease_bet.png
+
+Новые добавленные символы (обязательно добавить):
+- 10.png (самый низкий символ, выплата 1x)
+- J.png (выплата 1.5x)
+- Q.png (выплата 1.8x)
