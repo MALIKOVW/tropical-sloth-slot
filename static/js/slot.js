@@ -41,7 +41,7 @@ class LoadingManager {
 
     loadImage(path) {
         return new Promise((resolve, reject) => {
-            console.log(`LoadingManager: Starting to load image ${path}`);
+            console.log(`LoadingManager: Starting to load ${path}`);
             const img = new Image();
             img.onload = () => {
                 console.log(`LoadingManager: Successfully loaded ${path}`);
@@ -66,7 +66,7 @@ class SlotMachine {
 
     async init() {
         try {
-            // Basic setup
+            // Basic initialization
             this.SYMBOL_SIZE = 60;
             this.SYMBOL_PADDING = 3;
             this.symbolImages = new Map();
@@ -76,7 +76,7 @@ class SlotMachine {
             // Initialize canvas
             this.canvas = document.getElementById('slotCanvas');
             if (!this.canvas) {
-                throw new Error('Canvas element not found');
+                throw new Error('Canvas not found');
             }
             this.ctx = this.canvas.getContext('2d');
             this.ctx.imageSmoothingEnabled = false;
@@ -84,12 +84,14 @@ class SlotMachine {
             // Initialize LoadingManager
             this.loadingManager = new LoadingManager();
 
-            // Define all available symbols
+            // Define available symbols with actual paths
             const symbols = [
-                // Regular symbols
+                // Basic symbols
                 { name: 'wooden_a', path: '/static/images/symbols/wooden_a.png' },
                 { name: 'wooden_k', path: '/static/images/symbols/wooden_k.png' },
                 { name: 'wooden_arch', path: '/static/images/symbols/wooden_arch.png' },
+
+                // Animal symbols
                 { name: 'snake', path: '/static/images/symbols/snake.png' },
                 { name: 'gorilla', path: '/static/images/symbols/gorilla.png' },
                 { name: 'jaguar', path: '/static/images/symbols/jaguar.png' },
@@ -102,8 +104,7 @@ class SlotMachine {
                 { name: 'sloth', path: '/static/images/symbols/sloth.png' },
                 { name: 'wild_2x', path: '/static/images/symbols/wild_2x.png' },
                 { name: 'wild_3x', path: '/static/images/symbols/wild_3x.png' },
-                { name: 'wild_5x', path: '/static/images/symbols/wild_5x.png' },
-                { name: 'scatter', path: '/static/images/symbols/scatter.png' } // Added scatter symbol
+                { name: 'wild_5x', path: '/static/images/symbols/wild_5x.png' }
             ];
 
             // Set total assets
@@ -134,7 +135,7 @@ class SlotMachine {
 
             console.log('SlotMachine: Initialization complete');
         } catch (error) {
-            console.error('SlotMachine: Initialization failed:', error);
+            console.error('SlotMachine: Failed to initialize:', error);
         }
     }
 
@@ -248,6 +249,10 @@ class SlotMachine {
 
     isWildSymbol(symbol) {
         return symbol.startsWith('wild_');
+    }
+
+    isSlothSymbol(symbol) {
+        return symbol === 'sloth';
     }
     showWinningLine(positions) {
         const container = document.getElementById('paylineContainer');
