@@ -210,13 +210,24 @@ class SlotMachine {
         if (spinButton) spinButton.disabled = true;
 
         // Get available symbols
-        const availableSymbols = Array.from(this.symbolImages.keys());
-        console.log('Available symbols for spin:', availableSymbols);
+        const regularSymbols = ['wooden_a', 'wooden_k', 'wooden_arch', 'snake', 'gorilla', 'jaguar',
+                               'crocodile', 'gator', 'leopard', 'dragon', 'sloth'];
+        const wildSymbols = ['wild_2x', 'wild_3x', 'wild_5x'];
 
-        // Generate random result
-        const result = Array(5).fill().map(() =>
-            Array(3).fill().map(() => availableSymbols[Math.floor(Math.random() * availableSymbols.length)])
-        );
+        // Generate result for each reel
+        const result = Array(5).fill().map((_, reelIndex) => {
+            return Array(3).fill().map(() => {
+                // Only add wild symbols to reels 2, 3, and 4 (index 1, 2, 3)
+                if (reelIndex >= 1 && reelIndex <= 3) {
+                    // 20% chance for wild symbol
+                    if (Math.random() < 0.20) {
+                        return wildSymbols[Math.floor(Math.random() * wildSymbols.length)];
+                    }
+                }
+                // Regular symbols for all reels
+                return regularSymbols[Math.floor(Math.random() * regularSymbols.length)];
+            });
+        });
 
         await this.animateSpin(result);
         this.reels = result;
@@ -241,12 +252,27 @@ class SlotMachine {
 
         for (let step = 0; step < steps; step++) {
             for (let i = 0; i < 5; i++) {
+                // Skip animation for reels 1 and 5
+                if (i === 0 || i === 4) {
+                    if (step === steps - 1) {
+                        this.reels[i] = finalResult[i];
+                    }
+                    continue;
+                }
+
                 if (step < i * 2) continue;
 
                 if (step < steps - 1) {
                     for (let j = 0; j < 3; j++) {
-                        const symbols = Array.from(this.symbolImages.keys());
-                        this.reels[i][j] = symbols[Math.floor(Math.random() * symbols.length)];
+                        // Only add wild symbols to reels 2, 3, and 4
+                        if (i >= 1 && i <= 3 && Math.random() < 0.20) {
+                            const wildSymbols = ['wild_2x', 'wild_3x', 'wild_5x'];
+                            this.reels[i][j] = wildSymbols[Math.floor(Math.random() * wildSymbols.length)];
+                        } else {
+                            const regularSymbols = ['wooden_a', 'wooden_k', 'wooden_arch', 'snake', 'gorilla', 'jaguar',
+                                                  'crocodile', 'gator', 'leopard', 'dragon', 'sloth'];
+                            this.reels[i][j] = regularSymbols[Math.floor(Math.random() * regularSymbols.length)];
+                        }
                     }
                 } else {
                     this.reels[i] = finalResult[i];
