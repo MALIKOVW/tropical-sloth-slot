@@ -401,12 +401,12 @@ class SlotMachine {
         let currentClass = 'big-win';
         let currentText = 'BIG WIN';
         let animationSpeed = 1;
-        let updateInterval = 100; // Увеличили базовый интервал с 50 до 100
+        let updateInterval = 200; // Увеличили базовый интервал до 200
 
         // Функция обновления значений
         const updateValues = () => {
             // Увеличиваем значения более плавно
-            const step = Math.max(1, Math.floor((multiplier - currentMultiplier) / 20)); // Уменьшили делитель с 10 до 20
+            const step = Math.max(1, Math.floor((multiplier - currentMultiplier) / 50)); // Уменьшили делитель до 50 для более плавного изменения
             currentMultiplier = Math.min(currentMultiplier + step, multiplier);
             currentAmount = this.currentBet * currentMultiplier;
 
@@ -435,8 +435,8 @@ class SlotMachine {
             // Продолжаем анимацию если не достигли целевых значений
             if (currentMultiplier < multiplier) {
                 // Увеличиваем скорость более плавно
-                animationSpeed *= 1.05; // Уменьшили коэффициент с 1.1 до 1.05
-                updateInterval = Math.max(20, Math.floor(100 / animationSpeed)); // Увеличили минимальный интервал с 10 до 20
+                animationSpeed *= 1.02; // Уменьшили коэффициент до 1.02
+                updateInterval = Math.max(50, Math.floor(200 / animationSpeed)); // Увеличили минимальный интервал до 50
                 setTimeout(updateValues, updateInterval);
             }
         };
@@ -452,8 +452,8 @@ class SlotMachine {
         };
         closeButton.addEventListener('click', closePopup);
 
-        // Автоматически закрываем через 8 секунд после окончания анимации
-        setTimeout(closePopup, 10000); // Увеличили время показа с 8000 до 10000
+        // Автоматически закрываем через 15 секунд после окончания анимации
+        setTimeout(closePopup, 15000); // Увеличили время показа до 15 секунд
     }
 
     async animateSpin(finalResult) {
@@ -734,7 +734,7 @@ class SlotMachine {
 
                     // Проверяем выигрышные комбинации для 3+ символов
                     if (consecutiveCount >= 3) {
-                        console.log(`Winning line found with ${consecutiveCount} symbols (including wilds). Wild multiplier: ${wildMultiplier}`);
+                        console.log(`Winning line found with ${consecutiveCount` symbols (including wilds). Wild multiplier: ${wildMultiplier}`);
                         winningLines.push({
                             lineIndex: index,
                             positions: line.slice(0, consecutiveCount),
