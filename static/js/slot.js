@@ -6,23 +6,16 @@ class LoadingManager {
         this.gameContent = document.getElementById('gameContent');
 
         if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
-            console.error('LoadingManager: Required elements not found');
+            console.error('Required loading elements not found');
             return;
         }
 
-        // Состояние загрузки
         this.totalAssets = 0;
         this.loadedAssets = 0;
         this.imageCache = new Map();
 
-        // Начальное состояние
-        this.initializeLoadingScreen();
-    }
-
-    initializeLoadingScreen() {
-        // Скрываем игровой контент
+        // Скрываем игровой контент и показываем экран загрузки
         this.gameContent.style.display = 'none';
-        // Показываем экран загрузки
         this.loadingScreen.style.display = 'flex';
         this.updateProgress(0);
     }
@@ -40,15 +33,11 @@ class LoadingManager {
         this.updateProgress(progress);
 
         if (this.loadedAssets >= this.totalAssets) {
-            this.showGameContent();
+            setTimeout(() => {
+                this.loadingScreen.style.display = 'none';
+                this.gameContent.style.display = 'block';
+            }, 500);
         }
-    }
-
-    showGameContent() {
-        setTimeout(() => {
-            this.loadingScreen.style.display = 'none';
-            this.gameContent.style.display = 'block';
-        }, 500);
     }
 
     async loadImage(path) {
@@ -78,12 +67,14 @@ class LoadingManager {
 
 class SlotMachine {
     constructor() {
-        this.loadingManager = new LoadingManager();
         this.initialize();
     }
 
     async initialize() {
         try {
+            // Создаем загрузчик
+            this.loadingManager = new LoadingManager();
+
             // Базовая инициализация
             this.SYMBOL_SIZE = 60;
             this.SYMBOL_PADDING = 3;
@@ -122,8 +113,10 @@ class SlotMachine {
             // Инициализация барабанов
             this.reels = Array(5).fill().map(() => Array(3).fill('10'));
 
-            // Загрузка изображений и инициализация игры
+            // Загрузка изображений
             await this.loadSymbols();
+
+            // Инициализация игры
             this.initPaylines();
             this.initializeEventListeners();
             this.resizeCanvas();
@@ -164,7 +157,7 @@ class SlotMachine {
         ctx.fillStyle = '#333333';
         ctx.fillRect(0, 0, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
         ctx.fillStyle = '#ffffff';
-        ctx.font = '12px Arial';
+        ctx.font = `${this.SYMBOL_SIZE * 0.3}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(symbol, this.SYMBOL_SIZE / 2, this.SYMBOL_SIZE / 2);
@@ -229,7 +222,7 @@ class SlotMachine {
     adjustBet(amount) {
         const betValues = [10, 20, 30, 40, 50, 100, 200, 300, 400, 500, 1000];
         const currentIndex = betValues.indexOf(this.currentBet);
-        const newIndex = amount > 0
+        let newIndex = amount > 0
             ? Math.min(currentIndex + 1, betValues.length - 1)
             : Math.max(currentIndex - 1, 0);
 
@@ -328,85 +321,6 @@ class SlotMachine {
         }
     }
 
-
-    showWinningLine(linePositions) {
-        const container = document.getElementById('paylineContainer');
-        if (!container) return;
-
-        try {
-            container.innerHTML = '';
-
-            const startPos = linePositions[0];
-            const endPos = linePositions[linePositions.length - 1];
-
-            const cellSize = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
-            const startX = startPos.x * cellSize + cellSize / 2;
-            const startY = startPos.y * cellSize + cellSize / 2;
-            const endX = endPos.x * cellSize + cellSize / 2;
-            const endY = endPos.y * cellSize + cellSize / 2;
-
-            const line = document.createElement('div');
-            line.className = 'payline';
-
-            const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
-            const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
-
-            line.style.width = `${length}px`;
-            line.style.left = `${startX}px`;
-            line.style.top = `${startY}px`;
-            line.style.transform = `rotate(${angle}deg)`;
-            line.style.transformOrigin = 'left center';
-
-            container.appendChild(line);
-
-            const symbolElements = [];
-            for (const pos of linePositions) {
-                const x = pos.x * cellSize;
-                const y = pos.y * cellSize;
-
-                const symbolKey = this.reels[pos.x][pos.y];
-                const img = this.symbolImages.get(symbolKey);
-
-                if (img) {
-                    const symbol = document.createElement('div');
-                    symbol.className = 'winning-symbol';
-                    symbol.style.position = 'absolute';
-                    symbol.style.left = `${x + this.SYMBOL_PADDING}px`;
-                    symbol.style.top = `${y + this.SYMBOL_PADDING}px`;
-                    symbol.style.width = `${this.SYMBOL_SIZE}px`;
-                    symbol.style.height = `${this.SYMBOL_SIZE}px`;
-                    symbol.style.zIndex = '4';
-
-                    const symbolImg = document.createElement('img');
-                    symbolImg.src = img.src;
-                    symbolImg.style.width = '100%';
-                    symbolImg.style.height = '100%';
-                    symbol.appendChild(symbolImg);
-
-                    container.appendChild(symbol);
-                    symbolElements.push(symbol);
-                }
-            }
-
-            setTimeout(() => {
-                line.classList.add('active');
-                line.style.animation = 'paylineGlow 1.5s infinite';
-                symbolElements.forEach(symbol => symbol.classList.add('active'));
-            }, 50);
-
-            container.addEventListener('click', () => {
-                container.innerHTML = '';
-            }, { once: true });
-
-            setTimeout(() => {
-                container.innerHTML = '';
-            }, 2000);
-
-        } catch (error) {
-            console.error('Error showing winning line:', error);
-            container.innerHTML = '';
-        }
-    }
     checkWinningLines() {
         const winningLines = [];
 
@@ -434,7 +348,6 @@ class SlotMachine {
                     }
 
                     if (consecutiveCount >= 3) {
-                        console.log(`Winning line found with ${consecutiveCount} symbols(including wilds). Wild multiplier: ${wildMultiplier}`);
                         winningLines.push({
                             lineIndex: index,
                             positions: line.slice(0, consecutiveCount),
@@ -458,7 +371,6 @@ class SlotMachine {
                     }
 
                     if (consecutiveCount >= 3) {
-                        console.log(`Regular winning line found with ${consecutiveCount} symbols`);
                         winningLines.push({
                             lineIndex: index,
                             positions: line.slice(0, consecutiveCount),
@@ -473,126 +385,92 @@ class SlotMachine {
 
         return winningLines;
     }
+
+    calculateWinAmount(line) {
+        const symbol = line.symbol;
+        const count = line.count;
+        const multiplier = line.multiplier;
+        const baseWin = this.symbolDefinitions[symbol].multipliers[count] || 0;
+        return baseWin * this.currentBet * multiplier;
+    }
+
+    showWinPopup(winAmount) {
+        const popup = document.getElementById('winPopup');
+        const title = popup.querySelector('.win-title');
+        const multiplierElement = popup.querySelector('.win-multiplier');
+        const amountElement = popup.querySelector('.win-amount');
+        const multiplier = winAmount / this.currentBet;
+
+        popup.style.display = 'block';
+        title.textContent = 'BIG WIN';
+        multiplierElement.textContent = `${multiplier.toFixed(2)}x`;
+        amountElement.textContent = winAmount.toFixed(2);
+
+        setTimeout(() => {
+            popup.style.display = 'none';
+        }, 3000);
+    }
+
+    showWinningLine(positions) {
+        const container = document.getElementById('paylineContainer');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        const cellSize = this.SYMBOL_SIZE + (this.SYMBOL_PADDING * 2);
+        const startPos = positions[0];
+        const endPos = positions[positions.length - 1];
+
+        const startX = startPos.x * cellSize + cellSize / 2;
+        const startY = startPos.y * cellSize + cellSize / 2;
+        const endX = endPos.x * cellSize + cellSize / 2;
+        const endY = endPos.y * cellSize + cellSize / 2;
+
+        const line = document.createElement('div');
+        line.className = 'payline active';
+
+        const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+        const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+
+        line.style.width = `${length}px`;
+        line.style.left = `${startX}px`;
+        line.style.top = `${startY}px`;
+        line.style.transform = `rotate(${angle}deg)`;
+
+        container.appendChild(line);
+
+        positions.forEach(pos => {
+            const x = pos.x * cellSize;
+            const y = pos.y * cellSize;
+
+            const symbolKey = this.reels[pos.x][pos.y];
+            const img = this.symbolImages.get(symbolKey);
+
+            if (img) {
+                const symbol = document.createElement('div');
+                symbol.className = 'winning-symbol active';
+                symbol.style.left = `${x}px`;
+                symbol.style.top = `${y}px`;
+
+                const symbolImg = document.createElement('img');
+                symbolImg.src = img.src;
+                symbol.appendChild(symbolImg);
+
+                container.appendChild(symbol);
+            }
+        });
+
+        setTimeout(() => {
+            container.innerHTML = '';
+        }, 2000);
+    }
+
     isWildSymbol(symbol) {
         return this.symbolDefinitions[symbol]?.isWild || false;
     }
 
     getWildMultiplier(symbol) {
         return this.symbolDefinitions[symbol]?.multiplier || 1;
-    }
-    calculateWinAmount(line) {
-        const multiplier = line.multiplier;
-        const symbol = line.symbol;
-        const count = line.count;
-        const baseWin = this.symbolDefinitions[symbol].multipliers[count] || 0;
-        return baseWin * this.currentBet * multiplier;
-
-    }
-    showWinPopup(winAmount) {
-        const multiplier = winAmount / this.currentBet;
-        const popup = document.getElementById('winPopup');
-        const title = popup.querySelector('.win-title');
-        const multiplierElement = popup.querySelector('.win-multiplier');
-        const amountElement = popup.querySelector('.win-amount');
-
-        if (popup.style.display === 'block') {
-            return;
-        }
-
-        let finalWinClass = '';
-        let finalWinText = '';
-        if (multiplier >= 10000) {
-            finalWinClass = 'max-win';
-            finalWinText = 'MAX WIN';
-        } else if (multiplier >= 500) {
-            finalWinClass = 'epic-win';
-            finalWinText = 'EPIC WIN';
-        } else if (multiplier >= 100) {
-            finalWinClass = 'mega-win';
-            finalWinText = 'MEGA WIN';
-        } else if (multiplier >= 20) {
-            finalWinClass = 'big-win';
-            finalWinText = 'BIG WIN';
-        } else {
-            return;
-        }
-
-        popup.className = 'win-popup big-win';
-        title.textContent = 'BIG WIN';
-        popup.style.display = 'block';
-
-        let currentMultiplier = 20;
-        let currentAmount = this.currentBet * 20;
-        let currentClass = 'big-win';
-        let currentText = 'BIG WIN';
-        let animationSpeed = 1;
-        let updateInterval = 200;
-
-        let lastUpdate = performance.now();
-        let animationFrame;
-
-        const animate = (currentTime) => {
-            const deltaTime = currentTime - lastUpdate;
-
-            if (deltaTime >= updateInterval) {
-                const step = Math.max(1, Math.floor((multiplier - currentMultiplier) / 50));
-                currentMultiplier = Math.min(currentMultiplier + step, multiplier);
-                currentAmount = this.currentBet * currentMultiplier;
-
-                if (currentMultiplier >= 10000 && currentClass !== 'max-win') {
-                    currentClass = 'max-win';
-                    currentText = 'MAX WIN';
-                    popup.className = `win-popup ${currentClass}`;
-                    title.textContent = currentText;
-                } else if (currentMultiplier >= 500 && currentClass !== 'epic-win' && currentMultiplier < 10000) {
-                    currentClass = 'epic-win';
-                    currentText = 'EPIC WIN';
-                    popup.className = `win-popup ${currentClass}`;
-                    title.textContent = currentText;
-                } else if (currentMultiplier >= 100 && currentClass !== 'mega-win' && currentMultiplier < 500) {
-                    currentClass = 'mega-win';
-                    currentText = 'MEGA WIN';
-                    popup.className = `win-popup ${currentClass}`;
-                    title.textContent = currentText;
-                }
-
-                multiplierElement.textContent = `${currentMultiplier.toFixed(2)}x`;
-                amountElement.textContent = currentAmount.toFixed(2);
-
-                lastUpdate = currentTime;
-
-                animationSpeed *= 1.01;
-                updateInterval = Math.max(50, Math.floor(200 / animationSpeed));
-            }
-
-            if (currentMultiplier < multiplier) {
-                animationFrame = requestAnimationFrame(animate);
-            } else {
-                setTimeout(() => {
-                    popup.style.display = 'none';
-                }, 15000);
-            }
-        };
-
-        animationFrame = requestAnimationFrame(animate);
-
-        const closeButton = popup.querySelector('.close-button');
-        const closePopup = () => {
-            cancelAnimationFrame(animationFrame);
-            popup.style.display = 'none';
-            closeButton.removeEventListener('click', closePopup);
-        };
-        closeButton.addEventListener('click', closePopup);
-
-        popup.addEventListener('click', (e) => {
-            if (e.target !== closeButton) {
-                cancelAnimationFrame(animationFrame);
-                popup.className = `win-popup ${finalWinClass}`;
-                title.textContent = finalWinText;
-                multiplierElement.textContent = `${multiplier.toFixed(2)}x`;
-                amountElement.textContent = winAmount.toFixed(2);
-            }
-        });
     }
     drawFallbackSymbol(symbol, x, y) {
         if (!this.ctx) return;
@@ -616,19 +494,9 @@ class SlotMachine {
         };
         return symbolMap[symbol] || symbol;
     }
-
-    
-    symbolDefinitions = {
-        'wild': { isWild: true, multiplier: 2 }
-    };
 }
 
-// Инициализация слота при загрузке DOM
+// Инициализация слота
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Document loaded, creating slot machine instance');
-    try {
-        window.slotMachine = new SlotMachine();
-    } catch (error) {
-        console.error('Failed to create slot machine:', error);
-    }
+    window.slotMachine = new SlotMachine();
 });
