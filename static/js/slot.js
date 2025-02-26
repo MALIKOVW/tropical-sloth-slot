@@ -1,40 +1,61 @@
 // Оптимизированный менеджер загрузки
 class LoadingManager {
     constructor() {
+        // Получаем элементы загрузки
         this.loadingScreen = document.getElementById('loadingScreen');
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
 
-        // Состояние загрузки
-        this.totalAssets = 0;
-        this.loadedAssets = 0;
-        this.imageCache = new Map();
-
-        // Проверка элементов
+        // Проверяем наличие всех элементов
         if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
             console.error('Required loading elements not found');
             return;
         }
 
-        // Начальное состояние
-        this.showLoadingScreen();
+        // Состояние загрузки
+        this.totalAssets = 0;
+        this.loadedAssets = 0;
+        this.imageCache = new Map();
+        this.lastProgress = 0;
+
+        // Инициализация начального состояния
+        this.initializeLoadingScreen();
     }
 
-    showLoadingScreen() {
+    initializeLoadingScreen() {
+        // Добавляем CSS transitions для плавности
+        this.loadingScreen.style.transition = 'opacity 0.5s ease-in-out';
+        this.gameContent.style.transition = 'opacity 0.5s ease-in-out';
+        this.loadingBar.style.transition = 'width 0.3s ease-out';
+
+        // Скрываем игровой контент и показываем экран загрузки
+        this.gameContent.style.opacity = '0';
         this.gameContent.style.display = 'none';
-        this.loadingScreen.style.display = 'flex';
+
         this.loadingScreen.style.opacity = '1';
+        this.loadingScreen.style.display = 'flex';
+
+        // Сбрасываем прогресс
         this.updateProgress(0);
     }
 
     updateProgress(progress) {
         if (!this.loadingBar || !this.loadingText) return;
 
+        // Нормализуем прогресс
         progress = Math.min(100, Math.max(0, progress));
-        this.loadingBar.style.width = `${progress}%`;
-        this.loadingText.textContent = `${Math.round(progress)}%`;
-        console.log(`Loading progress: ${progress}%`);
+
+        // Обновляем только при значимых изменениях
+        if (Math.abs(progress - this.lastProgress) >= 1) {
+            this.lastProgress = progress;
+
+            // Используем requestAnimationFrame для плавной анимации
+            requestAnimationFrame(() => {
+                this.loadingBar.style.width = `${progress}%`;
+                this.loadingText.textContent = `${Math.round(progress)}%`;
+            });
+        }
     }
 
     onAssetLoaded() {
@@ -42,26 +63,36 @@ class LoadingManager {
         const progress = (this.loadedAssets / this.totalAssets) * 100;
         this.updateProgress(progress);
 
+        // Если все ассеты загружены, показываем игру
         if (this.loadedAssets >= this.totalAssets) {
-            this.hideLoadingScreen();
+            this.showGameContent();
         }
     }
 
-    hideLoadingScreen() {
+    showGameContent() {
+        // Плавно скрываем экран загрузки
         this.loadingScreen.style.opacity = '0';
+
+        // Показываем игровой контент после скрытия экрана загрузки
         setTimeout(() => {
             this.loadingScreen.style.display = 'none';
             this.gameContent.style.display = 'block';
-            this.gameContent.style.opacity = '1';
-        }, 500);
+
+            // Плавно показываем игровой контент
+            requestAnimationFrame(() => {
+                this.gameContent.style.opacity = '1';
+            });
+        }, 500); // Время должно совпадать с transition
     }
 
     async loadImage(path) {
         try {
+            // Проверяем кэш
             if (this.imageCache.has(path)) {
                 return this.imageCache.get(path);
             }
 
+            // Загружаем новое изображение
             const img = await new Promise((resolve, reject) => {
                 const image = new Image();
                 image.onload = () => resolve(image);
@@ -69,11 +100,13 @@ class LoadingManager {
                 image.src = path;
             });
 
+            // Кэшируем и обновляем прогресс
             this.imageCache.set(path, img);
             this.onAssetLoaded();
             return img;
+
         } catch (error) {
-            console.error(`Error loading image: ${path}`, error);
+            console.error(`Failed to load image: ${path}`, error);
             throw error;
         }
     }
