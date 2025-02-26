@@ -330,63 +330,71 @@ class SlotMachine {
     }
 
     showWinningLine(positions) {
+        if (!positions || !positions.length) return;
+
         const container = document.getElementById('paylineContainer');
         if (!container) return;
 
         container.innerHTML = '';
 
-        const cellSize = this.SYMBOL_SIZE + this.SYMBOL_PADDING * 2;
-        const startPos = positions[0];
-        const endPos = positions[positions.length - 1];
+        try {
+            const cellSize = this.SYMBOL_SIZE + this.SYMBOL_PADDING * 2;
+            const startPos = positions[0];
+            const endPos = positions[positions.length - 1];
 
-        // Create payline
-        const line = document.createElement('div');
-        line.className = 'payline active';
+            // Create payline
+            const line = document.createElement('div');
+            line.className = 'payline active';
 
-        const startX = startPos.x * cellSize + cellSize / 2;
-        const startY = startPos.y * cellSize + cellSize / 2;
-        const endX = endPos.x * cellSize + cellSize / 2;
-        const endY = endPos.y * cellSize + cellSize / 2;
+            const startX = startPos.x * cellSize + cellSize / 2;
+            const startY = startPos.y * cellSize + cellSize / 2;
+            const endX = endPos.x * cellSize + cellSize / 2;
+            const endY = endPos.y * cellSize + cellSize / 2;
 
-        const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
-        const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+            const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+            const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
 
-        line.style.width = `${length}px`;
-        line.style.left = `${startX}px`;
-        line.style.top = `${startY}px`;
-        line.style.transform = `rotate(${angle}deg)`;
+            line.style.width = `${length}px`;
+            line.style.left = `${startX}px`;
+            line.style.top = `${startY}px`;
+            line.style.transform = `rotate(${angle}deg)`;
 
-        container.appendChild(line);
+            container.appendChild(line);
 
-        // Animate winning symbols
-        positions.forEach(pos => {
-            const x = pos.x * cellSize;
-            const y = pos.y * cellSize;
+            // Animate winning symbols
+            positions.forEach(pos => {
+                if (!this.reels[pos.x] || !this.reels[pos.x][pos.y]) return;
 
-            const symbolKey = this.reels[pos.x][pos.y];
-            const img = this.symbolImages.get(symbolKey);
+                const x = pos.x * cellSize;
+                const y = pos.y * cellSize;
+                const symbolKey = this.reels[pos.x][pos.y];
+                const img = this.symbolImages.get(symbolKey);
 
-            if (img) {
-                const symbol = document.createElement('div');
-                symbol.className = 'winning-symbol active';
-                if (this.isWildSymbol(symbolKey)) {
-                    symbol.classList.add('wild');
+                if (img) {
+                    const symbol = document.createElement('div');
+                    symbol.className = 'winning-symbol active';
+                    if (this.isWildSymbol(symbolKey)) {
+                        symbol.classList.add('wild');
+                    }
+                    symbol.style.left = `${x}px`;
+                    symbol.style.top = `${y}px`;
+
+                    const symbolImg = document.createElement('img');
+                    symbolImg.src = img.src;
+                    symbol.appendChild(symbolImg);
+
+                    container.appendChild(symbol);
                 }
-                symbol.style.left = `${x}px`;
-                symbol.style.top = `${y}px`;
+            });
 
-                const symbolImg = document.createElement('img');
-                symbolImg.src = img.src;
-                symbol.appendChild(symbolImg);
-
-                container.appendChild(symbol);
-            }
-        });
-
-        // Clear animations after delay
-        setTimeout(() => {
+            // Clear animations after delay
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 2000);
+        } catch (error) {
+            console.error('Error showing winning line:', error);
             container.innerHTML = '';
-        }, 2000);
+        }
     }
 
     calculateWinAmount(line) {
@@ -403,10 +411,13 @@ class SlotMachine {
             'dragon': 50
         };
 
-        const base_value = symbolValues[line.symbol] || 0;
-        const line_win = this.currentBet * base_value * line.multiplier;
+        if (!line || !line.symbol) return 0;
 
-        return line_win;
+        const base_value = symbolValues[line.symbol] || 0;
+        const count_multiplier = Math.min(line.count, 5); // Максимум 5 символов
+        const wild_multiplier = line.multiplier || 1;
+
+        return this.currentBet * base_value * count_multiplier * wild_multiplier;
     }
 
     checkWinningLines() {
@@ -453,16 +464,19 @@ class SlotMachine {
     }
 
     showWinPopup(winAmount) {
-        const popup = document.getElementById('winPopup');
-        const multiplierElement = popup.querySelector('.win-multiplier');
-        const amountElement = popup.querySelector('.win-amount');
+        if (!winAmount || winAmount <= 0) return;
 
-        popup.style.display = 'block';
-        multiplierElement.textContent = `${(winAmount / this.currentBet).toFixed(2)}x`;
-        amountElement.textContent = winAmount.toFixed(2);
+        const popup = document.createElement('div');
+        popup.className = 'win-animation';
+        popup.innerHTML = `
+            <div class="win-multiplier">${(winAmount / this.currentBet).toFixed(2)}x</div>
+            <div class="win-amount">${winAmount.toFixed(2)}</div>
+        `;
+
+        document.body.appendChild(popup);
 
         setTimeout(() => {
-            popup.style.display = 'none';
+            popup.remove();
         }, 3000);
     }
 }
