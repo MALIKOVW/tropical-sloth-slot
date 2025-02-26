@@ -393,25 +393,28 @@ class SlotMachine {
                 }
             });
 
-            // Создаем линию выигрыша
-            const line = document.createElement('div');
-            line.className = 'win-line';
+            // Создаем линию выигрыша через центры символов
+            if (positions.length >= 2) {
+                const line = document.createElement('div');
+                line.className = 'win-line';
 
-            // Вычисляем позицию и размер линии
-            const startPos = positions[0];
-            const endPos = positions[positions.length - 1];
-            const startX = startPos.x * cellSize + cellSize / 2;
-            const startY = startPos.y * cellSize + cellSize / 2;
-            const endX = endPos.x * cellSize + cellSize / 2;
-            const endY = endPos.y * cellSize + cellSize /2;
+                const startPos = positions[0];
+                const endPos = positions[positions.length - 1];
+                const startX = startPos.x * cellSize + cellSize / 2;
+                const startY = startPos.y * cellSize + cellSize / 2;
+                const endX = endPos.x * cellSize + cellSize / 2;
+                const endY = endPos.y * cellSize + cellSize / 2;
 
-            line.style.width = `${Math.abs(endX - startX)}px`;
-            line.style.left = `${Math.min(startX, endX)}px`;
-            line.style.top = `${startY}px`;
-            line.style.transform = `rotate(${Math.atan2(endY - startY, endX - startX) * 180 / Math.PI}deg)`;
+                const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+                const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
 
-            container.appendChild(line);
+                line.style.width = `${length}px`;
+                line.style.left = `${startX}px`;
+                line.style.top = `${startY}px`;
+                line.style.transform = `rotate(${angle}deg)`;
 
+                container.appendChild(line);
+            }
 
             // Очистка анимаций
             setTimeout(() => {

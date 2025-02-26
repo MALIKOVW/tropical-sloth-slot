@@ -163,8 +163,8 @@ body {
     );
     pointer-events: none;
     z-index: 3;
-    opacity: 0;
     transform-origin: left;
+    opacity: 0;
     animation: winLineAnimation 2s ease-in-out;
 }
 
@@ -185,7 +185,6 @@ body {
         transform: scaleX(1);
     }
 }
-
 
 /* Winning symbol animation */
 .winning-symbol {
