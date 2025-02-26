@@ -20,10 +20,15 @@ class LoadingManager {
             gameContent: !!this.gameContent
         });
 
-        this.totalAssets = 12;
+        this.totalAssets = 0; // Будет установлено позже
         this.loadedAssets = 0;
         this.lastProgress = 0;
         this.imageCache = new Map();
+    }
+
+    setTotalAssets(count) {
+        this.totalAssets = count;
+        console.log(`LoadingManager: Total assets set to ${count}`);
     }
 
     async init() {
@@ -36,6 +41,7 @@ class LoadingManager {
 
             this.loadingScreen.style.display = 'flex';
             this.gameContent.style.display = 'none';
+            this.updateProgress(0); // Начальный прогресс
             console.log('LoadingManager: Loading screen displayed');
             return true;
         } catch (error) {
@@ -193,6 +199,9 @@ class SlotMachine {
                 'wild': { value: 0, path: '/static/images/symbols/wild.png', multiplier: 2, isWild: true }
             };
 
+            // Set total assets count before loading
+            this.loadingManager.setTotalAssets(Object.keys(this.symbolDefinitions).length);
+
             console.log('Slot Machine: Loading symbol images');
             await this.loadSymbolImages();
 
@@ -213,6 +222,7 @@ class SlotMachine {
 
     async loadSymbolImages() {
         const loadPromises = [];
+
         for (const [symbol, def] of Object.entries(this.symbolDefinitions)) {
             try {
                 const promise = this.loadingManager.loadImage(def.path)
@@ -229,6 +239,7 @@ class SlotMachine {
                 console.error(`Slot Machine: Error in loadSymbolImages for ${symbol}:`, error);
             }
         }
+
         await Promise.all(loadPromises);
     }
 
