@@ -361,34 +361,35 @@ class SlotMachine {
 
         try {
             const cellSize = this.SYMBOL_SIZE + this.SYMBOL_PADDING * 2;
+            const startPos = positions[0];
+            const endPos = positions[positions.length - 1];
 
-            // Создаем SVG для линии
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.style.position = 'absolute';
-            svg.style.top = '0';
-            svg.style.left = '0';
-            svg.style.width = '100%';
-            svg.style.height = '100%';
-            svg.style.pointerEvents = 'none';
+            // Создаем линию выигрыша
+            const line = document.createElement('div');
+            line.className = 'winning-line';
 
-            // Создаем path для линии
-            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            // Вычисляем параметры линии
+            const startX = startPos.x * cellSize + cellSize / 2;
+            const startY = startPos.y * cellSize + cellSize / 2;
+            const endX = endPos.x * cellSize + cellSize / 2;
+            const endY = endPos.y * cellSize + cellSize / 2;
 
-            // Генерируем path data
-            let pathData = `M ${positions[0].x * cellSize + cellSize/2} ${positions[0].y * cellSize + cellSize/2}`;
-            for (let i = 1; i < positions.length; i++) {
-                pathData += ` L ${positions[i].x * cellSize + cellSize/2} ${positions[i].y * cellSize + cellSize/2}`;
-            }
+            // Вычисляем длину и угол линии
+            const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+            const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
 
-            path.setAttribute("d", pathData);
-            path.setAttribute("stroke", "#ffd700");
-            path.setAttribute("stroke-width", "4");
-            path.setAttribute("fill", "none");
-            path.setAttribute("stroke-linecap", "round");
-            path.setAttribute("class", "winning-line");
+            // Устанавливаем стили линии
+            line.style.width = `${length}px`;
+            line.style.left = `${startX}px`;
+            line.style.top = `${startY}px`;
+            line.style.transform = `rotate(${angle}deg)`;
 
-            svg.appendChild(path);
-            container.appendChild(svg);
+            container.appendChild(line);
+
+            // Добавляем класс active с небольшой задержкой для анимации
+            setTimeout(() => {
+                line.classList.add('active');
+            }, 50);
 
             // Анимация символов
             positions.forEach(pos => {
@@ -417,7 +418,7 @@ class SlotMachine {
                     // Добавляем класс для активации анимации с небольшой задержкой
                     setTimeout(() => {
                         symbol.classList.add('active');
-                    }, 50);
+                    }, 100);
                 }
             });
 
