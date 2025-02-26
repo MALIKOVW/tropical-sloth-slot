@@ -1,6 +1,5 @@
 class LoadingManager {
     constructor() {
-        console.log('Initializing LoadingManager');
         this.loadingScreen = document.getElementById('loadingScreen');
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
@@ -20,7 +19,6 @@ class LoadingManager {
         }
 
         console.log('Loading screen initialized');
-        this.loadingScreen.classList.remove('hidden');
         this.loadingScreen.style.display = 'flex';
         this.gameContent.style.display = 'none';
     }
@@ -71,9 +69,13 @@ class LoadingManager {
             const img = new Image();
             img.onload = () => {
                 this.imageCache.set(path, img);
+                this.onAssetLoaded();
                 resolve(img);
             };
-            img.onerror = reject;
+            img.onerror = (error) => {
+                console.error(`Failed to load image: ${path}`, error);
+                reject(error);
+            };
             img.src = path;
         });
     }
@@ -84,63 +86,48 @@ class SlotMachine {
         this.loadingManager = new LoadingManager();
         this.SYMBOL_SIZE = 60;
         this.SYMBOL_PADDING = 3;
-        this.spinning = false;
-        this.isAnimatingWin = false;
-        this.skipWinAnimation = false;
-        this.animatedSymbols = new Map();
         this.symbolImages = new Map();
+        this.spinning = false;
+        this.currentBet = 10;
         this.initializeCanvas();
+        this.initPaylines();
     }
 
-    async loadSymbolImages() {
-        const loadPromises = [];
-        for (const [symbol, def] of Object.entries(this.symbolDefinitions)) {
-            try {
-                const img = await this.loadingManager.loadImage(def.path);
-                this.symbolImages.set(symbol, img);
-                this.loadingManager.onAssetLoaded();
-            } catch (error) {
-                console.error(`Failed to load image for symbol: ${symbol}`, error);
-                this.createFallbackImage(symbol);
-                this.loadingManager.onAssetLoaded();
+    initPaylines() {
+        this.paylines = [
+            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // 1
+            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // 2
+            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // 3
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // 4
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}]  // 5
+        ];
+    }
+
+    async initializeCanvas() {
+        try {
+            this.canvas = document.getElementById('slotCanvas');
+            if (!this.canvas) {
+                throw new Error('Canvas element not found');
             }
+
+            this.ctx = this.canvas.getContext('2d', { alpha: false });
+            this.ctx.imageSmoothingEnabled = false;
+
+            this.initializeSymbols();
+            await this.loadSymbolImages();
+            this.initializeEventListeners();
+            this.resizeCanvas();
+            this.draw();
+
+            console.log('Canvas initialized successfully');
+        } catch (error) {
+            console.error('Error initializing canvas:', error);
         }
     }
 
-    createFallbackImage(symbol) {
-        const canvas = document.createElement('canvas');
-        canvas.width = this.SYMBOL_SIZE;
-        canvas.height = this.SYMBOL_SIZE;
-        const ctx = canvas.getContext('2d');
-
-        ctx.fillStyle = '#333333';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(symbol, canvas.width / 2, canvas.height / 2);
-
-        const img = new Image();
-        img.src = canvas.toDataURL();
-        this.symbolImages.set(symbol, img);
-    }
-
-    initializeCanvas() {
-        this.canvas = document.getElementById('slotCanvas');
-        if (!this.canvas) {
-            console.error('Canvas element not found');
-            return;
-        }
-
-        this.ctx = this.canvas.getContext('2d', { alpha: false });
-        this.ctx.imageSmoothingEnabled = false;
-
+    initializeSymbols() {
         // Initialize game state
         this.reels = Array(5).fill().map(() => Array(3).fill('wooden_a'));
-        this.currentBet = 10;
-        this.bonusSpinsRemaining = 0;
 
         // Define symbols and their properties
         this.symbolDefinitions = {
@@ -153,51 +140,6 @@ class SlotMachine {
                 value: 5,
                 path: '/static/images/symbols/wooden_k.png',
                 multipliers: {3: 5, 4: 10, 5: 20}
-            },
-            'wooden_arch': {
-                value: 10,
-                path: '/static/images/symbols/wooden_arch.png',
-                multipliers: {3: 10, 4: 20, 5: 50}
-            },
-            'snake': {
-                value: 15,
-                path: '/static/images/symbols/snake.png',
-                multipliers: {3: 15, 4: 30, 5: 75}
-            },
-            'gorilla': {
-                value: 20,
-                path: '/static/images/symbols/gorilla.png',
-                multipliers: {3: 20, 4: 40, 5: 100}
-            },
-            'jaguar': {
-                value: 25,
-                path: '/static/images/symbols/jaguar.png',
-                multipliers: {3: 25, 4: 50, 5: 125}
-            },
-            'crocodile': {
-                value: 30,
-                path: '/static/images/symbols/crocodile.png',
-                multipliers: {3: 30, 4: 60, 5: 150}
-            },
-            'gator': {
-                value: 40,
-                path: '/static/images/symbols/gator.png',
-                multipliers: {3: 40, 4: 80, 5: 200}
-            },
-            'leopard': {
-                value: 50,
-                path: '/static/images/symbols/leopard.png',
-                multipliers: {3: 50, 4: 100, 5: 250}
-            },
-            'dragon': {
-                value: 100,
-                path: '/static/images/symbols/dragon.png',
-                multipliers: {3: 100, 4: 200, 5: 500}
-            },
-            'sloth': {
-                value: 0,
-                path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png',
-                multipliers: {3: 2, 4: 10, 5: 50}
             },
             'wild_2x': {
                 value: 0,
@@ -218,24 +160,107 @@ class SlotMachine {
                 isWild: true
             }
         };
+    }
 
-        this.loadSymbolImages();
-        this.resizeCanvas();
-        this.initializeEventListeners();
+    async loadSymbolImages() {
+        const loadPromises = [];
 
-        // Оптимизированная перерисовка
-        let animationFrameId;
-        const render = () => {
-            if (!this.spinning) {
-                cancelAnimationFrame(animationFrameId);
-                return;
+        for (const [symbol, def] of Object.entries(this.symbolDefinitions)) {
+            try {
+                const img = await this.loadingManager.loadImage(def.path);
+                this.symbolImages.set(symbol, img);
+            } catch (error) {
+                console.error(`Failed to load image for symbol: ${symbol}`, error);
+                this.createFallbackImage(symbol);
             }
-            this.draw();
-            animationFrameId = requestAnimationFrame(render);
-        };
+        }
+    }
 
-        // Начальная отрисовка
+    initializeEventListeners() {
+        const spinButton = document.getElementById('spinButton');
+        if (spinButton) {
+            spinButton.addEventListener('click', () => this.spin());
+        }
+
+        document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(1));
+        document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-1));
+    }
+
+    adjustBet(amount) {
+        const betValues = [10, 20, 30, 40, 50, 100, 200, 300, 400, 500, 1000];
+        const currentIndex = betValues.indexOf(this.currentBet);
+        let newIndex;
+
+        if (amount > 0) {
+            newIndex = Math.min(currentIndex + 1, betValues.length - 1);
+        } else {
+            newIndex = Math.max(currentIndex - 1, 0);
+        }
+
+        this.currentBet = betValues[newIndex];
+        document.getElementById('currentBet').textContent = this.currentBet.toFixed(2);
+    }
+
+    draw() {
+        if (!this.ctx || !this.canvas) return;
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        const totalWidth = this.canvas.width;
+        const totalHeight = this.canvas.height;
+        const symbolWidth = this.SYMBOL_SIZE;
+        const symbolHeight = this.SYMBOL_SIZE;
+
+        const horizontalGap = (totalWidth - (5 * symbolWidth)) / 6;
+        const verticalGap = (totalHeight - (3 * symbolHeight)) / 4;
+
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 3; j++) {
+                const symbol = this.reels[i][j];
+                const x = horizontalGap + i * (symbolWidth + horizontalGap);
+                const y = verticalGap + j * (symbolHeight + verticalGap);
+
+                const img = this.symbolImages.get(symbol);
+                if (img) {
+                    this.ctx.drawImage(img, x, y, symbolWidth, symbolHeight);
+                } else {
+                    this.drawFallbackSymbol(symbol, x, y);
+                }
+            }
+        }
+    }
+
+    resizeCanvas() {
+        if (!this.ctx || !this.canvas) return;
+
+        const numReels = 5;
+        const numRows = 3;
+        const horizontalPadding = this.SYMBOL_PADDING * 6;
+        const verticalPadding = this.SYMBOL_PADDING * 4;
+
+        this.canvas.width = (this.SYMBOL_SIZE * numReels) + horizontalPadding;
+        this.canvas.height = (this.SYMBOL_SIZE * numRows) + verticalPadding;
+
         this.draw();
+    }
+
+    createFallbackImage(symbol) {
+        const canvas = document.createElement('canvas');
+        canvas.width = this.SYMBOL_SIZE;
+        canvas.height = this.SYMBOL_SIZE;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(symbol, canvas.width / 2, canvas.height / 2);
+
+        const img = new Image();
+        img.src = canvas.toDataURL();
+        this.symbolImages.set(symbol, img);
     }
 
     showWinningLine(linePositions) {
@@ -324,7 +349,7 @@ class SlotMachine {
         if (this.spinning) return;
 
         const credits = parseFloat(document.getElementById('creditDisplay').textContent);
-        if (!this.bonusSpinsRemaining && credits < this.currentBet) {
+        if (credits < this.currentBet) {
             alert('Недостаточно кредитов!');
             return;
         }
@@ -338,10 +363,9 @@ class SlotMachine {
             this.spinning = true;
             document.getElementById('spinButton').disabled = true;
 
-            if (!this.bonusSpinsRemaining) {
-                const newCredits = credits - this.currentBet;
-                document.getElementById('creditDisplay').textContent = newCredits.toFixed(2);
-            }
+            const newCredits = credits - this.currentBet;
+            document.getElementById('creditDisplay').textContent = newCredits.toFixed(2);
+
 
             audio.playClickSound();
 
@@ -601,105 +625,6 @@ class SlotMachine {
         this.draw();
     }
 
-    initializeCanvas() {
-        console.log('Initializing canvas');
-        this.canvas = document.getElementById('slotCanvas');
-        if (!this.canvas) {
-            console.error('Canvas element not found');
-            return;
-        }
-
-        this.ctx = this.canvas.getContext('2d', { alpha: false });
-        this.ctx.imageSmoothingEnabled = false;
-
-        // Initialize game state
-        this.reels = Array(5).fill().map(() => Array(3).fill('wooden_a'));
-        this.currentBet = 10; // Начальная ставка 10
-        this.bonusSpinsRemaining = 0;
-
-        // Define symbols and their properties
-        this.symbolDefinitions = {
-            'wooden_a': {
-                value: 5,
-                path: '/static/images/symbols/wooden_a.png',
-                multipliers: {3: 5, 4: 10, 5: 20}
-            },
-            'wooden_k': {
-                value: 5,
-                path: '/static/images/symbols/wooden_k.png',
-                multipliers: {3: 5, 4: 10, 5: 20}
-            },
-            'wooden_arch': {
-                value: 10,
-                path: '/static/images/symbols/wooden_arch.png',
-                multipliers: {3: 10, 4: 20, 5: 50}
-            },
-            'snake': {
-                value: 15,
-                path: '/static/images/symbols/snake.png',
-                multipliers: {3: 15, 4: 30, 5: 75}
-            },
-            'gorilla': {
-                value: 20,
-                path: '/static/images/symbols/gorilla.png',
-                multipliers: {3: 20, 4: 40, 5: 100}
-            },
-            'jaguar': {
-                value: 25,
-                path: '/static/images/symbols/jaguar.png',
-                multipliers: {3: 25, 4: 50, 5: 125}
-            },
-            'crocodile': {
-                value: 30,
-                path: '/static/images/symbols/crocodile.png',
-                multipliers: {3: 30, 4: 60, 5: 150}
-            },
-            'gator': {
-                value: 40,
-                path: '/static/images/symbols/gator.png',
-                multipliers: {3: 40, 4: 80, 5: 200}
-            },
-            'leopard': {
-                value: 50,
-                path: '/static/images/symbols/leopard.png',
-                multipliers: {3: 50, 4: 100, 5: 250}
-            },
-            'dragon': {
-                value: 100,
-                path: '/static/images/symbols/dragon.png',
-                multipliers: {3: 100, 4: 200, 5: 500}
-            },
-            'sloth': {
-                value: 0,
-                path: '/static/images/symbols/Picsart_25-02-25_16-45-12-270.png',
-                multipliers: {3: 2, 4: 10, 5: 50}
-            },
-            'wild_2x': {
-                value: 0,
-                path: '/static/images/symbols/Picsart_25-02-25_18-10-53-970.png',
-                multiplier: 2,
-                isWild: true
-            },
-            'wild_3x': {
-                value: 0,
-                path: '/static/images/symbols/Picsart_25-02-25_18-12-23-513.png',
-                multiplier: 3,
-                isWild: true
-            },
-            'wild_5x': {
-                value: 0,
-                path: '/static/images/symbols/Picsart_25-02-25_18-13-55-519.png',
-                multiplier: 5,
-                isWild: true
-            }
-        };
-
-        this.loadSymbolImages();
-        this.resizeCanvas();
-        this.initializeEventListeners();
-    }
-
-
     isWildSymbol(symbol) {
         return this.symbolDefinitions[symbol]?.isWild || false;
     }
@@ -775,75 +700,16 @@ class SlotMachine {
         return winningLines;
     }
 
-    resizeCanvas() {
-        if (!this.ctx || !this.canvas) return;
-
-        try {
-            const numReels = 5;
-            const numRows = 3;
-
-            const horizontalPadding = this.SYMBOL_PADDING * 6; 
-            const verticalPadding = this.SYMBOL_PADDING * 4;   
-
-            const totalWidth = (this.SYMBOL_SIZE * numReels) + horizontalPadding;
-            const totalHeight = (this.SYMBOL_SIZE * numRows) + verticalPadding;
-
-            this.canvas.width = totalWidth;
-            this.canvas.height = totalHeight;
-
-            this.logicalWidth = totalWidth;
-            this.logicalHeight = totalHeight;
-
-            this.draw();
-        } catch (error) {
-            console.error('Error resizing canvas:', error);
-        }
-    }
-
-    draw() {
-        if (!this.ctx || !this.canvas) return;
-
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        const totalWidth = this.canvas.width;
-        const totalHeight = this.canvas.height;
-        const symbolWidth = this.SYMBOL_SIZE;
-        const symbolHeight = this.SYMBOL_SIZE;
-
-        const horizontalGap = (totalWidth - (5 * symbolWidth)) / 6;
-        const verticalGap = (totalHeight - (3 * symbolHeight)) / 4;
-
-        for (let i = 0; i < 5; i++) {
-            for (let j = 0; j < 3; j++) {
-                const symbol = this.reels[i][j];
-                const x = horizontalGap + i * (symbolWidth + horizontalGap);
-                const y = verticalGap + j * (symbolHeight + verticalGap);
-
-                try {
-                    const img = this.symbolImages.get(symbol);
-                    if (img) {
-                        this.ctx.drawImage(img, x, y, symbolWidth, symbolHeight);
-                    } else {
-                        this.drawFallbackSymbol(symbol, x, y, symbolWidth);
-                    }
-                } catch (error) {
-                    console.error(`Error rendering symbol ${symbol}:`, error);
-                    this.drawFallbackSymbol(symbol, x, y, symbolWidth);
-                }
-            }
-        }
-    }
-
-    drawFallbackSymbol(symbol, x, y, size) {
+    drawFallbackSymbol(symbol, x, y) {
         if (!this.ctx) return;
 
         this.ctx.fillStyle = '#333333';
-        this.ctx.fillRect(x, y, size, size);
+        this.ctx.fillRect(x, y, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
         this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = `${size * 0.3}px Arial`;
+        this.ctx.font = `${this.SYMBOL_SIZE * 0.3}px Arial`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(this.getSymbolDisplay(symbol), x + size / 2, y + size / 2);
+        this.ctx.fillText(this.getSymbolDisplay(symbol), x + this.SYMBOL_SIZE / 2, y + this.SYMBOL_SIZE / 2);
     }
 
     getSymbolDisplay(symbol) {
@@ -861,68 +727,16 @@ class SlotMachine {
         try {
             console.log('Starting slot machine initialization');
 
-            this.paylines = [
-                [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // 1
-                [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // 2
-                [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // 3
-                [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // 4
-                [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}], // 5
-                [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 2}], // 6
-                [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 0}], // 7
-                [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 1}], // 8
-                [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 1}], // 9
-                [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 1}], // 10
-                [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}], // 11
-                [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 0}], // 12
-                [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 2}], // 13
-                [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 0}], // 14
-                [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 2}], // 15
-                [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 1}], // 16
-                [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 1}], // 17
-                [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 2}, {x: 3, y: 0}, {x: 4, y: 0}], // 18
-                [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 0}, {x: 3, y: 2}, {x: 4, y: 2}], // 19
-                [{x: 0, y: 0}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 0}]  // 20
-            ];
-
             this.wildReels = [1, 2, 3]; 
             console.log('Slot machine initialization complete');
         } catch (error) {
             console.error('Error during initialization:', error);
         }
     }
-
-    initializeEventListeners() {
-        const spinButton = document.getElementById('spinButton');
-        if (spinButton) {
-            spinButton.addEventListener('click', () => this.spin());
-        }
-
-        document.getElementById('increaseBet').addEventListener('click', () => this.adjustBet(1));
-        document.getElementById('decreaseBet').addEventListener('click', () => this.adjustBet(-1));
-    }
-
-    adjustBet(amount) {
-        const betValues = [10, 20, 30, 40, 50, 100, 200, 300, 400, 500, 1000, 2000, 3000, 4000, 5000, 10000, 20000, 30000, 40000, 50000, 100000];
-        const currentIndex = betValues.indexOf(this.currentBet);
-        let newIndex;
-
-        if (amount > 0) {
-            newIndex = Math.min(currentIndex + 1, betValues.length - 1);
-        } else {
-            newIndex = Math.max(currentIndex - 1, 0);
-        }
-
-        this.currentBet = betValues[newIndex];
-        document.getElementById('currentBet').textContent = this.currentBet.toFixed(2);
-    }
 }
 
-window.addEventListener('load', () => {
-    console.log('Page loaded, creating slot machine instance');
-    try {
-        const slot = new SlotMachine();
-        window.slotMachine = slot; 
-    } catch (error) {
-        console.error('Failed to create SlotMachine instance:', error);
-    }
+// Initialize the slot machine when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM fully loaded');
+    window.slotMachine = new SlotMachine();
 });
