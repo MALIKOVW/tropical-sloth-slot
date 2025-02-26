@@ -90,150 +90,8 @@ body {
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
-/* Payline container */
-#paylineContainer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 2;
-}
+/* Payline container -  Removed payline related styles */
 
-/* Payline styles */
-.payline {
-    position: absolute;
-    height: 4px;
-    background: linear-gradient(
-        90deg,
-        rgba(255, 215, 0, 0) 0%,
-        rgba(255, 215, 0, 1) 10%,
-        rgba(255, 255, 255, 1) 50%,
-        rgba(255, 215, 0, 1) 90%,
-        rgba(255, 215, 0, 0) 100%
-    );
-    pointer-events: none;
-    transform-origin: left center;
-    border-radius: 2px;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.8),
-                0 0 20px rgba(255, 215, 0, 0.4);
-    z-index: 3;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-    animation: paylineGlow 1.5s infinite;
-}
-
-.payline.active {
-    opacity: 1;
-}
-
-@keyframes paylineGlow {
-    0% {
-        opacity: 0.7;
-        filter: brightness(1.2) blur(0.5px);
-        box-shadow: 0 0 10px rgba(255, 215, 0, 0.8),
-                   0 0 20px rgba(255, 215, 0, 0.4);
-    }
-    50% {
-        opacity: 1;
-        filter: brightness(1.4) blur(0px);
-        box-shadow: 0 0 15px rgba(255, 215, 0, 0.9),
-                   0 0 30px rgba(255, 215, 0, 0.5);
-    }
-    100% {
-        opacity: 0.7;
-        filter: brightness(1.2) blur(0.5px);
-        box-shadow: 0 0 10px rgba(255, 215, 0, 0.8),
-                   0 0 20px rgba(255, 215, 0, 0.4);
-    }
-}
-
-/* Winning line animation */
-.win-line {
-    position: absolute;
-    height: 2px;
-    background: linear-gradient(
-        90deg,
-        rgba(255, 215, 0, 0) 0%,
-        rgba(255, 215, 0, 0.8) 20%,
-        rgba(255, 255, 255, 1) 50%,
-        rgba(255, 215, 0, 0.8) 80%,
-        rgba(255, 215, 0, 0) 100%
-    );
-    pointer-events: none;
-    z-index: 3;
-    transform-origin: left;
-    opacity: 0;
-    animation: winLineAnimation 2s ease-in-out;
-}
-
-@keyframes winLineAnimation {
-    0% {
-        opacity: 0;
-        transform: scaleX(0);
-    }
-    20% {
-        opacity: 1;
-    }
-    80% {
-        opacity: 1;
-        transform: scaleX(1);
-    }
-    100% {
-        opacity: 0;
-        transform: scaleX(1);
-    }
-}
-
-/* Winning symbol animation */
-.winning-symbol {
-    position: absolute;
-    z-index: 4;
-    pointer-events: none;
-    transform: scale(1);
-    opacity: 0;
-    transition: all 0.3s ease-out;
-}
-
-.winning-symbol.active {
-    opacity: 1;
-    animation: symbolPulse 0.6s ease-in-out infinite;
-}
-
-.winning-symbol.wild.active {
-    animation: wildPulse 0.6s infinite;
-}
-
-@keyframes symbolPulse {
-    0% {
-        transform: scale(1);
-        filter: brightness(1.4) drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
-    }
-    50% {
-        transform: scale(1.15);
-        filter: brightness(1.6) drop-shadow(0 0 25px rgba(255, 215, 0, 1));
-    }
-    100% {
-        transform: scale(1);
-        filter: brightness(1.4) drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
-    }
-}
-
-@keyframes wildPulse {
-    0% {
-        transform: scale(1);
-        filter: brightness(1.4) drop-shadow(0 0 15px rgba(255, 159, 67, 0.8));
-    }
-    50% {
-        transform: scale(1.15);
-        filter: brightness(1.6) drop-shadow(0 0 25px rgba(255, 159, 67, 1));
-    }
-    100% {
-        transform: scale(1);
-        filter: brightness(1.4) drop-shadow(0 0 15px rgba(255, 159, 67, 0.8));
-    }
-}
 
 /* Game container and controls */
 .game-container {
@@ -1140,97 +998,50 @@ h1 {
     opacity: 1;
 }
 
-.win-popup.big-win {
-    border-color: #00ff9d;
-    box-shadow: 0 0 30px rgba(0, 255, 157, 0.3);
+/* Winning symbol animation */
+.winning-symbol {
+    position: absolute;
+    z-index: 4;
+    pointer-events: none;
+    transform: scale(1);    opacity: 0;
+    transition: all 0.3s ease-out;
 }
 
-.win-popup.mega-win {
-    border-color: #ff00ff;
-    box-shadow: 0 0 40px rgba(255, 0, 255, 0.4);
+.winning-symbol.active {
+    opacity: 1;
+    animation: symbolPulse 0.6s ease-in-out infinite;
 }
 
-.win-popup.epic-win {
-    border-color: #ff0000;
-    box-shadow: 0 0 50px rgba(255, 0, 0, 0.5);
+.winning-symbol.wild.active {
+    animation: wildPulse 0.6s infinite;
 }
 
-.win-popup.max-win {
-    border-color: #ffff00;
-    box-shadow: 0 0 60px rgba(255, 255, 0, 0.6);
-}
-
-.win-title {
-    font-size: 48px;
-    margin-bottom: 20px;
-    font-weight: bold;
-    text-transform: uppercase;
-    transition: all 0.3s ease;
-}
-
-.big-win .win-title {
-    color: #00ff9d;
-    text-shadow: 0 0 20px rgba(0, 255, 157, 0.5);
-}
-
-.mega-win .win-title {
-    color: #ff00ff;
-    text-shadow: 0 0 25px rgba(255, 0, 255, 0.5);
-}
-
-.epic-win .win-title {
-    color: #ff0000;
-    text-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
-}
-
-.max-win .win-title {
-    color: #ffff00;
-    text-shadow: 0 0 35px rgba(255, 255, 0, 0.5);
-}
-
-.win-multiplier {
-    font-size: 36px;
-    color: #fff;
-    margin: 10px 0;
-    transition: all 0.2s ease;
-}
-
-.win-amount {
-    font-size: 42px;
-    color: #ffd700;
-    margin: 20px 0;
-    text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
-    transition: all 0.2s ease;
-}
-
-@keyframes popupAppear {
+@keyframes symbolPulse {
     0% {
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0;
+        transform: scale(1);
+        filter: brightness(1.4) drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
     }
     50% {
-        transform: translate(-50%, -50%) scale(1.2);
-        opacity: 0.8;
+        transform: scale(1.15);
+        filter: brightness(1.6) drop-shadow(0 0 25px rgba(255, 215, 0, 1));
     }
     100% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
+        transform: scale(1);
+        filter: brightness(1.4) drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
     }
 }
 
-.win-popup .close-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 24px;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.3s;
-}
-
-.win-popup .close-button:hover {
-    opacity: 1;
+@keyframes wildPulse {
+    0% {
+        transform: scale(1);
+        filter: brightness(1.4) drop-shadow(0 0 15px rgba(255, 159, 67, 0.8));
+    }
+    50% {
+        transform: scale(1.15);
+        filter: brightness(1.6) drop-shadow(0 0 25px rgba(255, 159, 67, 1));
+    }
+    100% {
+        transform: scale(1);
+        filter: brightness(1.4) drop-shadow(0 0 15px rgba(255, 159, 67, 0.8));
+    }
 }
