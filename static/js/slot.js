@@ -1,28 +1,34 @@
 class LoadingManager {
     constructor() {
+        console.log('LoadingManager: Constructor called');
         this.loadingScreen = document.getElementById('loadingScreen');
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
 
         if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
-            console.error('Required elements not found');
+            console.error('LoadingManager: Required elements not found:', {
+                loadingScreen: !!this.loadingScreen,
+                loadingBar: !!this.loadingBar,
+                loadingText: !!this.loadingText,
+                gameContent: !!this.gameContent
+            });
             return;
         }
 
         this.loadedAssets = 0;
         this.totalAssets = 0;
-        this.imageCache = new Map();
 
-        // Set initial state
+        // Initial state
         this.gameContent.style.display = 'none';
         this.loadingScreen.style.display = 'flex';
+        this.updateProgress(0);
+
+        console.log('LoadingManager: Initialized');
     }
 
     updateProgress(progress) {
-        if (!this.loadingBar || !this.loadingText) return;
-        progress = Math.min(100, Math.max(0, progress));
-        console.log(`Loading progress: ${progress}%`);
+        console.log(`LoadingManager: Updating progress to ${progress}%`);
         this.loadingBar.style.width = `${progress}%`;
         this.loadingText.textContent = `${Math.round(progress)}%`;
     }
@@ -30,11 +36,11 @@ class LoadingManager {
     onAssetLoaded() {
         this.loadedAssets++;
         const progress = (this.loadedAssets / this.totalAssets) * 100;
-        console.log(`Asset loaded: ${this.loadedAssets}/${this.totalAssets}`);
+        console.log(`LoadingManager: Asset loaded ${this.loadedAssets}/${this.totalAssets}`);
         this.updateProgress(progress);
 
         if (this.loadedAssets >= this.totalAssets) {
-            console.log('All assets loaded, showing game content');
+            console.log('LoadingManager: All assets loaded');
             this.loadingScreen.style.display = 'none';
             this.gameContent.style.display = 'block';
         }
@@ -42,16 +48,20 @@ class LoadingManager {
 
     loadImage(path) {
         return new Promise((resolve, reject) => {
+            console.log(`LoadingManager: Starting to load ${path}`);
             const img = new Image();
+
             img.onload = () => {
-                console.log(`Successfully loaded: ${path}`);
+                console.log(`LoadingManager: Successfully loaded ${path}`);
                 this.onAssetLoaded();
                 resolve(img);
             };
+
             img.onerror = () => {
-                console.error(`Failed to load: ${path}`);
+                console.error(`LoadingManager: Failed to load ${path}`);
                 reject(new Error(`Failed to load image: ${path}`));
             };
+
             img.src = path;
         });
     }
@@ -59,6 +69,7 @@ class LoadingManager {
 
 class SlotMachine {
     constructor() {
+        console.log('SlotMachine: Constructor called');
         // Wait for DOM content to be loaded
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.init());
@@ -81,49 +92,29 @@ class SlotMachine {
             // Initialize canvas
             this.canvas = document.getElementById('slotCanvas');
             if (!this.canvas) {
-                throw new Error('Canvas not found');
+                throw new Error('Canvas element not found');
             }
             this.ctx = this.canvas.getContext('2d');
             this.ctx.imageSmoothingEnabled = false;
 
-            // Create loading manager after DOM elements are ready
+            // Create loading manager
             this.loadingManager = new LoadingManager();
 
-            // Initialize reels with default symbol
-            this.reels = Array(5).fill().map(() => Array(3).fill('wooden_a'));
+            // Start with just one test image
+            console.log('SlotMachine: Starting test load');
+            this.loadingManager.totalAssets = 1;
 
-            // Define symbol paths
-            const symbolPaths = [
-                { name: 'wooden_a', path: '/static/images/symbols/wooden_a.png' },
-                { name: 'wooden_k', path: '/static/images/symbols/wooden_k.png' },
-                { name: 'wooden_arch', path: '/static/images/symbols/wooden_arch.png' },
-                { name: 'snake', path: '/static/images/symbols/snake.png' },
-                { name: 'gorilla', path: '/static/images/symbols/gorilla.png' },
-                { name: 'jaguar', path: '/static/images/symbols/jaguar.png' },
-                { name: 'crocodile', path: '/static/images/symbols/crocodile.png' },
-                { name: 'gator', path: '/static/images/symbols/gator.png' },
-                { name: 'leopard', path: '/static/images/symbols/leopard.png' },
-                { name: 'dragon', path: '/static/images/symbols/dragon.png' },
-                { name: 'sloth', path: '/static/images/symbols/sloth.png' },
-                { name: 'wild', path: '/static/images/symbols/wild_2x.png' }
-            ];
-
-            // Set total assets and start loading
-            this.loadingManager.totalAssets = symbolPaths.length;
-            console.log(`Loading ${symbolPaths.length} symbols`);
-
-            // Load all images one by one
-            for (const { name, path } of symbolPaths) {
-                try {
-                    console.log(`Loading symbol: ${name} from ${path}`);
-                    const img = await this.loadingManager.loadImage(path);
-                    this.symbolImages.set(name, img);
-                    console.log(`Successfully loaded: ${name}`);
-                } catch (error) {
-                    console.error(`Failed to load ${name}:`, error);
-                    this.createFallbackSymbol(name);
-                }
+            try {
+                const testImg = await this.loadingManager.loadImage('/static/images/symbols/wooden_a.png');
+                this.symbolImages.set('test', testImg);
+                console.log('SlotMachine: Test image loaded successfully');
+            } catch (error) {
+                console.error('SlotMachine: Test load failed:', error);
+                this.createFallbackSymbol('test');
             }
+
+            // Initialize reels with test symbol
+            this.reels = Array(5).fill().map(() => Array(3).fill('test'));
 
             // Initialize game components
             this.initPaylines();
@@ -131,12 +122,14 @@ class SlotMachine {
             this.resizeCanvas();
             this.draw();
 
+            console.log('SlotMachine: Initialization complete');
         } catch (error) {
-            console.error('Failed to initialize slot:', error);
+            console.error('SlotMachine: Initialization failed:', error);
         }
     }
 
     createFallbackSymbol(symbol) {
+        console.log(`SlotMachine: Creating fallback symbol for ${symbol}`);
         const canvas = document.createElement('canvas');
         canvas.width = this.SYMBOL_SIZE;
         canvas.height = this.SYMBOL_SIZE;
@@ -182,8 +175,6 @@ class SlotMachine {
                 const img = this.symbolImages.get(symbol);
                 if (img) {
                     this.ctx.drawImage(img, x, y, this.SYMBOL_SIZE, this.SYMBOL_SIZE);
-                } else {
-                    console.error(`Missing image for symbol: ${symbol}`);
                 }
             }
         }
@@ -203,9 +194,8 @@ class SlotMachine {
         const spinButton = document.getElementById('spinButton');
         if (spinButton) spinButton.disabled = true;
 
-        const symbols = Array.from(this.symbolImages.keys());
         const result = Array(5).fill().map(() =>
-            Array(3).fill().map(() => symbols[Math.floor(Math.random() * symbols.length)])
+            Array(3).fill().map(() => 'test')
         );
 
         await this.animateSpin(result);
@@ -226,8 +216,7 @@ class SlotMachine {
 
                 if (step < steps - 1) {
                     for (let j = 0; j < 3; j++) {
-                        const symbols = Array.from(this.symbolImages.keys());
-                        this.reels[i][j] = symbols[Math.floor(Math.random() * symbols.length)];
+                        this.reels[i][j] = 'test';
                     }
                 } else {
                     this.reels[i] = finalResult[i];
