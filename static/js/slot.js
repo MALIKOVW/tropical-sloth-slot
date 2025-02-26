@@ -1,10 +1,6 @@
 class LoadingManager {
     constructor() {
-        console.log('LoadingManager: Starting initialization');
-        // Инициализация после полной загрузки DOM
-        document.addEventListener('DOMContentLoaded', () => {
-            this.initializeElements();
-        });
+        this.initializeElements();
     }
 
     initializeElements() {
@@ -13,14 +9,11 @@ class LoadingManager {
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
 
-        console.log('LoadingManager: Elements initialized:', {
-            loadingScreen: !!this.loadingScreen,
-            loadingBar: !!this.loadingBar,
-            loadingText: !!this.loadingText,
-            gameContent: !!this.gameContent
-        });
+        if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
+            throw new Error('Required loading elements not found');
+        }
 
-        this.totalAssets = 0; // Будет установлено позже
+        this.totalAssets = 0;
         this.loadedAssets = 0;
         this.lastProgress = 0;
         this.imageCache = new Map();
@@ -28,110 +21,73 @@ class LoadingManager {
 
     setTotalAssets(count) {
         this.totalAssets = count;
-        console.log(`LoadingManager: Total assets set to ${count}`);
     }
 
-    async init() {
-        try {
-            if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
-                console.error('LoadingManager: Required elements not found');
-                await new Promise(resolve => setTimeout(resolve, 100));
-                return this.init();
-            }
-
+    show() {
+        if (this.loadingScreen) {
             this.loadingScreen.style.display = 'flex';
-            this.gameContent.style.display = 'none';
-            this.updateProgress(0); // Начальный прогресс
-            console.log('LoadingManager: Loading screen displayed');
-            return true;
-        } catch (error) {
-            console.error('LoadingManager: Initialization failed:', error);
-            return false;
         }
+        if (this.gameContent) {
+            this.gameContent.style.display = 'none';
+        }
+        this.updateProgress(0);
     }
 
     updateProgress(progress) {
-        try {
-            if (!this.loadingBar || !this.loadingText) return;
+        if (!this.loadingBar || !this.loadingText) return;
 
-            progress = Math.min(100, Math.max(0, progress));
-            if (Math.abs(progress - this.lastProgress) >= 1) {
-                this.lastProgress = progress;
-                requestAnimationFrame(() => {
-                    this.loadingBar.style.width = `${progress}%`;
-                    this.loadingText.textContent = `${Math.round(progress)}%`;
-                });
-                console.log(`LoadingManager: Progress updated to ${progress}%`);
-            }
-        } catch (error) {
-            console.error('LoadingManager: Error updating progress:', error);
+        progress = Math.min(100, Math.max(0, progress));
+        if (Math.abs(progress - this.lastProgress) >= 1) {
+            this.lastProgress = progress;
+            this.loadingBar.style.width = `${progress}%`;
+            this.loadingText.textContent = `${Math.round(progress)}%`;
         }
     }
 
-    hideLoadingScreen() {
-        try {
-            if (!this.loadingScreen || !this.gameContent) return;
-
-            console.log('LoadingManager: Hiding loading screen');
+    hide() {
+        if (this.loadingScreen) {
             this.loadingScreen.classList.add('hidden');
             setTimeout(() => {
                 this.loadingScreen.style.display = 'none';
-                this.gameContent.style.display = 'block';
-                console.log('LoadingManager: Game content shown');
+                if (this.gameContent) {
+                    this.gameContent.style.display = 'block';
+                }
             }, 500);
-        } catch (error) {
-            console.error('LoadingManager: Error hiding loading screen:', error);
         }
     }
 
     onAssetLoaded() {
-        try {
-            this.loadedAssets++;
-            const progress = (this.loadedAssets / this.totalAssets) * 100;
-            this.updateProgress(progress);
-            console.log(`LoadingManager: Asset loaded (${this.loadedAssets}/${this.totalAssets})`);
+        this.loadedAssets++;
+        const progress = (this.loadedAssets / this.totalAssets) * 100;
+        this.updateProgress(progress);
 
-            if (this.loadedAssets >= this.totalAssets) {
-                console.log('LoadingManager: All assets loaded');
-                this.hideLoadingScreen();
-            }
-        } catch (error) {
-            console.error('LoadingManager: Error in onAssetLoaded:', error);
+        if (this.loadedAssets >= this.totalAssets) {
+            this.hide();
         }
     }
 
     async loadImage(path) {
-        try {
-            if (this.imageCache.has(path)) {
-                console.log(`LoadingManager: Image loaded from cache: ${path}`);
-                return this.imageCache.get(path);
-            }
-
-            console.log(`LoadingManager: Loading image: ${path}`);
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => {
-                    console.log(`LoadingManager: Image loaded successfully: ${path}`);
-                    this.imageCache.set(path, img);
-                    this.onAssetLoaded();
-                    resolve(img);
-                };
-                img.onerror = (error) => {
-                    console.error(`LoadingManager: Failed to load image: ${path}`, error);
-                    reject(error);
-                };
-                img.src = path;
-            });
-        } catch (error) {
-            console.error(`LoadingManager: Error in loadImage for ${path}:`, error);
-            throw error;
+        if (this.imageCache.has(path)) {
+            return this.imageCache.get(path);
         }
+
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                this.imageCache.set(path, img);
+                this.onAssetLoaded();
+                resolve(img);
+            };
+            img.onerror = (error) => {
+                reject(error);
+            };
+            img.src = path;
+        });
     }
 }
 
 class SlotMachine {
     constructor() {
-        console.log('Slot Machine: Starting initialization');
         this.loadingManager = new LoadingManager();
         this.SYMBOL_SIZE = 60;
         this.SYMBOL_PADDING = 3;
@@ -139,111 +95,84 @@ class SlotMachine {
         this.spinning = false;
         this.currentBet = 10;
 
-        // Ждем полной загрузки DOM перед инициализацией
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.initialize());
-        } else {
-            this.initialize();
+        this.initializeGame();
+    }
+
+    async initializeGame() {
+        try {
+            // Показываем экран загрузки
+            this.loadingManager.show();
+
+            // Инициализируем игровые элементы
+            await this.initializeCanvas();
+            this.initPaylines();
+            await this.loadSymbols();
+            this.initializeEventListeners();
+            this.resizeCanvas();
+            this.draw();
+
+        } catch (error) {
+            console.error('Failed to initialize game:', error);
         }
     }
 
-    async initialize() {
-        try {
-            console.log('Slot Machine: Initializing components');
-            this.initPaylines();
-            await this.initializeCanvas();
-            console.log('Slot Machine: Initialization complete');
-        } catch (error) {
-            console.error('Slot Machine: Initialization failed:', error);
+    async initializeCanvas() {
+        this.canvas = document.getElementById('slotCanvas');
+        if (!this.canvas) {
+            throw new Error('Canvas element not found');
         }
+
+        this.ctx = this.canvas.getContext('2d');
+        this.ctx.imageSmoothingEnabled = false;
+
+        // Initialize reels
+        this.reels = Array(5).fill().map(() => Array(3).fill('10'));
     }
 
     initPaylines() {
         this.paylines = [
-            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // 1
-            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // 2
-            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // 3
-            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // 4
-            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}]  // 5
+            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}],
+            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}],
+            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}],
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}],
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}]
         ];
     }
 
-    async initializeCanvas() {
-        try {
-            await this.loadingManager.init();
+    async loadSymbols() {
+        this.symbolDefinitions = {
+            '10': { value: 5, path: '/static/images/symbols/10.png', multipliers: {3: 5, 4: 10, 5: 20} },
+            'J': { value: 5, path: '/static/images/symbols/J.png', multipliers: {3: 5, 4: 10, 5: 20} },
+            'Q': { value: 10, path: '/static/images/symbols/Q.png', multipliers: {3: 10, 4: 20, 5: 50} },
+            'K': { value: 15, path: '/static/images/symbols/K.png', multipliers: {3: 15, 4: 30, 5: 75} },
+            'A': { value: 20, path: '/static/images/symbols/A.png', multipliers: {3: 20, 4: 40, 5: 100} },
+            'dog1': { value: 25, path: '/static/images/symbols/dog1.png', multipliers: {3: 25, 4: 50, 5: 125} },
+            'dog2': { value: 30, path: '/static/images/symbols/dog2.png', multipliers: {3: 30, 4: 60, 5: 150} },
+            'dog3': { value: 40, path: '/static/images/symbols/dog3.png', multipliers: {3: 40, 4: 80, 5: 200} },
+            'toy1': { value: 50, path: '/static/images/symbols/toy1.png', multipliers: {3: 50, 4: 100, 5: 250} },
+            'toy2': { value: 100, path: '/static/images/symbols/toy2.png', multipliers: {3: 100, 4: 200, 5: 500} },
+            'scatter': { value: 0, path: '/static/images/symbols/scatter.png', isScatter: true, multipliers: {3: 2, 4: 10, 5: 50} },
+            'wild': { value: 0, path: '/static/images/symbols/wild.png', multiplier: 2, isWild: true }
+        };
 
-            this.canvas = document.getElementById('slotCanvas');
-            if (!this.canvas) {
-                throw new Error('Canvas element not found');
-            }
+        // Устанавливаем общее количество ассетов для загрузки
+        this.loadingManager.setTotalAssets(Object.keys(this.symbolDefinitions).length);
 
-            this.ctx = this.canvas.getContext('2d');
-            this.ctx.imageSmoothingEnabled = false;
-
-            // Initialize game state
-            this.reels = Array(5).fill().map(() => Array(3).fill('10'));
-
-            // Define symbols and their properties
-            this.symbolDefinitions = {
-                '10': { value: 5, path: '/static/images/symbols/10.png', multipliers: {3: 5, 4: 10, 5: 20} },
-                'J': { value: 5, path: '/static/images/symbols/J.png', multipliers: {3: 5, 4: 10, 5: 20} },
-                'Q': { value: 10, path: '/static/images/symbols/Q.png', multipliers: {3: 10, 4: 20, 5: 50} },
-                'K': { value: 15, path: '/static/images/symbols/K.png', multipliers: {3: 15, 4: 30, 5: 75} },
-                'A': { value: 20, path: '/static/images/symbols/A.png', multipliers: {3: 20, 4: 40, 5: 100} },
-                'dog1': { value: 25, path: '/static/images/symbols/dog1.png', multipliers: {3: 25, 4: 50, 5: 125} },
-                'dog2': { value: 30, path: '/static/images/symbols/dog2.png', multipliers: {3: 30, 4: 60, 5: 150} },
-                'dog3': { value: 40, path: '/static/images/symbols/dog3.png', multipliers: {3: 40, 4: 80, 5: 200} },
-                'toy1': { value: 50, path: '/static/images/symbols/toy1.png', multipliers: {3: 50, 4: 100, 5: 250} },
-                'toy2': { value: 100, path: '/static/images/symbols/toy2.png', multipliers: {3: 100, 4: 200, 5: 500} },
-                'scatter': { value: 0, path: '/static/images/symbols/scatter.png', isScatter: true, multipliers: {3: 2, 4: 10, 5: 50} },
-                'wild': { value: 0, path: '/static/images/symbols/wild.png', multiplier: 2, isWild: true }
-            };
-
-            // Set total assets count before loading
-            this.loadingManager.setTotalAssets(Object.keys(this.symbolDefinitions).length);
-
-            console.log('Slot Machine: Loading symbol images');
-            await this.loadSymbolImages();
-
-            console.log('Slot Machine: Initializing event listeners');
-            this.initializeEventListeners();
-
-            console.log('Slot Machine: Resizing canvas');
-            this.resizeCanvas();
-
-            console.log('Slot Machine: Drawing initial state');
-            this.draw();
-
-        } catch (error) {
-            console.error('Slot Machine: Canvas initialization failed:', error);
-            throw error;
-        }
-    }
-
-    async loadSymbolImages() {
-        const loadPromises = [];
-
-        for (const [symbol, def] of Object.entries(this.symbolDefinitions)) {
+        // Загружаем все изображения
+        const loadPromises = Object.entries(this.symbolDefinitions).map(async ([symbol, def]) => {
             try {
-                const promise = this.loadingManager.loadImage(def.path)
-                    .then(img => {
-                        this.symbolImages.set(symbol, img);
-                        console.log(`Slot Machine: Symbol image loaded: ${symbol}`);
-                    })
-                    .catch(error => {
-                        console.error(`Slot Machine: Failed to load symbol image: ${symbol}`, error);
-                        this.createFallbackImage(symbol);
-                    });
-                loadPromises.push(promise);
+                const img = await this.loadingManager.loadImage(def.path);
+                this.symbolImages.set(symbol, img);
             } catch (error) {
-                console.error(`Slot Machine: Error in loadSymbolImages for ${symbol}:`, error);
+                console.error(`Failed to load symbol ${symbol}:`, error);
+                this.createFallbackSymbol(symbol);
             }
-        }
+        });
 
         await Promise.all(loadPromises);
     }
 
-    createFallbackImage(symbol) {
+    createFallbackSymbol(symbol) {
         const canvas = document.createElement('canvas');
         canvas.width = this.SYMBOL_SIZE;
         canvas.height = this.SYMBOL_SIZE;
@@ -260,6 +189,7 @@ class SlotMachine {
         const img = new Image();
         img.src = canvas.toDataURL();
         this.symbolImages.set(symbol, img);
+        this.loadingManager.onAssetLoaded();
     }
 
     initializeEventListeners() {
@@ -268,32 +198,14 @@ class SlotMachine {
             spinButton.addEventListener('click', () => this.spin());
         }
 
-        const increaseBetButton = document.getElementById('increaseBet');
-        const decreaseBetButton = document.getElementById('decreaseBet');
+        const increaseBet = document.getElementById('increaseBet');
+        const decreaseBet = document.getElementById('decreaseBet');
 
-        if (increaseBetButton) {
-            increaseBetButton.addEventListener('click', () => this.adjustBet(1));
+        if (increaseBet) {
+            increaseBet.addEventListener('click', () => this.adjustBet(1));
         }
-        if (decreaseBetButton) {
-            decreaseBetButton.addEventListener('click', () => this.adjustBet(-1));
-        }
-    }
-
-    adjustBet(amount) {
-        const betValues = [10, 20, 30, 40, 50, 100, 200, 300, 400, 500, 1000];
-        const currentIndex = betValues.indexOf(this.currentBet);
-        let newIndex;
-
-        if (amount > 0) {
-            newIndex = Math.min(currentIndex + 1, betValues.length - 1);
-        } else {
-            newIndex = Math.max(currentIndex - 1, 0);
-        }
-
-        this.currentBet = betValues[newIndex];
-        const currentBetElement = document.getElementById('currentBet');
-        if (currentBetElement) {
-            currentBetElement.textContent = this.currentBet.toFixed(2);
+        if (decreaseBet) {
+            decreaseBet.addEventListener('click', () => this.adjustBet(-1));
         }
     }
 
@@ -320,7 +232,7 @@ class SlotMachine {
                 if (img) {
                     this.ctx.drawImage(img, x, y, symbolWidth, symbolHeight);
                 } else {
-                    this.drawFallbackSymbol(symbol, x, y);
+                    this.createFallbackSymbol(symbol);
                 }
             }
         }
@@ -340,6 +252,23 @@ class SlotMachine {
         this.draw();
     }
 
+    adjustBet(amount) {
+        const betValues = [10, 20, 30, 40, 50, 100, 200, 300, 400, 500, 1000];
+        const currentIndex = betValues.indexOf(this.currentBet);
+        let newIndex;
+
+        if (amount > 0) {
+            newIndex = Math.min(currentIndex + 1, betValues.length - 1);
+        } else {
+            newIndex = Math.max(currentIndex - 1, 0);
+        }
+
+        this.currentBet = betValues[newIndex];
+        const currentBetElement = document.getElementById('currentBet');
+        if (currentBetElement) {
+            currentBetElement.textContent = this.currentBet.toFixed(2);
+        }
+    }
 
     showWinningLine(linePositions) {
         const container = document.getElementById('paylineContainer');
@@ -802,7 +731,7 @@ class SlotMachine {
         try {
             console.log('Starting slot machine initialization');
 
-            this.wildReels = [1, 2, 3]; 
+            this.wildReels = [1, 2, 3];
             console.log('Slot machine initialization complete');
         } catch (error) {
             console.error('Error during initialization:', error);
@@ -810,12 +739,11 @@ class SlotMachine {
     }
 }
 
-// Initialize the slot machine
+// Инициализация слота при загрузке DOM
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Document loaded, creating slot machine instance');
     try {
         window.slotMachine = new SlotMachine();
     } catch (error) {
-        console.error('Failed to create SlotMachine instance:', error);
+        console.error('Failed to initialize slot machine:', error);
     }
 });
