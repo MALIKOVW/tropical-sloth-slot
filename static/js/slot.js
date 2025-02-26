@@ -201,17 +201,18 @@ class SlotMachine {
 
     draw() {
         if (!this.ctx || !this.canvas) return;
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Очищаем предыдущие символы
         const existingSymbols = this.gameField.querySelectorAll('.symbol');
         existingSymbols.forEach(symbol => symbol.remove());
 
+        const cellSize = this.SYMBOL_SIZE + this.SYMBOL_PADDING * 2;
+
         for (let i = 0; i < 5; i++) {
             for (let j = 0; j < 3; j++) {
                 const symbol = this.reels[i][j];
-                const x = this.SYMBOL_PADDING + i * (this.SYMBOL_SIZE + this.SYMBOL_PADDING);
-                const y = this.SYMBOL_PADDING + j * (this.SYMBOL_SIZE + this.SYMBOL_PADDING);
+                const x = this.SYMBOL_PADDING + i * cellSize;
+                const y = this.SYMBOL_PADDING + j * cellSize;
 
                 const img = this.symbolImages.get(symbol);
                 if (img) {
@@ -377,7 +378,7 @@ class SlotMachine {
         if (!positions || !positions.length) return;
 
         try {
-            // Находим символы для анимации
+            // Анимация символов
             positions.forEach(pos => {
                 const symbolElement = document.querySelector(`.symbol[data-position="${pos.x}-${pos.y}"]`);
                 if (symbolElement) {
