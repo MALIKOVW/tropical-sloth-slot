@@ -1,51 +1,79 @@
-# Tropical Sloth Slot Machine
+# Tropical Slot Machine
 
-A dynamic slot machine simulator featuring innovative wild symbol mechanics and engaging interactive elements.
+Тропическая слот-машина с уникальной механикой умножителей и разнообразными символами животных.
 
-## Features
+## Функции
 
-- Multiple wild symbols (2x, 3x, 5x) appearing on reels 2, 3, and 4
-- Multiplier combinations for enhanced winnings
-- Dynamic symbol animations and visual effects
-- Responsive design with wild symbol interactions
-- Sound effects and background music
-- Session-based credit system
-- Statistical tracking of game outcomes
+- Множество символов с различными выплатами
+- Специальные Wild символы с множителями (x2, x3, x5)
+- 20 линий выплат с различными паттернами
+- Анимированные выигрышные комбинации
+- Звуковые эффекты и фоновая музыка
 
-## Technical Stack
+## Символы и выплаты
+
+### Базовые символы
+- 10 - выплата 1x ставки
+- J - выплата 1.5x ставки
+- Q - выплата 1.8x ставки
+- Деревянная A - выплата 2x ставки
+- Деревянная K - выплата 3x ставки
+- Деревянная арка - выплата 4x ставки
+
+### Средние символы
+- Змея - выплата 5x ставки
+- Горилла - выплата 6x ставки
+- Ягуар - выплата 8x ставки
+- Крокодил - выплата 10x ставки
+- Аллигатор - выплата 15x ставки
+- Леопард - выплата 20x ставки
+
+### Высокооплачиваемый символ
+- Дракон - выплата 50x ставки
+
+### Специальные символы
+- Ленивец - скаттер символ
+- Wild x2 - множитель x2
+- Wild x3 - множитель x3
+- Wild x5 - множитель x5
+
+## Технический стек
 
 - Backend: Flask (Python)
 - Frontend: Vanilla JavaScript
-- Database: PostgreSQL
-- Audio: Tone.js
-- Graphics: Custom PNG assets
+- Аудио: Tone.js
+- Графика: PNG assets
 
-## Getting Started
+## Установка и запуск
 
-1. Clone the repository
-2. Install dependencies:
+1. Клонируйте репозиторий
+2. Установите зависимости:
 ```bash
 pip install -r requirements.txt
 ```
-3. Set up environment variables:
-   - `DATABASE_URL`: PostgreSQL database URL
-   - `SESSION_SECRET`: Secret key for Flask sessions
-
-4. Run the application:
+3. Запустите приложение:
 ```bash
 python main.py
 ```
 
-The server will start on port 5000.
+Сервер запустится на порту 5000.
 
-## Game Rules
+## Правила игры
 
-- Wild symbols (2x, 3x, 5x) appear only on reels 2, 3, and 4
-- Wild symbols substitute for all symbols except scatter
-- Multiple wild symbols multiply their values (e.g., 2x and 3x = 6x multiplier)
-- Minimum bet: 0.20
-- Maximum bet: 100.00
+- Wild символы появляются только на барабанах 2, 3 и 4
+- Wild символы заменяют все символы, кроме скаттера
+- Несколько Wild символов умножают свои значения
+- Минимальная ставка: 0.20
+- Максимальная ставка: 100.00
 
-## License
+## Линии выплат
 
-This project is proprietary and confidential.
+Всего 20 линий выплат:
+1. Горизонтальные линии (1-3)
+2. V-образные линии (4-8)
+3. Зигзагообразные линии (9-13)
+4. Сложные паттерны (14-20)
+
+## Лицензия
+
+Проприетарное программное обеспечение. Все права защищены.
