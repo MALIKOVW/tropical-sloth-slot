@@ -1,13 +1,12 @@
 class LoadingManager {
     constructor() {
-        console.log('LoadingManager: Starting initialization');
         this.loadingScreen = document.getElementById('loadingScreen');
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
 
         if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
-            console.error('LoadingManager: Required elements not found');
+            console.error('Required elements not found');
             return;
         }
 
@@ -15,19 +14,15 @@ class LoadingManager {
         this.totalAssets = 0;
         this.imageCache = new Map();
 
-        // Initial state
-        this.gameContent.style.opacity = '0';
+        // Set initial state
         this.gameContent.style.display = 'none';
         this.loadingScreen.style.display = 'flex';
-
-        // Add transitions
-        this.loadingScreen.style.transition = 'opacity 0.5s ease-out';
-        this.gameContent.style.transition = 'opacity 0.5s ease-in';
     }
 
     updateProgress(progress) {
+        if (!this.loadingBar || !this.loadingText) return;
         progress = Math.min(100, Math.max(0, progress));
-        console.log(`LoadingManager: Progress ${progress}%`);
+        console.log(`Loading progress: ${progress}%`);
         this.loadingBar.style.width = `${progress}%`;
         this.loadingText.textContent = `${Math.round(progress)}%`;
     }
@@ -35,37 +30,26 @@ class LoadingManager {
     onAssetLoaded() {
         this.loadedAssets++;
         const progress = (this.loadedAssets / this.totalAssets) * 100;
-        console.log(`LoadingManager: Asset loaded ${this.loadedAssets}/${this.totalAssets}`);
+        console.log(`Asset loaded: ${this.loadedAssets}/${this.totalAssets}`);
         this.updateProgress(progress);
 
         if (this.loadedAssets >= this.totalAssets) {
-            console.log('LoadingManager: All assets loaded, showing game content');
-            this.showGame();
-        }
-    }
-
-    showGame() {
-        this.loadingScreen.style.opacity = '0';
-        setTimeout(() => {
+            console.log('All assets loaded, showing game content');
             this.loadingScreen.style.display = 'none';
             this.gameContent.style.display = 'block';
-            requestAnimationFrame(() => {
-                this.gameContent.style.opacity = '1';
-            });
-        }, 500);
+        }
     }
 
     loadImage(path) {
         return new Promise((resolve, reject) => {
-            console.log(`LoadingManager: Starting to load image ${path}`);
             const img = new Image();
             img.onload = () => {
-                console.log(`LoadingManager: Successfully loaded ${path}`);
+                console.log(`Successfully loaded: ${path}`);
                 this.onAssetLoaded();
                 resolve(img);
             };
-            img.onerror = (error) => {
-                console.error(`LoadingManager: Failed to load ${path}`, error);
+            img.onerror = () => {
+                console.error(`Failed to load: ${path}`);
                 reject(new Error(`Failed to load image: ${path}`));
             };
             img.src = path;
@@ -75,14 +59,17 @@ class LoadingManager {
 
 class SlotMachine {
     constructor() {
-        console.log('SlotMachine: Starting initialization');
-        this.init();
+        // Wait for DOM content to be loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.init());
+        } else {
+            this.init();
+        }
     }
 
     async init() {
         try {
-            // Create loading manager first
-            this.loadingManager = new LoadingManager();
+            console.log('SlotMachine: Starting initialization');
 
             // Basic initialization
             this.SYMBOL_SIZE = 60;
@@ -99,10 +86,13 @@ class SlotMachine {
             this.ctx = this.canvas.getContext('2d');
             this.ctx.imageSmoothingEnabled = false;
 
+            // Create loading manager after DOM elements are ready
+            this.loadingManager = new LoadingManager();
+
             // Initialize reels with default symbol
             this.reels = Array(5).fill().map(() => Array(3).fill('wooden_a'));
 
-            // Define available symbols
+            // Define symbol paths
             const symbolPaths = [
                 { name: 'wooden_a', path: '/static/images/symbols/wooden_a.png' },
                 { name: 'wooden_k', path: '/static/images/symbols/wooden_k.png' },
@@ -115,46 +105,38 @@ class SlotMachine {
                 { name: 'leopard', path: '/static/images/symbols/leopard.png' },
                 { name: 'dragon', path: '/static/images/symbols/dragon.png' },
                 { name: 'sloth', path: '/static/images/symbols/sloth.png' },
-                { name: 'wild', path: '/static/images/symbols/wild_2x.png' },
-                { name: 'wild_3x', path: '/static/images/symbols/wild_3x.png' },
-                { name: 'wild_5x', path: '/static/images/symbols/wild_5x.png' }
+                { name: 'wild', path: '/static/images/symbols/wild_2x.png' }
             ];
 
-            // Set total assets
+            // Set total assets and start loading
             this.loadingManager.totalAssets = symbolPaths.length;
-            console.log(`SlotMachine: Will load ${symbolPaths.length} symbols`);
+            console.log(`Loading ${symbolPaths.length} symbols`);
 
-            // Load all symbols
-            let loadedCount = 0;
-            for (const symbol of symbolPaths) {
+            // Load all images one by one
+            for (const { name, path } of symbolPaths) {
                 try {
-                    console.log(`SlotMachine: Loading symbol ${symbol.name} from ${symbol.path}`);
-                    const img = await this.loadingManager.loadImage(symbol.path);
-                    this.symbolImages.set(symbol.name, img);
-                    loadedCount++;
-                    console.log(`SlotMachine: Successfully loaded ${symbol.name} (${loadedCount}/${symbolPaths.length})`);
+                    console.log(`Loading symbol: ${name} from ${path}`);
+                    const img = await this.loadingManager.loadImage(path);
+                    this.symbolImages.set(name, img);
+                    console.log(`Successfully loaded: ${name}`);
                 } catch (error) {
-                    console.error(`SlotMachine: Failed to load ${symbol.name}:`, error);
-                    this.createFallbackSymbol(symbol.name);
+                    console.error(`Failed to load ${name}:`, error);
+                    this.createFallbackSymbol(name);
                 }
             }
 
             // Initialize game components
-            console.log('SlotMachine: Initializing game components');
             this.initPaylines();
             this.initializeEventListeners();
             this.resizeCanvas();
             this.draw();
 
-            console.log('SlotMachine: Initialization complete');
-
         } catch (error) {
-            console.error('SlotMachine: Initialization failed:', error);
+            console.error('Failed to initialize slot:', error);
         }
     }
 
     createFallbackSymbol(symbol) {
-        console.log(`SlotMachine: Creating fallback for ${symbol}`);
         const canvas = document.createElement('canvas');
         canvas.width = this.SYMBOL_SIZE;
         canvas.height = this.SYMBOL_SIZE;
@@ -211,8 +193,6 @@ class SlotMachine {
         const spinButton = document.getElementById('spinButton');
         if (spinButton) {
             spinButton.addEventListener('click', () => this.spin());
-        } else {
-            console.error('Spin button not found');
         }
     }
 
@@ -368,7 +348,7 @@ class SlotMachine {
     }
 }
 
-// Initialize slot machine when DOM is ready
+// Initialize when document is ready
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Document loaded, creating slot machine');
     window.slotMachine = new SlotMachine();
