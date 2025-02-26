@@ -1,101 +1,117 @@
 class LoadingManager {
     constructor() {
+        console.log('LoadingManager: Starting initialization');
         this.loadingScreen = document.getElementById('loadingScreen');
         this.loadingBar = document.getElementById('loadingBar');
         this.loadingText = document.getElementById('loadingText');
         this.gameContent = document.getElementById('gameContent');
-        this.totalAssets = 14;
+
+        // Debug logging
+        console.log('LoadingManager: Elements found:', {
+            loadingScreen: !!this.loadingScreen,
+            loadingBar: !!this.loadingBar,
+            loadingText: !!this.loadingText,
+            gameContent: !!this.gameContent
+        });
+
+        this.totalAssets = 12; // Общее количество ассетов для загрузки
         this.loadedAssets = 0;
         this.lastProgress = 0;
         this.imageCache = new Map();
-
-        console.log('LoadingManager initialized');
     }
 
     async init() {
         try {
+            console.log('LoadingManager: init() called');
             if (!this.loadingScreen || !this.loadingBar || !this.loadingText || !this.gameContent) {
-                console.error('Required elements not found:', {
-                    loadingScreen: !!this.loadingScreen,
-                    loadingBar: !!this.loadingBar,
-                    loadingText: !!this.loadingText,
-                    gameContent: !!this.gameContent
-                });
-                return false;
+                throw new Error('Required elements not found for loading screen');
             }
 
+            // Сначала показываем загрузочный экран
             this.loadingScreen.style.display = 'flex';
             this.gameContent.style.display = 'none';
 
-            console.log('Loading screen initialized successfully');
             return true;
         } catch (error) {
-            console.error('Error during LoadingManager initialization:', error);
+            console.error('LoadingManager: Initialization failed:', error);
             return false;
         }
     }
 
     updateProgress(progress) {
-        if (!this.loadingBar || !this.loadingText) return;
+        try {
+            if (!this.loadingBar || !this.loadingText) return;
 
-        progress = Math.min(100, Math.max(0, progress));
-        if (Math.abs(progress - this.lastProgress) >= 1) {
-            this.lastProgress = progress;
-            requestAnimationFrame(() => {
-                this.loadingBar.style.width = `${progress}%`;
-                this.loadingText.textContent = `${Math.round(progress)}%`;
-            });
-            console.log(`Loading progress: ${progress}%`);
+            progress = Math.min(100, Math.max(0, progress));
+            if (Math.abs(progress - this.lastProgress) >= 1) {
+                this.lastProgress = progress;
+                requestAnimationFrame(() => {
+                    this.loadingBar.style.width = `${progress}%`;
+                    this.loadingText.textContent = `${Math.round(progress)}%`;
+                });
+                console.log(`LoadingManager: Progress updated to ${progress}%`);
+            }
+        } catch (error) {
+            console.error('LoadingManager: Error updating progress:', error);
         }
     }
 
     hideLoadingScreen() {
-        if (!this.loadingScreen || !this.gameContent) return;
+        try {
+            if (!this.loadingScreen || !this.gameContent) return;
 
-        this.loadingScreen.classList.add('hidden');
-        setTimeout(() => {
-            this.loadingScreen.style.display = 'none';
-            this.gameContent.style.display = 'block';
-            console.log('Loading complete, game content shown');
-        }, 500);
+            console.log('LoadingManager: Hiding loading screen');
+            this.loadingScreen.classList.add('hidden');
+            setTimeout(() => {
+                this.loadingScreen.style.display = 'none';
+                this.gameContent.style.display = 'block';
+                console.log('LoadingManager: Game content shown');
+            }, 500);
+        } catch (error) {
+            console.error('LoadingManager: Error hiding loading screen:', error);
+        }
     }
 
     onAssetLoaded() {
-        this.loadedAssets++;
-        const progress = (this.loadedAssets / this.totalAssets) * 100;
-        this.updateProgress(progress);
-        console.log(`Asset loaded (${this.loadedAssets}/${this.totalAssets})`);
+        try {
+            this.loadedAssets++;
+            const progress = (this.loadedAssets / this.totalAssets) * 100;
+            this.updateProgress(progress);
+            console.log(`LoadingManager: Asset loaded (${this.loadedAssets}/${this.totalAssets})`);
 
-        if (this.loadedAssets >= this.totalAssets) {
-            console.log('All assets loaded');
-            this.hideLoadingScreen();
+            if (this.loadedAssets >= this.totalAssets) {
+                console.log('LoadingManager: All assets loaded');
+                this.hideLoadingScreen();
+            }
+        } catch (error) {
+            console.error('LoadingManager: Error in onAssetLoaded:', error);
         }
     }
 
     async loadImage(path) {
         try {
             if (this.imageCache.has(path)) {
-                console.log(`Image found in cache: ${path}`);
+                console.log(`LoadingManager: Image loaded from cache: ${path}`);
                 return this.imageCache.get(path);
             }
 
-            console.log(`Loading image: ${path}`);
+            console.log(`LoadingManager: Loading image: ${path}`);
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.onload = () => {
-                    console.log(`Image loaded successfully: ${path}`);
+                    console.log(`LoadingManager: Image loaded successfully: ${path}`);
                     this.imageCache.set(path, img);
                     this.onAssetLoaded();
                     resolve(img);
                 };
                 img.onerror = (error) => {
-                    console.error(`Failed to load image: ${path}`, error);
+                    console.error(`LoadingManager: Failed to load image: ${path}`, error);
                     reject(error);
                 };
                 img.src = path;
             });
         } catch (error) {
-            console.error(`Error in loadImage for ${path}:`, error);
+            console.error(`LoadingManager: Error in loadImage for ${path}:`, error);
             throw error;
         }
     }
@@ -815,5 +831,11 @@ class SlotMachine {
 // Initialize the slot machine when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM fully loaded, initializing slot machine');
-    window.slotMachine = new SlotMachine();
+    try {
+        const slotMachine = new SlotMachine();
+        window.slotMachine = slotMachine;
+        console.log('SlotMachine instance created successfully');
+    } catch (error) {
+        console.error('Failed to create SlotMachine instance:', error);
+    }
 });
