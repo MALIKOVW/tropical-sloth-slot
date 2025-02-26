@@ -363,8 +363,43 @@ body {
     }
 }
 
-.symbol.winning {
-    animation: symbolWin 0.5s ease-in-out infinite;
+.symbol.winning-symbol {
+    z-index: 4;
+    animation: symbolPulse 1s ease-in-out infinite;
+}
+
+.symbol.winning-symbol.wild {
+    animation: wildPulse 1s ease-in-out infinite;
+}
+
+@keyframes symbolPulse {
+    0% {
+        transform: scale(1);
+        filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
+    }
+    50% {
+        transform: scale(1.1);
+        filter: brightness(1.4) drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
+    }
+    100% {
+        transform: scale(1);
+        filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
+    }
+}
+
+@keyframes wildPulse {
+    0% {
+        transform: scale(1);
+        filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 159, 67, 0.6));
+    }
+    50% {
+        transform: scale(1.1);
+        filter: brightness(1.4) drop-shadow(0 0 20px rgba(255, 159, 67, 0.8));
+    }
+    100% {
+        transform: scale(1);
+        filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 159, 67, 0.6));
+    }
 }
 
 /* Styles for new buttons and modals from original file */
@@ -957,7 +992,7 @@ h1 {
 }
 
 .win-amount {
-    font-size: 42px;
+    fontsize: 42px;
     color: #ffd700;
     margin: 20px 0;
     text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
@@ -997,21 +1032,16 @@ h1 {
 }
 
 /* Winning symbol animation */
-.winning-symbol {
-    position: absolute;
-    z-index: 4;
-    pointer-events: none;
-    transform: scale(1);
-    opacity: 0;
-    transition: opacity 0.3s ease-out;
+.symbol.winning {
+    animation: symbolWin 0.5s ease-in-out infinite;
 }
 
-.winning-symbol.active {
-    opacity: 1;
+.symbol.winning-symbol {
+    z-index: 4;
     animation: symbolPulse 1s ease-in-out infinite;
 }
 
-.winning-symbol.wild.active {
+.symbol.winning-symbol.wild {
     animation: wildPulse 1s ease-in-out infinite;
 }
 

@@ -354,57 +354,34 @@ class SlotMachine {
     showWinningLine(positions) {
         if (!positions || !positions.length) return;
 
-        const container = document.getElementById('paylineContainer');
-        if (!container) return;
-
-        container.innerHTML = '';
-
         try {
-            const cellSize = this.SYMBOL_SIZE + this.SYMBOL_PADDING * 2;
+            // Находим все символы на поле
+            const symbols = document.querySelectorAll('.symbol');
 
-            // Анимация символов
+            // Для каждой позиции в выигрышной линии
             positions.forEach(pos => {
                 if (!this.reels[pos.x] || !this.reels[pos.x][pos.y]) return;
 
-                const x = pos.x * cellSize;
-                const y = pos.y * cellSize;
                 const symbolKey = this.reels[pos.x][pos.y];
-                const img = this.symbolImages.get(symbolKey);
+                const symbolIndex = pos.y * 5 + pos.x;
+                const symbolElement = symbols[symbolIndex];
 
-                if (img) {
-                    const symbol = document.createElement('div');
-                    symbol.className = 'winning-symbol';
+                if (symbolElement) {
+                    symbolElement.classList.add('winning-symbol');
                     if (this.isWildSymbol(symbolKey)) {
-                        symbol.classList.add('wild');
+                        symbolElement.classList.add('wild');
                     }
-                    symbol.style.left = `${x}px`;
-                    symbol.style.top = `${y}px`;
-                    symbol.style.width = `${this.SYMBOL_SIZE}px`;
-                    symbol.style.height = `${this.SYMBOL_SIZE}px`;
-
-                    const symbolImg = document.createElement('img');
-                    symbolImg.src = img.src;
-                    symbolImg.style.width = '100%';
-                    symbolImg.style.height = '100%';
-                    symbolImg.style.objectFit = 'contain';
-                    symbol.appendChild(symbolImg);
-
-                    container.appendChild(symbol);
-
-                    // Активируем анимацию с небольшой задержкой
-                    requestAnimationFrame(() => {
-                        symbol.classList.add('active');
-                    });
                 }
             });
 
             // Очистка анимаций через 2 секунды
             setTimeout(() => {
-                container.innerHTML = '';
+                symbols.forEach(symbol => {
+                    symbol.classList.remove('winning-symbol', 'wild');
+                });
             }, 2000);
         } catch (error) {
             console.error('Error showing winning symbols:', error);
-            container.innerHTML = '';
         }
     }
 
