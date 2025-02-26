@@ -162,11 +162,33 @@ class SlotMachine {
 
     initPaylines() {
         this.paylines = [
-            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // Top
-            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // Middle
-            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // Bottom
-            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // V
-            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}]  // Inverted V
+            // Горизонтальные линии (1-3)
+            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1}], // Линия 1 - центр
+            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}], // Линия 2 - верх
+            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2}], // Линия 3 - низ
+
+            // V-образные линии (4-8)
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 0}], // Линия 4
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 2}], // Линия 5
+            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 0}], // Линия 6
+            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 2}], // Линия 7
+            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 1}], // Линия 8
+
+            // Зигзагообразные линии (9-13)
+            [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 1}], // Линия 9
+            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}], // Линия 10
+            [{x: 0, y: 1}, {x: 1, y: 0}, {x: 2, y: 1}, {x: 3, y: 2}, {x: 4, y: 1}], // Линия 11
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 0}], // Линия 12
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 2}], // Линия 13
+
+            // Сложные паттерны (14-20)
+            [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 0}], // Линия 14
+            [{x: 0, y: 2}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 2}], // Линия 15
+            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 0}, {x: 3, y: 1}, {x: 4, y: 1}], // Линия 16
+            [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 1}, {x: 4, y: 1}], // Линия 17
+            [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 2}, {x: 3, y: 0}, {x: 4, y: 0}], // Линия 18
+            [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 0}, {x: 3, y: 2}, {x: 4, y: 2}], // Линия 19
+            [{x: 0, y: 1}, {x: 1, y: 2}, {x: 2, y: 1}, {x: 3, y: 0}, {x: 4, y: 1}]  // Линия 20
         ];
     }
 
@@ -339,29 +361,36 @@ class SlotMachine {
 
         try {
             const cellSize = this.SYMBOL_SIZE + this.SYMBOL_PADDING * 2;
-            const startPos = positions[0];
-            const endPos = positions[positions.length - 1];
 
-            // Create payline
-            const line = document.createElement('div');
-            line.className = 'payline active';
+            // Создаем SVG для линии
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.style.position = 'absolute';
+            svg.style.top = '0';
+            svg.style.left = '0';
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.pointerEvents = 'none';
 
-            const startX = startPos.x * cellSize + cellSize / 2;
-            const startY = startPos.y * cellSize + cellSize / 2;
-            const endX = endPos.x * cellSize + cellSize / 2;
-            const endY = endPos.y * cellSize + cellSize / 2;
+            // Создаем path для линии
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 
-            const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
-            const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+            // Генерируем path data
+            let pathData = `M ${positions[0].x * cellSize + cellSize/2} ${positions[0].y * cellSize + cellSize/2}`;
+            for (let i = 1; i < positions.length; i++) {
+                pathData += ` L ${positions[i].x * cellSize + cellSize/2} ${positions[i].y * cellSize + cellSize/2}`;
+            }
 
-            line.style.width = `${length}px`;
-            line.style.left = `${startX}px`;
-            line.style.top = `${startY}px`;
-            line.style.transform = `rotate(${angle}deg)`;
+            path.setAttribute("d", pathData);
+            path.setAttribute("stroke", "#ffd700");
+            path.setAttribute("stroke-width", "4");
+            path.setAttribute("fill", "none");
+            path.setAttribute("stroke-linecap", "round");
+            path.setAttribute("class", "winning-line");
 
-            container.appendChild(line);
+            svg.appendChild(path);
+            container.appendChild(svg);
 
-            // Animate winning symbols
+            // Анимация символов
             positions.forEach(pos => {
                 if (!this.reels[pos.x] || !this.reels[pos.x][pos.y]) return;
 
@@ -372,7 +401,7 @@ class SlotMachine {
 
                 if (img) {
                     const symbol = document.createElement('div');
-                    symbol.className = 'winning-symbol active';
+                    symbol.className = 'winning-symbol';
                     if (this.isWildSymbol(symbolKey)) {
                         symbol.classList.add('wild');
                     }
@@ -384,10 +413,15 @@ class SlotMachine {
                     symbol.appendChild(symbolImg);
 
                     container.appendChild(symbol);
+
+                    // Добавляем класс для активации анимации с небольшой задержкой
+                    setTimeout(() => {
+                        symbol.classList.add('active');
+                    }, 50);
                 }
             });
 
-            // Clear animations after delay
+            // Очистка анимаций
             setTimeout(() => {
                 container.innerHTML = '';
             }, 2000);
